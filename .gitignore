@@ -1,0 +1,12 @@
+.DS_Store
+
+.idea/
+.vscode/
+
+.turbo/
+.claude/
+
+node_modules/
+dist/
+build/
+coverage/
