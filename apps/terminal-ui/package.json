@@ -1,0 +1,26 @@
+{
+    "name": "@zenvark/terminal-ui",
+    "private": true,
+    "description": "Interactive terminal UI for demonstrating Zenvark Circuit Breaker",
+    "license": "MIT",
+    "engines": {
+        "node": ">=22"
+    },
+    "type": "module",
+    "scripts": {
+        "start": "tsx index.tsx",
+        "docker:start": "docker compose up -d",
+        "docker:stop": "docker compose down"
+    },
+    "dependencies": {
+        "ink": "^6.4.0",
+        "ioredis": "^5.8.1",
+        "react": "^19.2.0",
+        "zenvark": "*"
+    },
+    "devDependencies": {
+        "@types/node": "^24.10.1",
+        "tsx": "^4.20.6",
+        "typescript": "5.9.3"
+    }
+}
