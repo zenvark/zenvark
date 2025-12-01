@@ -1,10 +1,10 @@
 import type { BackoffStrategy } from './BackoffStrategy.ts';
 
 export interface ConstantBackoffOptions {
-  /**
-   * The constant delay in milliseconds to apply before each attempt.
-   */
-  delayMs: number;
+	/**
+	 * The constant delay in milliseconds to apply before each attempt.
+	 */
+	delayMs: number;
 }
 
 /**
@@ -12,13 +12,13 @@ export interface ConstantBackoffOptions {
  * including the initial one.
  */
 export class ConstantBackoff implements BackoffStrategy {
-  private readonly delayMs: number;
+	private readonly delayMs: number;
 
-  constructor(options: ConstantBackoffOptions) {
-    this.delayMs = options.delayMs;
-  }
+	constructor(options: ConstantBackoffOptions) {
+		this.delayMs = options.delayMs;
+	}
 
-  getDelayMs(_attempt: number): number {
-    return this.delayMs;
-  }
+	getDelayMs(_attempt: number): number {
+		return this.delayMs;
+	}
 }

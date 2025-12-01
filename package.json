@@ -4,12 +4,15 @@
 	"engines": {
 		"node": ">=22"
 	},
+	"packageManager": "npm@11.4.2",
 	"workspaces": [
 		"apps/*",
 		"packages/*"
 	],
 	"scripts": {
 		"build": "turbo run build",
+		"lint": "turbo run lint",
+		"lint:fix": "turbo run lint:fix",
 		"format": "prettier --check \"**/*.{yaml,yml,md}\" *.json",
 		"format:fix": "prettier --write \"**/*.{yaml,yml,md}\" *.json",
 		"changeset": "changeset",
