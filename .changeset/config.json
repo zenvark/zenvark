@@ -1,9 +1,9 @@
 {
-  "$schema": "https://unpkg.com/@changesets/config@2.3.1/schema.json",
-  "changelog": "@changesets/cli/changelog",
-  "baseBranch": "main",
-  "commit": false,
-	"fixed": [["zenvark", "@zenvark/*"]],
+	"$schema": "https://unpkg.com/@changesets/config@2.3.1/schema.json",
+	"changelog": "@changesets/cli/changelog",
+	"baseBranch": "main",
+	"commit": false,
+	"fixed": [["zenvark", "@zenvark/*", "!@zenvark/terminal-ui"]],
 	"access": "public",
-  "updateInternalDependencies": "patch"
+	"updateInternalDependencies": "patch"
 }
