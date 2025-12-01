@@ -18,6 +18,13 @@ This will prompt you to:
 
 The changeset will be committed along with your code changes.
 
+## Version Bumping
+
+All packages are **fixed** together, meaning:
+- When you bump ANY package, ALL packages will receive the same version bump
+- All packages will always have the same version number
+- This ensures consistency across the entire monorepo
+
 ## Automated Releases
 
 The GitHub Actions workflow automatically:

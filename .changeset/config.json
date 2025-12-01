@@ -3,6 +3,7 @@
   "changelog": "@changesets/cli/changelog",
   "baseBranch": "main",
   "commit": false,
-  "access": "public",
+	"fixed": [["zenvark", "@zenvark/*"]],
+	"access": "public",
   "updateInternalDependencies": "patch"
 }
