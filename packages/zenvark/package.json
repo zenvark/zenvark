@@ -38,10 +38,10 @@
 	"devDependencies": {
 		"@lokalise/tsconfig": "^3.0.0",
 		"@types/node": "^24.10.1",
-		"@vitest/coverage-v8": "^3.2.4",
+		"@vitest/coverage-v8": "^4.0.15",
 		"rimraf": "^6.0.1",
 		"typescript": "5.9.3",
-		"vitest": "^3.2.4"
+		"vitest": "^4.0.15"
 	},
 	"dependencies": {
 		"@lokalise/node-core": "^14.1.0",

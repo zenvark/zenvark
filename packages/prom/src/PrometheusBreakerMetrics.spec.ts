@@ -16,11 +16,11 @@ describe('PrometheusBreakerMetrics', () => {
 
 		const allMetrics = await registry.metrics();
 
-		// Default prefix is 'circuit_breaker'
-		expect(allMetrics).toContain('circuit_breaker_call_duration_seconds');
-		expect(allMetrics).toContain('circuit_breaker_blocked_requests_total');
+		// Default prefix is 'zenvark'
+		expect(allMetrics).toContain('zenvark_call_duration_seconds');
+		expect(allMetrics).toContain('zenvark_blocked_requests_total');
 		expect(allMetrics).toContain(
-			'circuit_breaker_healthcheck_duration_seconds',
+			'zenvark_healthcheck_duration_seconds',
 		);
 	});
 
@@ -33,7 +33,7 @@ describe('PrometheusBreakerMetrics', () => {
 
 		const allMetrics = await registry.metrics();
 
-		expect(allMetrics).toContain('circuit_breaker_call_duration_seconds');
+		expect(allMetrics).toContain('zenvark_call_duration_seconds');
 		expect(allMetrics).toContain(`breaker_id="${breakerId}"`);
 		expect(allMetrics).toContain(`result="${callResult}"`);
 		expect(allMetrics).toContain('0.4');
@@ -48,7 +48,7 @@ describe('PrometheusBreakerMetrics', () => {
 
 		const allMetrics = await registry.metrics();
 
-		expect(allMetrics).toContain('circuit_breaker_call_duration_seconds');
+		expect(allMetrics).toContain('zenvark_call_duration_seconds');
 		expect(allMetrics).toContain(`breaker_id="${breakerId}"`);
 		expect(allMetrics).toContain(`result="${callResult}"`);
 		expect(allMetrics).toContain('0.3');
@@ -64,7 +64,7 @@ describe('PrometheusBreakerMetrics', () => {
 
 		expect(allMetrics).toMatch(
 			new RegExp(
-				`circuit_breaker_blocked_requests_total{[^}]*breaker_id="${breakerId}"[^}]*} 2`,
+				`zenvark_blocked_requests_total{[^}]*breaker_id="${breakerId}"[^}]*} 2`,
 			),
 		);
 	});
@@ -85,7 +85,7 @@ describe('PrometheusBreakerMetrics', () => {
 		const allMetrics = await registry.metrics();
 
 		expect(allMetrics).toContain(
-			'circuit_breaker_healthcheck_duration_seconds',
+			'zenvark_healthcheck_duration_seconds',
 		);
 		expect(allMetrics).toContain(`breaker_id="${breakerId}"`);
 		expect(allMetrics).toContain(`type="${type}"`);
@@ -125,7 +125,7 @@ describe('PrometheusBreakerMetrics', () => {
 
 			const metricsBeforeBlock = await registry.metrics();
 			expect(metricsBeforeBlock).toContain(
-				'circuit_breaker_blocked_requests_total',
+				'zenvark_blocked_requests_total',
 			);
 			expect(metricsBeforeBlock).toContain(`breaker_id="${breakerId}"`);
 
@@ -135,7 +135,7 @@ describe('PrometheusBreakerMetrics', () => {
 			const metricsAfterBlock = await registry.metrics();
 			expect(metricsAfterBlock).toMatch(
 				new RegExp(
-					`circuit_breaker_blocked_requests_total{[^}]*breaker_id="${breakerId}"[^}]*} 1`,
+					`zenvark_blocked_requests_total{[^}]*breaker_id="${breakerId}"[^}]*} 1`,
 				),
 			);
 		});
@@ -152,7 +152,7 @@ describe('PrometheusBreakerMetrics', () => {
 			expect(allMetrics).toContain(`env="${customLabels.env}"`);
 			expect(allMetrics).toContain(`region="${customLabels.region}"`);
 			expect(allMetrics).toMatch(
-				/circuit_breaker_blocked_requests_total{[^}]*} 0/,
+				/zenvark_blocked_requests_total{[^}]*} 0/,
 			);
 		});
 	});

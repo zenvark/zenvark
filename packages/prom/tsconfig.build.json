@@ -1,5 +1,5 @@
 {
-	"extends": ["./tsconfig.json", "@lokalise/tsconfig/build-private-lib"],
+	"extends": ["./tsconfig.json", "@lokalise/tsconfig/build-public-lib"],
 	"include": ["src/**/*"],
 	"exclude": ["src/**/*.spec.ts"]
 }

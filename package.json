@@ -15,6 +15,7 @@
 		"lint:fix": "turbo run lint:fix",
 		"format": "prettier --check \"**/*.{yaml,yml,md}\" *.json",
 		"format:fix": "prettier --write \"**/*.{yaml,yml,md}\" *.json",
+		"test:ci": "turbo run test:ci --concurrency=1",
 		"changeset": "changeset",
 		"version-packages": "changeset version",
 		"release": "turbo run build && changeset publish"

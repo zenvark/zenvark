@@ -1,0 +1,6 @@
+services:
+  redis:
+    image: redis:6-alpine
+    command: redis-server --requirepass sOmE_sEcUrE_pAsS
+    ports:
+      - '6379:6379'
