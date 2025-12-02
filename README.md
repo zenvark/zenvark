@@ -396,11 +396,11 @@ const circuitBreaker = new CircuitBreaker({
 
 **Available Metrics:**
 
-| Metric                                         | Type      | Description                      | Labels                         |
-| ---------------------------------------------- | --------- | -------------------------------- | ------------------------------ |
-| `circuit_breaker_call_duration_seconds`        | Histogram | Duration of protected calls      | `breaker_id`, `result`         |
-| `circuit_breaker_blocked_requests_total`       | Counter   | Requests blocked by open circuit | `breaker_id`                   |
-| `circuit_breaker_healthcheck_duration_seconds` | Histogram | Health check attempt duration    | `breaker_id`, `type`, `result` |
+| Metric                                 | Type      | Description                      | Labels                         |
+| -------------------------------------- | --------- | -------------------------------- | ------------------------------ |
+| `zenvark_call_duration_seconds`        | Histogram | Duration of protected calls      | `breaker_id`, `result`         |
+| `zenvark_blocked_requests_total`       | Counter   | Requests blocked by open circuit | `breaker_id`                   |
+| `zenvark_healthcheck_duration_seconds` | Histogram | Health check attempt duration    | `breaker_id`, `type`, `result` |
 
 **Label Values:**
 
