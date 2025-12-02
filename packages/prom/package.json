@@ -40,10 +40,10 @@
 		"rimraf": "^6.0.1",
 		"typescript": "5.9.3",
 		"vitest": "^3.2.4",
-		"zenvark": "*"
+		"zenvark": "^0.0.1"
 	},
 	"peerDependencies": {
 		"prom-client": "^15.0.0",
-		"zenvark": "*"
+		"zenvark": "^0.0.1"
 	}
 }
