@@ -19,9 +19,7 @@ describe('PrometheusBreakerMetrics', () => {
 		// Default prefix is 'zenvark'
 		expect(allMetrics).toContain('zenvark_call_duration_seconds');
 		expect(allMetrics).toContain('zenvark_blocked_requests_total');
-		expect(allMetrics).toContain(
-			'zenvark_healthcheck_duration_seconds',
-		);
+		expect(allMetrics).toContain('zenvark_healthcheck_duration_seconds');
 	});
 
 	it('recordCall observes duration with success result label', async () => {
@@ -84,9 +82,7 @@ describe('PrometheusBreakerMetrics', () => {
 
 		const allMetrics = await registry.metrics();
 
-		expect(allMetrics).toContain(
-			'zenvark_healthcheck_duration_seconds',
-		);
+		expect(allMetrics).toContain('zenvark_healthcheck_duration_seconds');
 		expect(allMetrics).toContain(`breaker_id="${breakerId}"`);
 		expect(allMetrics).toContain(`type="${type}"`);
 		expect(allMetrics).toContain(`result="${callResult}"`);
@@ -124,9 +120,7 @@ describe('PrometheusBreakerMetrics', () => {
 			bm.initialize(breakerId);
 
 			const metricsBeforeBlock = await registry.metrics();
-			expect(metricsBeforeBlock).toContain(
-				'zenvark_blocked_requests_total',
-			);
+			expect(metricsBeforeBlock).toContain('zenvark_blocked_requests_total');
 			expect(metricsBeforeBlock).toContain(`breaker_id="${breakerId}"`);
 
 			// Counter should still increment normally after initialization
@@ -151,9 +145,7 @@ describe('PrometheusBreakerMetrics', () => {
 			expect(allMetrics).toContain(`breaker_id="${breakerId}"`);
 			expect(allMetrics).toContain(`env="${customLabels.env}"`);
 			expect(allMetrics).toContain(`region="${customLabels.region}"`);
-			expect(allMetrics).toMatch(
-				/zenvark_blocked_requests_total{[^}]*} 0/,
-			);
+			expect(allMetrics).toMatch(/zenvark_blocked_requests_total{[^}]*} 0/);
 		});
 	});
 });
