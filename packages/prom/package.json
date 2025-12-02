@@ -2,11 +2,25 @@
 	"name": "@zenvark/prom",
 	"version": "0.0.1",
 	"description": "Prometheus metrics for Zenvark Circuit Breaker",
+	"keywords": [
+		"zenvark",
+		"circuit",
+		"breaker",
+		"circuit-breaker",
+		"prometheus",
+		"metrics",
+		"monitoring",
+		"observability"
+	],
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/zenvark/zenvark.git",
 		"directory": "packages/prom"
+	},
+	"homepage": "https://github.com/zenvark/zenvark#readme",
+	"bugs": {
+		"url": "https://github.com/zenvark/zenvark/issues"
 	},
 	"engines": {
 		"node": ">=22"

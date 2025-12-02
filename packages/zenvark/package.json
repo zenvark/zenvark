@@ -2,12 +2,24 @@
 	"name": "zenvark",
 	"version": "0.0.1",
 	"description": "A distributed circuit breaker coordinated via Redis for high-availability applications",
+	"keywords": [
+		"zenvark",
+		"circuit",
+		"breaker",
+		"circuit-breaker",
+		"redis",
+		"distributed"
+	],
 	"type": "module",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/zenvark/zenvark.git",
 		"directory": "packages/zenvark"
+	},
+	"homepage": "https://github.com/zenvark/zenvark#readme",
+	"bugs": {
+		"url": "https://github.com/zenvark/zenvark/issues"
 	},
 	"engines": {
 		"node": ">=22"
