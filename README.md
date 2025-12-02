@@ -3,8 +3,6 @@
 A robust distributed circuit breaker, coordinated via Redis, designed for high-availability applications.
 This library helps you build resilient systems by preventing cascading failures and gracefully handling degraded services.
 
-> ⚠️ **This library is currently in beta. Expect minor API changes before v1.**
-
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
