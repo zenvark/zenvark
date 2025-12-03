@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { HealthCheckTypeEnum } from '../constants.ts';
+import { HealthCheckType } from '../constants.ts';
 import { HealthCheckManager } from './health-check-manager.ts';
 
 describe('HealthCheckManager', () => {
 	it('calls runCheck repeatedly with provided type and increments attempts', async () => {
-		const calls: HealthCheckTypeEnum[] = [];
+		const calls: HealthCheckType[] = [];
 		const attempts: number[] = [];
 
 		const manager = new HealthCheckManager({
@@ -19,7 +19,7 @@ describe('HealthCheckManager', () => {
 		});
 
 		await manager.start({
-			type: HealthCheckTypeEnum.IDLE,
+			type: HealthCheckType.IDLE,
 			getDelayMs: (attempt) => {
 				attempts.push(attempt);
 				return 0;
@@ -29,9 +29,9 @@ describe('HealthCheckManager', () => {
 		await vi.waitUntil(() => attempts.length >= 3);
 
 		expect(calls).toEqual([
-			HealthCheckTypeEnum.IDLE,
-			HealthCheckTypeEnum.IDLE,
-			HealthCheckTypeEnum.IDLE,
+			HealthCheckType.IDLE,
+			HealthCheckType.IDLE,
+			HealthCheckType.IDLE,
 		]);
 		expect(attempts).toEqual([1, 2, 3]);
 	});
@@ -48,7 +48,7 @@ describe('HealthCheckManager', () => {
 		});
 
 		await manager.start({
-			type: HealthCheckTypeEnum.RECOVERY,
+			type: HealthCheckType.RECOVERY,
 			getDelayMs: () => 50,
 		});
 
@@ -73,7 +73,7 @@ describe('HealthCheckManager', () => {
 					restarted = true;
 
 					void manager.restart({
-						type: HealthCheckTypeEnum.IDLE,
+						type: HealthCheckType.IDLE,
 						getDelayMs: (attempt) => {
 							attemptsPhase2.push(attempt);
 							return 1;
@@ -90,7 +90,7 @@ describe('HealthCheckManager', () => {
 		});
 
 		await manager.start({
-			type: HealthCheckTypeEnum.RECOVERY,
+			type: HealthCheckType.RECOVERY,
 			getDelayMs: (attempt) => {
 				attemptsPhase1.push(attempt);
 				return 1;

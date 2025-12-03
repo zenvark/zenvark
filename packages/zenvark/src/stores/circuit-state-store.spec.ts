@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { redis } from '../../test/setup-redis.ts';
-import { CircuitStateEnum } from '../constants.ts';
+import { CircuitState } from '../constants.ts';
 import { CircuitStateStore } from './circuit-state-store.ts';
 
 describe('CircuitStateStore', () => {
@@ -33,8 +33,8 @@ describe('CircuitStateStore', () => {
 			onStreamReadError: vi.fn(),
 		});
 
-		await store.setState(CircuitStateEnum.OPEN);
-		await store.setState(CircuitStateEnum.CLOSED);
+		await store.setState(CircuitState.OPEN);
+		await store.setState(CircuitState.CLOSED);
 
 		const entries = await redis.xrange('test-circuit-stream', '-', '+');
 
@@ -45,7 +45,7 @@ describe('CircuitStateStore', () => {
 				expect.any(String),
 				[
 					'state',
-					CircuitStateEnum.OPEN,
+					CircuitState.OPEN,
 					'timestamp',
 					expect.stringMatching(/^\d+$/),
 				],
@@ -54,7 +54,7 @@ describe('CircuitStateStore', () => {
 				expect.any(String),
 				[
 					'state',
-					CircuitStateEnum.CLOSED,
+					CircuitState.CLOSED,
 					'timestamp',
 					expect.stringMatching(/^\d+$/),
 				],
@@ -68,7 +68,7 @@ describe('CircuitStateStore', () => {
 			redisStreamKey,
 			'*',
 			'state',
-			CircuitStateEnum.OPEN,
+			CircuitState.OPEN,
 			'timestamp',
 			Date.now().toString(),
 		);
@@ -81,7 +81,7 @@ describe('CircuitStateStore', () => {
 
 		await store.start();
 
-		expect(store.getState()).toBe(CircuitStateEnum.OPEN);
+		expect(store.getState()).toBe(CircuitState.OPEN);
 
 		await store.stop();
 	});
@@ -95,7 +95,7 @@ describe('CircuitStateStore', () => {
 
 		await store.start();
 
-		expect(store.getState()).toBe(CircuitStateEnum.CLOSED);
+		expect(store.getState()).toBe(CircuitState.CLOSED);
 
 		await store.stop();
 	});
@@ -123,16 +123,16 @@ describe('CircuitStateStore', () => {
 
 		await Promise.all([store1.start(), store2.start()]);
 
-		await store1.setState(CircuitStateEnum.OPEN);
+		await store1.setState(CircuitState.OPEN);
 
 		await vi.waitUntil(
-			() => onStateChange1.mock.calls[0]?.[0] === CircuitStateEnum.OPEN,
+			() => onStateChange1.mock.calls[0]?.[0] === CircuitState.OPEN,
 		);
 		await vi.waitUntil(
-			() => onStateChange2.mock.calls[0]?.[0] === CircuitStateEnum.OPEN,
+			() => onStateChange2.mock.calls[0]?.[0] === CircuitState.OPEN,
 		);
-		await vi.waitUntil(() => store1.getState() === CircuitStateEnum.OPEN);
-		await vi.waitUntil(() => store2.getState() === CircuitStateEnum.OPEN);
+		await vi.waitUntil(() => store1.getState() === CircuitState.OPEN);
+		await vi.waitUntil(() => store2.getState() === CircuitState.OPEN);
 
 		await Promise.all([store1.stop(), store2.stop()]);
 	});
@@ -151,7 +151,7 @@ describe('CircuitStateStore', () => {
 		await store.stop();
 		await store.start();
 
-		await store.setState(CircuitStateEnum.OPEN);
+		await store.setState(CircuitState.OPEN);
 
 		await vi.waitUntil(() => onStateChange.mock.calls.length > 0);
 
@@ -176,7 +176,7 @@ describe('CircuitStateStore', () => {
 			redisStreamKey,
 			'*',
 			'state',
-			CircuitStateEnum.OPEN,
+			CircuitState.OPEN,
 			'timestamp',
 			expectedTimestamp.toString(),
 		);
@@ -189,7 +189,7 @@ describe('CircuitStateStore', () => {
 
 		await store.start();
 
-		expect(store.getState()).toBe(CircuitStateEnum.OPEN);
+		expect(store.getState()).toBe(CircuitState.OPEN);
 		expect(store.getLastStateChangeTimestamp()).toBe(expectedTimestamp);
 
 		await store.stop();
@@ -206,9 +206,9 @@ describe('CircuitStateStore', () => {
 		});
 
 		await store.start();
-		await store.setState(CircuitStateEnum.OPEN);
+		await store.setState(CircuitState.OPEN);
 
-		await vi.waitUntil(() => store.getState() === CircuitStateEnum.OPEN);
+		await vi.waitUntil(() => store.getState() === CircuitState.OPEN);
 
 		const afterTimestamp = Date.now();
 		const stateTimestamp = store.getLastStateChangeTimestamp();

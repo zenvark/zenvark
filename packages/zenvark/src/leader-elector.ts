@@ -1,6 +1,6 @@
 import type { Redis } from 'ioredis';
 import { Mutex } from 'redis-semaphore';
-import { CircuitRoleEnum } from './constants.ts';
+import { CircuitRole } from './constants.ts';
 import { AbstractLifecycleManager } from './utils/abstract-lifecycle-manager.ts';
 import { delay } from './utils/delay.ts';
 
@@ -18,7 +18,7 @@ type LeaderElectorOptions = {
 	/** Called when an error occurs during the acquire loop */
 	onAcquireError: (err: unknown) => void;
 	/** Called when role changes to leader or follower */
-	onRoleChange: (role: CircuitRoleEnum) => void;
+	onRoleChange: (role: CircuitRole) => void;
 };
 
 type AcquireLoop = {
@@ -33,10 +33,10 @@ type AcquireLoop = {
 export class LeaderElector extends AbstractLifecycleManager {
 	private readonly mutex: Mutex;
 	private readonly onAcquireError: (err: unknown) => void;
-	private readonly onRoleChange: (role: CircuitRoleEnum) => void;
+	private readonly onRoleChange: (role: CircuitRole) => void;
 
 	private acquireLoop: AcquireLoop | null = null;
-	private currentRole: CircuitRoleEnum = CircuitRoleEnum.FOLLOWER;
+	private currentRole: CircuitRole = CircuitRole.FOLLOWER;
 
 	constructor(options: LeaderElectorOptions) {
 		super();
@@ -46,7 +46,7 @@ export class LeaderElector extends AbstractLifecycleManager {
 		this.mutex = new Mutex(options.redis, options.key, {
 			acquireAttemptsLimit: 1,
 			onLockLost: () => {
-				this.setRole(CircuitRoleEnum.FOLLOWER);
+				this.setRole(CircuitRole.FOLLOWER);
 			},
 		});
 	}
@@ -71,12 +71,12 @@ export class LeaderElector extends AbstractLifecycleManager {
 		await this.acquireLoop.promise;
 
 		await this.mutex.release();
-		this.setRole(CircuitRoleEnum.FOLLOWER);
+		this.setRole(CircuitRole.FOLLOWER);
 
 		this.acquireLoop = null;
 	}
 
-	private setRole(role: CircuitRoleEnum): void {
+	private setRole(role: CircuitRole): void {
 		if (this.currentRole === role) {
 			return;
 		}
@@ -96,7 +96,7 @@ export class LeaderElector extends AbstractLifecycleManager {
 		}
 
 		if (this.mutex.isAcquired) {
-			this.setRole(CircuitRoleEnum.LEADER);
+			this.setRole(CircuitRole.LEADER);
 		}
 	}
 
@@ -110,6 +110,6 @@ export class LeaderElector extends AbstractLifecycleManager {
 
 	/** Returns true if this instance currently holds leadership */
 	get isLeader(): boolean {
-		return this.currentRole === CircuitRoleEnum.LEADER;
+		return this.currentRole === CircuitRole.LEADER;
 	}
 }

@@ -1,5 +1,5 @@
 import type { Redis } from 'ioredis';
-import type { CallResultEnum } from '../constants.ts';
+import type { CallResult } from '../constants.ts';
 import type { CallResultEvent } from '../types.ts';
 import { AbstractLifecycleManager } from '../utils/abstract-lifecycle-manager.ts';
 import { RedisStreamReader } from '../utils/redis-stream-reader.ts';
@@ -77,7 +77,7 @@ export class CallResultStore extends AbstractLifecycleManager {
 		return this.events;
 	}
 
-	async storeCallResult(callResult: CallResultEnum): Promise<void> {
+	async storeCallResult(callResult: CallResult): Promise<void> {
 		await this.redis.xadd(
 			this.redisStreamKey,
 			'MAXLEN',
@@ -98,7 +98,7 @@ export class CallResultStore extends AbstractLifecycleManager {
 
 		return {
 			id,
-			callResult: fields[1] as CallResultEnum,
+			callResult: fields[1] as CallResult,
 			timestamp: Number(fields[3]),
 		};
 	}

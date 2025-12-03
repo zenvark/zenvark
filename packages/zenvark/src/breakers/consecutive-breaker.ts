@@ -1,4 +1,4 @@
-import { CallResultEnum } from '../constants.ts';
+import { CallResult } from '../constants.ts';
 import type { CallResultEvent } from '../types.ts';
 import type { BreakerStrategy } from './breaker-strategy.ts';
 
@@ -28,7 +28,7 @@ export class ConsecutiveBreaker implements BreakerStrategy {
 		const recentEvents = events.slice(-this.threshold);
 
 		return recentEvents.every(
-			(event) => event.callResult === CallResultEnum.FAILURE,
+			(event) => event.callResult === CallResult.FAILURE,
 		);
 	}
 }

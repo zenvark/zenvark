@@ -1,11 +1,8 @@
-import type { HealthCheckTypeEnum } from '../constants.ts';
+import type { HealthCheckType } from '../constants.ts';
 import { AbstractLifecycleManager } from './abstract-lifecycle-manager.ts';
 import { delay } from './delay.ts';
 
-type RunCheck = (
-	type: HealthCheckTypeEnum,
-	signal: AbortSignal,
-) => Promise<void>;
+type RunCheck = (type: HealthCheckType, signal: AbortSignal) => Promise<void>;
 
 type HealthCheckManagerOptions = {
 	/**
@@ -18,7 +15,7 @@ type HealthCheckManagerOptions = {
 
 export type HealthCheckStartOptions = {
 	/** Which healthcheck type to run for this loop instance */
-	type: HealthCheckTypeEnum;
+	type: HealthCheckType;
 	/** Computes delay before each attempt. Attempt starts at 1 and increments after failures. */
 	getDelayMs: (attempt: number) => number;
 };

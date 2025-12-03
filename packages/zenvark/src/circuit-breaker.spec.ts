@@ -4,9 +4,9 @@ import { ConstantBackoff } from './backoffs/constant-backoff.ts';
 import { ConsecutiveBreaker } from './breakers/consecutive-breaker.ts';
 import { CircuitBreaker } from './circuit-breaker.ts';
 import {
-	CircuitRoleEnum,
-	CircuitStateEnum,
-	type HealthCheckTypeEnum,
+	CircuitRole,
+	CircuitState,
+	type HealthCheckType,
 } from './constants.ts';
 import { CircuitOpenError } from './errors/circuit-open-error.ts';
 import { delay } from './utils/delay.ts';
@@ -20,10 +20,10 @@ describe('CircuitBreaker', () => {
 		onStateChange,
 	}: {
 		threshold?: number;
-		check?: (type: HealthCheckTypeEnum, signal: AbortSignal) => Promise<void>;
+		check?: (type: HealthCheckType, signal: AbortSignal) => Promise<void>;
 		idleProbeIntervalMs?: number;
-		onRoleChange?: (role: CircuitRoleEnum) => void;
-		onStateChange?: (state: CircuitStateEnum) => void;
+		onRoleChange?: (role: CircuitRole) => void;
+		onStateChange?: (state: CircuitState) => void;
 	} = {}) => {
 		const circuit = new CircuitBreaker({
 			id: 'test',
@@ -95,8 +95,8 @@ describe('CircuitBreaker', () => {
 
 		await vi.waitUntil(
 			() =>
-				circuitA.state === CircuitStateEnum.OPEN &&
-				circuitB.state === CircuitStateEnum.OPEN,
+				circuitA.state === CircuitState.OPEN &&
+				circuitB.state === CircuitState.OPEN,
 		);
 
 		await expect(
@@ -129,7 +129,7 @@ describe('CircuitBreaker', () => {
 
 		await expect(circuit.execute(() => Promise.reject())).rejects.toThrow();
 
-		await vi.waitUntil(() => circuit.state === CircuitStateEnum.OPEN, {
+		await vi.waitUntil(() => circuit.state === CircuitState.OPEN, {
 			interval: 1,
 		});
 
@@ -137,7 +137,7 @@ describe('CircuitBreaker', () => {
 			circuit.execute(() => Promise.resolve('blocked')),
 		).rejects.toBeInstanceOf(CircuitOpenError);
 
-		await vi.waitUntil(() => circuit.state === CircuitStateEnum.CLOSED);
+		await vi.waitUntil(() => circuit.state === CircuitState.CLOSED);
 
 		const result = await circuit.execute(() => Promise.resolve('ok again'));
 		expect(result).toBe('ok again');
@@ -165,11 +165,11 @@ describe('CircuitBreaker', () => {
 		await circuit.start();
 
 		// No calls -> idle triggers
-		await vi.waitUntil(() => circuit.state === CircuitStateEnum.OPEN, {
+		await vi.waitUntil(() => circuit.state === CircuitState.OPEN, {
 			interval: 1,
 		});
 
-		await vi.waitUntil(() => circuit.state === CircuitStateEnum.CLOSED);
+		await vi.waitUntil(() => circuit.state === CircuitState.CLOSED);
 
 		await circuit.stop();
 	});
@@ -189,22 +189,18 @@ describe('CircuitBreaker', () => {
 			circuit.execute(() => Promise.reject('fail')),
 		).rejects.toThrow();
 
-		await vi.waitUntil(() => circuit.state === CircuitStateEnum.OPEN, {
+		await vi.waitUntil(() => circuit.state === CircuitState.OPEN, {
 			interval: 1,
 		});
 
 		await vi.waitUntil(() =>
-			onStateChange.mock.calls.some(
-				(args) => args[0] === CircuitStateEnum.OPEN,
-			),
+			onStateChange.mock.calls.some((args) => args[0] === CircuitState.OPEN),
 		);
 
-		await vi.waitUntil(() => circuit.state === CircuitStateEnum.CLOSED);
+		await vi.waitUntil(() => circuit.state === CircuitState.CLOSED);
 
 		await vi.waitUntil(() =>
-			onStateChange.mock.calls.some(
-				(args) => args[0] === CircuitStateEnum.CLOSED,
-			),
+			onStateChange.mock.calls.some((args) => args[0] === CircuitState.CLOSED),
 		);
 
 		await circuit.stop();
@@ -217,16 +213,16 @@ describe('CircuitBreaker', () => {
 
 		await circuit.start();
 
-		const waitForRole = async (role: CircuitRoleEnum) => {
+		const waitForRole = async (role: CircuitRole) => {
 			await vi.waitUntil(() => circuit.role === role, { interval: 1 });
 			expect(onRoleChange).toHaveBeenLastCalledWith(role);
 		};
 
-		await waitForRole(CircuitRoleEnum.LEADER);
+		await waitForRole(CircuitRole.LEADER);
 
 		await circuit.stop();
 
-		await waitForRole(CircuitRoleEnum.FOLLOWER);
+		await waitForRole(CircuitRole.FOLLOWER);
 	});
 
 	it('filters out historical failures after successful recovery', async () => {
@@ -241,12 +237,12 @@ describe('CircuitBreaker', () => {
 		await expect(circuit.execute(() => Promise.reject())).rejects.toThrow();
 
 		// Wait for circuit to open
-		await vi.waitUntil(() => circuit.state === CircuitStateEnum.OPEN, {
+		await vi.waitUntil(() => circuit.state === CircuitState.OPEN, {
 			interval: 1,
 		});
 
 		// Wait for recovery health check to succeed and circuit to close
-		await vi.waitUntil(() => circuit.state === CircuitStateEnum.CLOSED, {
+		await vi.waitUntil(() => circuit.state === CircuitState.CLOSED, {
 			interval: 1,
 		});
 
@@ -254,11 +250,11 @@ describe('CircuitBreaker', () => {
 		// because historical failures are filtered out
 		await expect(circuit.execute(() => Promise.reject())).rejects.toThrow();
 		await delay(10);
-		expect(circuit.state).toBe(CircuitStateEnum.CLOSED);
+		expect(circuit.state).toBe(CircuitState.CLOSED);
 
 		// Second failed request should open the circuit again (threshold: 2)
 		await expect(circuit.execute(() => Promise.reject())).rejects.toThrow();
-		await vi.waitUntil(() => circuit.state === CircuitStateEnum.OPEN, {
+		await vi.waitUntil(() => circuit.state === CircuitState.OPEN, {
 			interval: 1,
 		});
 

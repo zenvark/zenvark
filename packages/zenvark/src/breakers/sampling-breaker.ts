@@ -1,4 +1,4 @@
-import { CallResultEnum } from '../constants.ts';
+import { CallResult } from '../constants.ts';
 import type { CallResultEvent } from '../types.ts';
 import type { BreakerStrategy } from './breaker-strategy.ts';
 
@@ -49,7 +49,7 @@ export class SamplingBreaker implements BreakerStrategy {
 		}
 
 		const failures = timeWindowEvents.filter(
-			(event) => event.callResult === CallResultEnum.FAILURE,
+			(event) => event.callResult === CallResult.FAILURE,
 		).length;
 		const failureRate = failures / timeWindowEvents.length;
 

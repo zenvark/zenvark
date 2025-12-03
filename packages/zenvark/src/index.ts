@@ -16,9 +16,9 @@ export {
 	type CircuitBreakerOptions,
 } from './circuit-breaker.ts';
 export {
-	CallResultEnum,
-	CircuitRoleEnum,
-	CircuitStateEnum,
-	HealthCheckTypeEnum,
+	CallResult,
+	CircuitRole,
+	CircuitState,
+	HealthCheckType,
 } from './constants.ts';
 export { CircuitOpenError } from './errors/circuit-open-error.ts';

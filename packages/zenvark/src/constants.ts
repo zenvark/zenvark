@@ -1,28 +1,28 @@
 import type { ObjectValues } from './types.ts';
 
-export const CircuitRoleEnum = {
+export const CircuitRole = {
 	LEADER: 'leader',
 	FOLLOWER: 'follower',
 } as const;
-export type CircuitRoleEnum = ObjectValues<typeof CircuitRoleEnum>;
+export type CircuitRole = ObjectValues<typeof CircuitRole>;
 
-export const CircuitStateEnum = {
+export const CircuitState = {
 	CLOSED: 'closed',
 	OPEN: 'open',
 } as const;
-export type CircuitStateEnum = ObjectValues<typeof CircuitStateEnum>;
+export type CircuitState = ObjectValues<typeof CircuitState>;
 
-export const CallResultEnum = {
+export const CallResult = {
 	SUCCESS: 'success',
 	FAILURE: 'failure',
 } as const;
-export type CallResultEnum = ObjectValues<typeof CallResultEnum>;
+export type CallResult = ObjectValues<typeof CallResult>;
 
 /**
  * Defines the types of health checks performed by the circuit breaker.
  * This helps in logging, metrics, and understanding the context of a health check.
  */
-export const HealthCheckTypeEnum = {
+export const HealthCheckType = {
 	/**
 	 * A health check performed when the circuit is OPEN. Its purpose is to
 	 * determine if the downstream service has recovered so the circuit can be closed.
@@ -35,4 +35,4 @@ export const HealthCheckTypeEnum = {
 	 */
 	IDLE: 'idle',
 } as const;
-export type HealthCheckTypeEnum = ObjectValues<typeof HealthCheckTypeEnum>;
+export type HealthCheckType = ObjectValues<typeof HealthCheckType>;

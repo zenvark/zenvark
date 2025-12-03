@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { redis } from '../test/setup-redis.ts';
-import { CircuitRoleEnum } from './constants.ts';
+import { CircuitRole } from './constants.ts';
 import { LeaderElector } from './leader-elector.ts';
 
 describe('LeaderElector', () => {
@@ -60,7 +60,7 @@ describe('LeaderElector', () => {
 
 		await vi.waitFor(() => {
 			expect(elector.isLeader).toBe(true);
-			expect(onRoleChange).toHaveBeenCalledWith(CircuitRoleEnum.LEADER);
+			expect(onRoleChange).toHaveBeenCalledWith(CircuitRole.LEADER);
 		});
 
 		await elector.stop();
@@ -112,26 +112,26 @@ describe('LeaderElector', () => {
 
 		await vi.waitFor(() => {
 			expect(electorA.isLeader).toBe(true);
-			expect(onRoleChangeA).toHaveBeenCalledWith(CircuitRoleEnum.LEADER);
+			expect(onRoleChangeA).toHaveBeenCalledWith(CircuitRole.LEADER);
 		});
 
 		await electorA.stop();
 
 		await vi.waitFor(() => {
-			expect(onRoleChangeA).toHaveBeenCalledWith(CircuitRoleEnum.FOLLOWER);
+			expect(onRoleChangeA).toHaveBeenCalledWith(CircuitRole.FOLLOWER);
 		});
 
 		await electorB.start();
 
 		await vi.waitFor(() => {
 			expect(electorB.isLeader).toBe(true);
-			expect(onRoleChangeB).toHaveBeenCalledWith(CircuitRoleEnum.LEADER);
+			expect(onRoleChangeB).toHaveBeenCalledWith(CircuitRole.LEADER);
 		});
 
 		await electorB.stop();
 
 		await vi.waitFor(() => {
-			expect(onRoleChangeB).toHaveBeenCalledWith(CircuitRoleEnum.FOLLOWER);
+			expect(onRoleChangeB).toHaveBeenCalledWith(CircuitRole.FOLLOWER);
 		});
 	});
 });

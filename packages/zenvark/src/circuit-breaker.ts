@@ -3,10 +3,10 @@ import type { BackoffStrategy } from './backoffs/backoff-strategy.ts';
 import type { BreakerMetricsRecorder } from './breaker-metrics-recorder.ts';
 import type { BreakerStrategy } from './breakers/breaker-strategy.ts';
 import {
-	CallResultEnum,
-	CircuitRoleEnum,
-	CircuitStateEnum,
-	HealthCheckTypeEnum,
+	CallResult,
+	CircuitRole,
+	CircuitState,
+	HealthCheckType,
 } from './constants.ts';
 import { CircuitOpenError } from './errors/circuit-open-error.ts';
 import { LeaderElector } from './leader-elector.ts';
@@ -18,13 +18,13 @@ import { HealthCheckManager } from './utils/health-check-manager.ts';
 
 type HealthConfig = {
 	backoff: BackoffStrategy;
-	check: (type: HealthCheckTypeEnum, signal: AbortSignal) => Promise<void>;
+	check: (type: HealthCheckType, signal: AbortSignal) => Promise<void>;
 	idleProbeIntervalMs?: number;
 };
 
 type OnErrorCallback = (err: Error) => void;
-type OnRoleChangeCallback = (role: CircuitRoleEnum) => void;
-type OnStateChangeCallback = (state: CircuitStateEnum) => void;
+type OnRoleChangeCallback = (role: CircuitRole) => void;
+type OnStateChangeCallback = (state: CircuitState) => void;
 
 export type CircuitBreakerOptions = {
 	id: string;
@@ -95,8 +95,8 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 				this.handleError('LeaderElector acquire error', err);
 			},
 			onRoleChange: (role) => {
-				if (role === CircuitRoleEnum.LEADER) {
-					if (this.state === CircuitStateEnum.OPEN) {
+				if (role === CircuitRole.LEADER) {
+					if (this.state === CircuitState.OPEN) {
 						void this.runRecoveryHealthChecks();
 					} else if (this.health.idleProbeIntervalMs) {
 						void this.rescheduleIdleHealthChecks();
@@ -121,7 +121,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 						this.metrics.recordHealthCheck({
 							breakerId: this.id,
 							type,
-							result: CallResultEnum.SUCCESS,
+							result: CallResult.SUCCESS,
 							durationMs,
 						});
 					}
@@ -137,7 +137,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 						this.metrics.recordHealthCheck({
 							breakerId: this.id,
 							type,
-							result: CallResultEnum.FAILURE,
+							result: CallResult.FAILURE,
 							durationMs,
 						});
 					}
@@ -168,34 +168,32 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 		]);
 	}
 
-	get role(): CircuitRoleEnum {
-		return this.elector.isLeader
-			? CircuitRoleEnum.LEADER
-			: CircuitRoleEnum.FOLLOWER;
+	get role(): CircuitRole {
+		return this.elector.isLeader ? CircuitRole.LEADER : CircuitRole.FOLLOWER;
 	}
 
-	get state(): CircuitStateEnum {
+	get state(): CircuitState {
 		return this.circuitStateStore.getState();
 	}
 
-	private async onHealthCheckSuccess(type: HealthCheckTypeEnum) {
+	private async onHealthCheckSuccess(type: HealthCheckType) {
 		if (!this.elector.isLeader) {
 			return;
 		}
 
-		if (type === HealthCheckTypeEnum.RECOVERY) {
-			await this.circuitStateStore.setState(CircuitStateEnum.CLOSED);
+		if (type === HealthCheckType.RECOVERY) {
+			await this.circuitStateStore.setState(CircuitState.CLOSED);
 			await this.rescheduleIdleHealthChecks();
 		}
 	}
 
-	private async onHealthCheckFailure(type: HealthCheckTypeEnum) {
+	private async onHealthCheckFailure(type: HealthCheckType) {
 		if (!this.elector.isLeader) {
 			return;
 		}
 
-		if (type === HealthCheckTypeEnum.IDLE) {
-			await this.circuitStateStore.setState(CircuitStateEnum.OPEN);
+		if (type === HealthCheckType.IDLE) {
+			await this.circuitStateStore.setState(CircuitState.OPEN);
 			await this.runRecoveryHealthChecks();
 		}
 	}
@@ -210,7 +208,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 		}
 
 		await this.healthCheckManager.restart({
-			type: HealthCheckTypeEnum.RECOVERY,
+			type: HealthCheckType.RECOVERY,
 			getDelayMs: (attempt) => this.health.backoff.getDelayMs(attempt),
 		});
 	}
@@ -228,7 +226,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 			: 0;
 
 		await this.healthCheckManager.restart({
-			type: HealthCheckTypeEnum.IDLE,
+			type: HealthCheckType.IDLE,
 			getDelayMs: (attempt) => {
 				if (attempt === 1) {
 					return Math.max(0, initialExecutionStartMs - Date.now());
@@ -239,7 +237,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 	}
 
 	private handleEventsAdded = async (events: CallResultEvent[]) => {
-		if (!this.elector.isLeader || this.state === CircuitStateEnum.OPEN) {
+		if (!this.elector.isLeader || this.state === CircuitState.OPEN) {
 			return;
 		}
 
@@ -252,7 +250,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 		);
 
 		if (this.shouldOpenCircuit(recentEvents)) {
-			await this.circuitStateStore.setState(CircuitStateEnum.OPEN);
+			await this.circuitStateStore.setState(CircuitState.OPEN);
 			await this.runRecoveryHealthChecks();
 		} else if (this.health.idleProbeIntervalMs) {
 			await this.rescheduleIdleHealthChecks();
@@ -260,7 +258,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 	};
 
 	private async recordCallResult(
-		callResult: CallResultEnum,
+		callResult: CallResult,
 		callStartedAtMs: number,
 	) {
 		const durationMs = performance.now() - callStartedAtMs;
@@ -275,7 +273,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 	}
 
 	async execute<T>(fn: () => Promise<T>): Promise<T> {
-		if (this.state === CircuitStateEnum.OPEN) {
+		if (this.state === CircuitState.OPEN) {
 			this.metrics?.recordBlockedRequest({ breakerId: this.id });
 
 			throw new CircuitOpenError(this.id);
@@ -286,11 +284,11 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 		try {
 			const result = await fn();
 
-			void this.recordCallResult(CallResultEnum.SUCCESS, startedAt);
+			void this.recordCallResult(CallResult.SUCCESS, startedAt);
 
 			return result;
 		} catch (err) {
-			void this.recordCallResult(CallResultEnum.FAILURE, startedAt);
+			void this.recordCallResult(CallResult.FAILURE, startedAt);
 
 			throw err;
 		}

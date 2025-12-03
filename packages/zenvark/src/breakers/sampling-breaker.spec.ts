@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { CallResultEnum } from '../constants.ts';
+import { CallResult } from '../constants.ts';
 import type { CallResultEvent } from '../types.ts';
 import { SamplingBreaker } from './sampling-breaker.ts';
 
 describe('SamplingBreaker', () => {
 	const createEvent = (
-		callResult: CallResultEnum,
+		callResult: CallResult,
 		timestamp: number,
 		id = 'test-id',
 	): CallResultEvent => ({
@@ -34,9 +34,9 @@ describe('SamplingBreaker', () => {
 
 			const now = Date.now();
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.FAILURE, now - 3000),
-				createEvent(CallResultEnum.FAILURE, now - 2000),
-				createEvent(CallResultEnum.FAILURE, now - 1000),
+				createEvent(CallResult.FAILURE, now - 3000),
+				createEvent(CallResult.FAILURE, now - 2000),
+				createEvent(CallResult.FAILURE, now - 1000),
 			];
 
 			expect(breaker.shouldOpenCircuit(events)).toBe(false);
@@ -51,11 +51,11 @@ describe('SamplingBreaker', () => {
 
 			const now = Date.now();
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.SUCCESS, now - 8000),
-				createEvent(CallResultEnum.SUCCESS, now - 6000),
-				createEvent(CallResultEnum.FAILURE, now - 4000),
-				createEvent(CallResultEnum.SUCCESS, now - 2000),
-				createEvent(CallResultEnum.SUCCESS, now),
+				createEvent(CallResult.SUCCESS, now - 8000),
+				createEvent(CallResult.SUCCESS, now - 6000),
+				createEvent(CallResult.FAILURE, now - 4000),
+				createEvent(CallResult.SUCCESS, now - 2000),
+				createEvent(CallResult.SUCCESS, now),
 			];
 
 			expect(breaker.shouldOpenCircuit(events)).toBe(false);
@@ -70,10 +70,10 @@ describe('SamplingBreaker', () => {
 
 			const now = Date.now();
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.FAILURE, now - 8000),
-				createEvent(CallResultEnum.FAILURE, now - 6000),
-				createEvent(CallResultEnum.SUCCESS, now - 4000),
-				createEvent(CallResultEnum.SUCCESS, now),
+				createEvent(CallResult.FAILURE, now - 8000),
+				createEvent(CallResult.FAILURE, now - 6000),
+				createEvent(CallResult.SUCCESS, now - 4000),
+				createEvent(CallResult.SUCCESS, now),
 			];
 
 			expect(breaker.shouldOpenCircuit(events)).toBe(true);
@@ -88,11 +88,11 @@ describe('SamplingBreaker', () => {
 
 			const now = Date.now();
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.FAILURE, now - 8000),
-				createEvent(CallResultEnum.FAILURE, now - 6000),
-				createEvent(CallResultEnum.FAILURE, now - 4000),
-				createEvent(CallResultEnum.SUCCESS, now - 2000),
-				createEvent(CallResultEnum.SUCCESS, now),
+				createEvent(CallResult.FAILURE, now - 8000),
+				createEvent(CallResult.FAILURE, now - 6000),
+				createEvent(CallResult.FAILURE, now - 4000),
+				createEvent(CallResult.SUCCESS, now - 2000),
+				createEvent(CallResult.SUCCESS, now),
 			];
 
 			expect(breaker.shouldOpenCircuit(events)).toBe(true);
@@ -108,13 +108,13 @@ describe('SamplingBreaker', () => {
 			const now = Date.now();
 			const events: CallResultEvent[] = [
 				// Old events outside window (should be ignored)
-				createEvent(CallResultEnum.FAILURE, now - 10000),
-				createEvent(CallResultEnum.FAILURE, now - 8000),
-				createEvent(CallResultEnum.FAILURE, now - 6000),
+				createEvent(CallResult.FAILURE, now - 10000),
+				createEvent(CallResult.FAILURE, now - 8000),
+				createEvent(CallResult.FAILURE, now - 6000),
 				// Recent events within window
-				createEvent(CallResultEnum.SUCCESS, now - 3000),
-				createEvent(CallResultEnum.SUCCESS, now - 2000),
-				createEvent(CallResultEnum.SUCCESS, now),
+				createEvent(CallResult.SUCCESS, now - 3000),
+				createEvent(CallResult.SUCCESS, now - 2000),
+				createEvent(CallResult.SUCCESS, now),
 			];
 
 			// Should only consider the last 3 events (all SUCCESS)
@@ -130,9 +130,9 @@ describe('SamplingBreaker', () => {
 
 			const now = Date.now();
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.FAILURE, now - 2000),
-				createEvent(CallResultEnum.FAILURE, now - 500),
-				createEvent(CallResultEnum.SUCCESS, now),
+				createEvent(CallResult.FAILURE, now - 2000),
+				createEvent(CallResult.FAILURE, now - 500),
+				createEvent(CallResult.SUCCESS, now),
 			];
 
 			expect(breaker.shouldOpenCircuit(events)).toBe(true);
@@ -147,17 +147,17 @@ describe('SamplingBreaker', () => {
 
 			const now = Date.now();
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.FAILURE, now - 3000),
-				createEvent(CallResultEnum.FAILURE, now - 2000),
-				createEvent(CallResultEnum.SUCCESS, now),
+				createEvent(CallResult.FAILURE, now - 3000),
+				createEvent(CallResult.FAILURE, now - 2000),
+				createEvent(CallResult.SUCCESS, now),
 			];
 
 			expect(breaker.shouldOpenCircuit(events)).toBe(false);
 
 			const allFailureEvents: CallResultEvent[] = [
-				createEvent(CallResultEnum.FAILURE, now - 3000),
-				createEvent(CallResultEnum.FAILURE, now - 2000),
-				createEvent(CallResultEnum.FAILURE, now),
+				createEvent(CallResult.FAILURE, now - 3000),
+				createEvent(CallResult.FAILURE, now - 2000),
+				createEvent(CallResult.FAILURE, now),
 			];
 
 			expect(breaker.shouldOpenCircuit(allFailureEvents)).toBe(true);
@@ -172,18 +172,18 @@ describe('SamplingBreaker', () => {
 
 			const now = Date.now();
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.SUCCESS, now - 3000),
-				createEvent(CallResultEnum.SUCCESS, now - 2000),
-				createEvent(CallResultEnum.SUCCESS, now),
+				createEvent(CallResult.SUCCESS, now - 3000),
+				createEvent(CallResult.SUCCESS, now - 2000),
+				createEvent(CallResult.SUCCESS, now),
 			];
 
 			// With 0% threshold, even 0% failure rate (0 >= 0) triggers the circuit
 			expect(breaker.shouldOpenCircuit(events)).toBe(true);
 
 			const withOneFailure: CallResultEvent[] = [
-				createEvent(CallResultEnum.SUCCESS, now - 3000),
-				createEvent(CallResultEnum.SUCCESS, now - 2000),
-				createEvent(CallResultEnum.FAILURE, now),
+				createEvent(CallResult.SUCCESS, now - 3000),
+				createEvent(CallResult.SUCCESS, now - 2000),
+				createEvent(CallResult.FAILURE, now),
 			];
 
 			// Any failure (33% > 0%) should trigger circuit when threshold is 0%

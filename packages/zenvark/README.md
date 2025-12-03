@@ -31,7 +31,7 @@ import {
 	ConsecutiveBreaker,
 	ConstantBackoff,
 	CircuitOpenError,
-	HealthCheckTypeEnum,
+	HealthCheckType,
 } from "zenvark";
 
 const redis = new Redis("redis://localhost:6379");
@@ -42,7 +42,7 @@ const circuitBreaker = new CircuitBreaker({
 	breaker: new ConsecutiveBreaker({ threshold: 5 }), // Open after 5 consecutive failures
 	health: {
 		backoff: new ConstantBackoff({ delayMs: 5000 }), // Wait 5 seconds between health checks
-		async check(type: HealthCheckTypeEnum, signal: AbortSignal) {
+		async check(type: HealthCheckType, signal: AbortSignal) {
 			// Your health check logic
 			const response = await fetch("https://api.example.com/health", {
 				signal,

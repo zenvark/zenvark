@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { redis } from '../../test/setup-redis.ts';
-import { CallResultEnum } from '../constants.ts';
+import { CallResult } from '../constants.ts';
 import { CallResultStore } from './call-result-store.ts';
 
 describe('CallResultStore', () => {
@@ -40,8 +40,8 @@ describe('CallResultStore', () => {
 			onEventsAdded: vi.fn(),
 		});
 
-		await store.storeCallResult(CallResultEnum.SUCCESS);
-		await store.storeCallResult(CallResultEnum.FAILURE);
+		await store.storeCallResult(CallResult.SUCCESS);
+		await store.storeCallResult(CallResult.FAILURE);
 
 		const elements = await redis.xrange('test', '-', '+');
 
@@ -52,7 +52,7 @@ describe('CallResultStore', () => {
 				expect.any(String),
 				[
 					'callResult',
-					CallResultEnum.SUCCESS,
+					CallResult.SUCCESS,
 					'timestamp',
 					expect.stringMatching(/^\d+$/),
 				],
@@ -61,7 +61,7 @@ describe('CallResultStore', () => {
 				expect.any(String),
 				[
 					'callResult',
-					CallResultEnum.FAILURE,
+					CallResult.FAILURE,
 					'timestamp',
 					expect.stringMatching(/^\d+$/),
 				],
@@ -80,14 +80,14 @@ describe('CallResultStore', () => {
 			onEventsAdded: onEventsAddedSpy,
 		});
 
-		await store.storeCallResult(CallResultEnum.SUCCESS);
-		await store.storeCallResult(CallResultEnum.FAILURE);
+		await store.storeCallResult(CallResult.SUCCESS);
+		await store.storeCallResult(CallResult.FAILURE);
 
 		await store.start();
 
 		expect(store.getEvents()).toEqual([
-			expect.objectContaining({ callResult: CallResultEnum.SUCCESS }),
-			expect.objectContaining({ callResult: CallResultEnum.FAILURE }),
+			expect.objectContaining({ callResult: CallResult.SUCCESS }),
+			expect.objectContaining({ callResult: CallResult.FAILURE }),
 		]);
 
 		await store.stop();
@@ -116,8 +116,8 @@ describe('CallResultStore', () => {
 		await Promise.all([store1.start(), store2.start()]);
 
 		await Promise.all([
-			store1.storeCallResult(CallResultEnum.SUCCESS),
-			store2.storeCallResult(CallResultEnum.FAILURE),
+			store1.storeCallResult(CallResult.SUCCESS),
+			store2.storeCallResult(CallResult.FAILURE),
 		]);
 
 		await vi.waitUntil(
@@ -127,8 +127,8 @@ describe('CallResultStore', () => {
 		);
 
 		const expectedEvents = expect.arrayContaining([
-			expect.objectContaining({ callResult: CallResultEnum.SUCCESS }),
-			expect.objectContaining({ callResult: CallResultEnum.FAILURE }),
+			expect.objectContaining({ callResult: CallResult.SUCCESS }),
+			expect.objectContaining({ callResult: CallResult.FAILURE }),
 		]);
 
 		expect(onEventsAddedSpy1).toHaveBeenCalledWith(expectedEvents);
@@ -151,19 +151,19 @@ describe('CallResultStore', () => {
 		await store.start();
 
 		await Promise.all([
-			store.storeCallResult(CallResultEnum.SUCCESS),
-			store.storeCallResult(CallResultEnum.SUCCESS),
-			store.storeCallResult(CallResultEnum.SUCCESS),
-			store.storeCallResult(CallResultEnum.SUCCESS),
-			store.storeCallResult(CallResultEnum.SUCCESS),
+			store.storeCallResult(CallResult.SUCCESS),
+			store.storeCallResult(CallResult.SUCCESS),
+			store.storeCallResult(CallResult.SUCCESS),
+			store.storeCallResult(CallResult.SUCCESS),
+			store.storeCallResult(CallResult.SUCCESS),
 		]);
 
 		await vi.waitUntil(() => onEventsAddedSpy.mock.calls.length > 0);
 
 		expect(onEventsAddedSpy).toHaveBeenCalledWith([
-			expect.objectContaining({ callResult: CallResultEnum.SUCCESS }),
-			expect.objectContaining({ callResult: CallResultEnum.SUCCESS }),
-			expect.objectContaining({ callResult: CallResultEnum.SUCCESS }),
+			expect.objectContaining({ callResult: CallResult.SUCCESS }),
+			expect.objectContaining({ callResult: CallResult.SUCCESS }),
+			expect.objectContaining({ callResult: CallResult.SUCCESS }),
 		]);
 
 		await store.stop();
@@ -184,7 +184,7 @@ describe('CallResultStore', () => {
 		await store.stop();
 		await store.start();
 
-		await store.storeCallResult(CallResultEnum.SUCCESS);
+		await store.storeCallResult(CallResult.SUCCESS);
 
 		await vi.waitUntil(() => onEventsAddedSpy.mock.calls.length > 0);
 

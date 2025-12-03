@@ -1,8 +1,8 @@
-import type { CallResultEnum, HealthCheckTypeEnum } from './constants.ts';
+import type { CallResult, HealthCheckType } from './constants.ts';
 
 export type RecordCallParams = {
 	breakerId: string;
-	result: CallResultEnum;
+	result: CallResult;
 	durationMs: number;
 };
 
@@ -12,8 +12,8 @@ export type RecordBlockedRequestParams = {
 
 export type RecordHealthCheckParams = {
 	breakerId: string;
-	type: HealthCheckTypeEnum;
-	result: CallResultEnum;
+	type: HealthCheckType;
+	result: CallResult;
 	durationMs: number;
 };
 

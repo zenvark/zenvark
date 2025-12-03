@@ -1,11 +1,11 @@
 import type { Redis } from 'ioredis';
-import { CircuitStateEnum } from '../constants.ts';
+import { CircuitState } from '../constants.ts';
 import { AbstractLifecycleManager } from '../utils/abstract-lifecycle-manager.ts';
 import { RedisStreamReader } from '../utils/redis-stream-reader.ts';
 
 type CircuitStateEvent = {
 	id: string;
-	state: CircuitStateEnum;
+	state: CircuitState;
 	timestamp: number;
 };
 
@@ -17,18 +17,18 @@ type CircuitStateStoreOptions = {
 	/** Called when an error occurs while reading from the Redis stream */
 	onStreamReadError: (err: unknown) => void;
 	/** Called whenever the state changes to a new value. Not called during initial load. */
-	onStateChange?: (state: CircuitStateEnum) => void;
+	onStateChange?: (state: CircuitState) => void;
 };
 
 export class CircuitStateStore extends AbstractLifecycleManager {
 	private readonly redis: Redis;
 	private readonly redisStreamKey: string;
 	private readonly streamReader: RedisStreamReader;
-	private readonly onStateChange?: (state: CircuitStateEnum) => void;
+	private readonly onStateChange?: (state: CircuitState) => void;
 
 	private currentState: CircuitStateEvent = {
 		id: '0',
-		state: CircuitStateEnum.CLOSED,
+		state: CircuitState.CLOSED,
 		timestamp: 0,
 	};
 
@@ -75,7 +75,7 @@ export class CircuitStateStore extends AbstractLifecycleManager {
 		await this.streamReader.stop();
 	}
 
-	async setState(state: CircuitStateEnum): Promise<void> {
+	async setState(state: CircuitState): Promise<void> {
 		await this.redis.xadd(
 			this.redisStreamKey,
 			'MAXLEN',
@@ -92,7 +92,7 @@ export class CircuitStateStore extends AbstractLifecycleManager {
 	/**
 	 * Returns the current state of the circuit.
 	 */
-	getState(): CircuitStateEnum {
+	getState(): CircuitState {
 		return this.currentState.state;
 	}
 
@@ -109,7 +109,7 @@ export class CircuitStateStore extends AbstractLifecycleManager {
 
 		return {
 			id,
-			state: fields[1] as CircuitStateEnum,
+			state: fields[1] as CircuitState,
 			timestamp: Number(fields[3]),
 		};
 	}

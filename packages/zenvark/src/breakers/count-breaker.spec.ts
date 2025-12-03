@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { CallResultEnum } from '../constants.ts';
+import { CallResult } from '../constants.ts';
 import type { CallResultEvent } from '../types.ts';
 import { CountBreaker } from './count-breaker.ts';
 
 describe('CountBreaker', () => {
 	const createEvent = (
-		callResult: CallResultEnum,
+		callResult: CallResult,
 		timestamp: number,
 		id = 'test-id',
 	): CallResultEvent => ({
@@ -33,9 +33,9 @@ describe('CountBreaker', () => {
 			});
 
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.FAILURE, 1000),
-				createEvent(CallResultEnum.FAILURE, 2000),
-				createEvent(CallResultEnum.FAILURE, 3000),
+				createEvent(CallResult.FAILURE, 1000),
+				createEvent(CallResult.FAILURE, 2000),
+				createEvent(CallResult.FAILURE, 3000),
 			];
 
 			expect(breaker.shouldOpenCircuit(events)).toBe(false);
@@ -49,11 +49,11 @@ describe('CountBreaker', () => {
 			});
 
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.SUCCESS, 1000),
-				createEvent(CallResultEnum.SUCCESS, 2000),
-				createEvent(CallResultEnum.FAILURE, 3000),
-				createEvent(CallResultEnum.SUCCESS, 4000),
-				createEvent(CallResultEnum.SUCCESS, 5000),
+				createEvent(CallResult.SUCCESS, 1000),
+				createEvent(CallResult.SUCCESS, 2000),
+				createEvent(CallResult.FAILURE, 3000),
+				createEvent(CallResult.SUCCESS, 4000),
+				createEvent(CallResult.SUCCESS, 5000),
 			];
 
 			expect(breaker.shouldOpenCircuit(events)).toBe(false);
@@ -67,10 +67,10 @@ describe('CountBreaker', () => {
 			});
 
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.FAILURE, 1000),
-				createEvent(CallResultEnum.FAILURE, 2000),
-				createEvent(CallResultEnum.SUCCESS, 3000),
-				createEvent(CallResultEnum.SUCCESS, 4000),
+				createEvent(CallResult.FAILURE, 1000),
+				createEvent(CallResult.FAILURE, 2000),
+				createEvent(CallResult.SUCCESS, 3000),
+				createEvent(CallResult.SUCCESS, 4000),
 			];
 
 			expect(breaker.shouldOpenCircuit(events)).toBe(true);
@@ -84,11 +84,11 @@ describe('CountBreaker', () => {
 			});
 
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.FAILURE, 1000),
-				createEvent(CallResultEnum.FAILURE, 2000),
-				createEvent(CallResultEnum.FAILURE, 3000),
-				createEvent(CallResultEnum.SUCCESS, 4000),
-				createEvent(CallResultEnum.SUCCESS, 5000),
+				createEvent(CallResult.FAILURE, 1000),
+				createEvent(CallResult.FAILURE, 2000),
+				createEvent(CallResult.FAILURE, 3000),
+				createEvent(CallResult.SUCCESS, 4000),
+				createEvent(CallResult.SUCCESS, 5000),
 			];
 
 			expect(breaker.shouldOpenCircuit(events)).toBe(true);
@@ -102,12 +102,12 @@ describe('CountBreaker', () => {
 			});
 
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.FAILURE, 1000),
-				createEvent(CallResultEnum.FAILURE, 2000),
-				createEvent(CallResultEnum.FAILURE, 3000),
-				createEvent(CallResultEnum.SUCCESS, 4000),
-				createEvent(CallResultEnum.SUCCESS, 5000),
-				createEvent(CallResultEnum.SUCCESS, 6000),
+				createEvent(CallResult.FAILURE, 1000),
+				createEvent(CallResult.FAILURE, 2000),
+				createEvent(CallResult.FAILURE, 3000),
+				createEvent(CallResult.SUCCESS, 4000),
+				createEvent(CallResult.SUCCESS, 5000),
+				createEvent(CallResult.SUCCESS, 6000),
 			];
 
 			expect(breaker.shouldOpenCircuit(events)).toBe(false);
@@ -121,17 +121,17 @@ describe('CountBreaker', () => {
 			});
 
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.FAILURE, 1000),
-				createEvent(CallResultEnum.FAILURE, 2000),
-				createEvent(CallResultEnum.SUCCESS, 3000),
+				createEvent(CallResult.FAILURE, 1000),
+				createEvent(CallResult.FAILURE, 2000),
+				createEvent(CallResult.SUCCESS, 3000),
 			];
 
 			expect(breaker.shouldOpenCircuit(events)).toBe(false);
 
 			const allFailureEvents: CallResultEvent[] = [
-				createEvent(CallResultEnum.FAILURE, 1000),
-				createEvent(CallResultEnum.FAILURE, 2000),
-				createEvent(CallResultEnum.FAILURE, 3000),
+				createEvent(CallResult.FAILURE, 1000),
+				createEvent(CallResult.FAILURE, 2000),
+				createEvent(CallResult.FAILURE, 3000),
 			];
 
 			expect(breaker.shouldOpenCircuit(allFailureEvents)).toBe(true);
@@ -145,18 +145,18 @@ describe('CountBreaker', () => {
 			});
 
 			const events: CallResultEvent[] = [
-				createEvent(CallResultEnum.SUCCESS, 1000),
-				createEvent(CallResultEnum.SUCCESS, 2000),
-				createEvent(CallResultEnum.SUCCESS, 3000),
+				createEvent(CallResult.SUCCESS, 1000),
+				createEvent(CallResult.SUCCESS, 2000),
+				createEvent(CallResult.SUCCESS, 3000),
 			];
 
 			// With 0% threshold, even 0% failure rate (0 >= 0) triggers the circuit
 			expect(breaker.shouldOpenCircuit(events)).toBe(true);
 
 			const withOneFailure: CallResultEvent[] = [
-				createEvent(CallResultEnum.SUCCESS, 1000),
-				createEvent(CallResultEnum.SUCCESS, 2000),
-				createEvent(CallResultEnum.FAILURE, 3000),
+				createEvent(CallResult.SUCCESS, 1000),
+				createEvent(CallResult.SUCCESS, 2000),
+				createEvent(CallResult.FAILURE, 3000),
 			];
 
 			// Any failure (33% >= 0%) should trigger circuit when threshold is 0%

@@ -50,7 +50,7 @@ import {
 	ConsecutiveBreaker,
 	ConstantBackoff,
 	CircuitOpenError,
-	HealthCheckTypeEnum,
+	HealthCheckType,
 } from "zenvark";
 import { PrometheusBreakerMetrics } from "@zenvark/prom";
 
@@ -62,7 +62,7 @@ const circuitBreaker = new CircuitBreaker({
 	breaker: new ConsecutiveBreaker({ threshold: 5 }), // Open after 5 consecutive failures
 	health: {
 		backoff: new ConstantBackoff({ delayMs: 5000 }), // Wait 5 seconds between health checks
-		async check(type: HealthCheckTypeEnum, signal: AbortSignal) {
+		async check(type: HealthCheckType, signal: AbortSignal) {
 			// Your health check logic
 			const response = await fetch("https://api.example.com/health", {
 				signal,
@@ -125,14 +125,14 @@ The `CircuitBreakerOptions` object is where you configure your distributed circu
 - `breaker`: **(Required)** The strategy that determines when the circuit should open due to failures. Refer to the [Breaker Strategies](#breaker-strategies) section for available options and their configurations.
 - `health`: **(Required)** An object configuring how the circuit breaker performs health checks while the circuit is in the `OPEN` state.
   - `backoff`: **(Required)** The backoff strategy to use between health check retries. This introduces delays to prevent overwhelming a recovering dependency. Refer to the [Backoff Strategies](#backoff-strategies) section for available options and their configurations.
-  - `check(type: HealthCheckTypeEnum, signal: AbortSignal)`: **(Required)** An asynchronous function that executes the actual health check against your protected dependency. It **must throw an `Error`** on failure. The provided `AbortSignal` should be respected by your function for early cancellation during graceful shutdowns. The `type` argument will be either `recovery` (when probing while OPEN) or `idle` (when probing during inactivity while CLOSED), which can be used for routing to different health endpoints if desired.
+  - `check(type: HealthCheckType, signal: AbortSignal)`: **(Required)** An asynchronous function that executes the actual health check against your protected dependency. It **must throw an `Error`** on failure. The provided `AbortSignal` should be respected by your function for early cancellation during graceful shutdowns. The `type` argument will be either `recovery` (when probing while OPEN) or `idle` (when probing during inactivity while CLOSED), which can be used for routing to different health endpoints if desired.
 - `onError(err: Error)`: **(Optional)** A callback for handling internal circuit breaker errors (e.g., Redis stream read failures, leader election issues). Highly recommended to provide this callback to prevent unhandled exceptions and maintain application stability.
-- `onStateChange(state: CircuitStateEnum)`: **(Optional)** Notified whenever the circuit transitions to a new state (`open` or `closed`).
+- `onStateChange(state: CircuitState)`: **(Optional)** Notified whenever the circuit transitions to a new state (`open` or `closed`).
   - Triggered for both self-initiated and cross-instance updates via Redis Streams.
   - Not called during the initial state load on `start()`; only future changes trigger it.
   - Called only when the state actually changes (no duplicate notifications for the same state).
   - Useful for logging, alerts, and custom metrics.
-- `onRoleChange(role: CircuitRoleEnum)`: **(Optional)** Notified whenever this instance's leader election role changes (`leader` or `follower`).
+- `onRoleChange(role: CircuitRole)`: **(Optional)** Notified whenever this instance's leader election role changes (`leader` or `follower`).
   - Not called during the initial role evaluation on `start()` unless it changes.
   - Called only when the role actually changes (no duplicate notifications for the same role).
   - Useful for logging.
@@ -180,23 +180,23 @@ This method executes a function with circuit breaker protection.
 
 ### Properties
 
-#### `state: CircuitStateEnum`
+#### `state: CircuitState`
 
 This is a **read-only property** that returns the current state of the circuit breaker.
 
 **Possible values:**
 
-- `CircuitStateEnum.CLOSED`: The circuit is closed, and requests are allowed.
-- `CircuitStateEnum.OPEN`: The circuit is open, and requests are blocked.
+- `CircuitState.CLOSED`: The circuit is closed, and requests are allowed.
+- `CircuitState.OPEN`: The circuit is open, and requests are blocked.
 
-#### `role: CircuitRoleEnum`
+#### `role: CircuitRole`
 
 This is a **read-only property** that returns the current leader election role of this instance.
 
 **Possible values:**
 
-- `CircuitRoleEnum.LEADER`: This instance currently holds leadership and will perform leader-only duties.
-- `CircuitRoleEnum.FOLLOWER`: This instance is listens for events posted by the leader.
+- `CircuitRole.LEADER`: This instance currently holds leadership and will perform leader-only duties.
+- `CircuitRole.FOLLOWER`: This instance is listens for events posted by the leader.
 
 ## Breaker Strategies
 
@@ -312,7 +312,7 @@ const circuitBreaker = new CircuitBreaker({
 	// ...
 	health: {
 		backoff: new ConstantBackoff({ delayMs: 5000 }),
-		async check(type: HealthCheckTypeEnum, signal: AbortSignal) {
+		async check(type: HealthCheckType, signal: AbortSignal) {
 			/* ... */
 		},
 		idleProbeIntervalMs: 30_000, // Run probe 30s after last call; next probe scheduled after each run
@@ -448,7 +448,7 @@ Keep health checks simple and focused:
 
 ```typescript
 // ✅ Good - Simple, focused health check
-async check(type: HealthCheckTypeEnum, signal: AbortSignal) {
+async check(type: HealthCheckType, signal: AbortSignal) {
 	const response = await fetch('/health', { signal })
 	if (!response.ok) {
 		throw new Error(`Health check failed: ${response.status}`)
@@ -456,7 +456,7 @@ async check(type: HealthCheckTypeEnum, signal: AbortSignal) {
 }
 
 // ❌ Bad - Complex health check with side effects
-async check(type: HealthCheckTypeEnum, signal: AbortSignal) {
+async check(type: HealthCheckType, signal: AbortSignal) {
 	const user = await createTestUser()
 	const result = await processPayment(user, 1.00)
 	await deleteTestUser(user)

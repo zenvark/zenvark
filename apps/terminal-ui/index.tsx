@@ -4,7 +4,7 @@ import { setTimeout as setTimeoutAsync } from 'node:timers/promises'
 import { Box, render, Text, useApp, useFocus, useInput } from 'ink'
 import { Redis } from 'ioredis'
 import { createElement, useEffect, useState } from 'react'
-import { ConstantBackoff, ConsecutiveBreaker, CircuitRoleEnum, CircuitBreaker, CircuitOpenError } from 'zenvark'
+import { ConstantBackoff, ConsecutiveBreaker, CircuitRole, CircuitBreaker, CircuitOpenError } from 'zenvark'
 
 const redis = new Redis({
   host: 'localhost',
@@ -190,7 +190,7 @@ const CircuitBox = ({
       <Box marginTop={1}>
         <Text>
           Status:
-          <Text color={role === CircuitRoleEnum.LEADER ? 'yellow' : 'gray'}>
+          <Text color={role === CircuitRole.LEADER ? 'yellow' : 'gray'}>
             {role.toUpperCase()}
           </Text>
           -<Text color={stateColor}>{state.toUpperCase()}</Text>

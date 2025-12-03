@@ -1,6 +1,6 @@
 import { Registry } from 'prom-client';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CallResultEnum, HealthCheckTypeEnum } from 'zenvark';
+import { CallResult, HealthCheckType } from 'zenvark';
 import { PrometheusBreakerMetrics } from './prometheus-breaker-metrics.ts';
 
 describe('PrometheusBreakerMetrics', () => {
@@ -23,7 +23,7 @@ describe('PrometheusBreakerMetrics', () => {
 	});
 
 	it('recordCall observes duration with success result label', async () => {
-		const callResult = CallResultEnum.SUCCESS;
+		const callResult = CallResult.SUCCESS;
 
 		const bm = new PrometheusBreakerMetrics({ registry });
 
@@ -38,7 +38,7 @@ describe('PrometheusBreakerMetrics', () => {
 	});
 
 	it('recordCall observes duration with failure result label', async () => {
-		const callResult = CallResultEnum.FAILURE;
+		const callResult = CallResult.FAILURE;
 
 		const bm = new PrometheusBreakerMetrics({ registry });
 
@@ -68,10 +68,10 @@ describe('PrometheusBreakerMetrics', () => {
 	});
 
 	it('recordHealthCheck observes duration with correct labels', async () => {
-		const callResult = CallResultEnum.SUCCESS;
+		const callResult = CallResult.SUCCESS;
 
 		const bm = new PrometheusBreakerMetrics({ registry });
-		const type = HealthCheckTypeEnum.IDLE;
+		const type = HealthCheckType.IDLE;
 
 		bm.recordHealthCheck({
 			breakerId,
