@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CallResultEnum } from '../constants.ts';
 import type { CallResultEvent } from '../types.ts';
-import { CountBreaker } from './CountBreaker.ts';
+import { CountBreaker } from './count-breaker.ts';
 
 describe('CountBreaker', () => {
 	const createEvent = (

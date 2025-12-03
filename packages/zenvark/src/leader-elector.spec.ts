@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { redis } from '../test/setupRedis.ts';
+import { redis } from '../test/setup-redis.ts';
 import { CircuitRoleEnum } from './constants.ts';
-import { LeaderElector } from './LeaderElector.ts';
+import { LeaderElector } from './leader-elector.ts';
 
 describe('LeaderElector', () => {
 	it('start is idempotent - calling twice should not throw', async () => {

@@ -1,20 +1,20 @@
 import type { Redis } from 'ioredis';
-import type { BreakerMetricsRecorder } from './BreakerMetricsRecorder.ts';
-import type { BackoffStrategy } from './backoffs/BackoffStrategy.ts';
-import type { BreakerStrategy } from './breakers/BreakerStrategy.ts';
+import type { BackoffStrategy } from './backoffs/backoff-strategy.ts';
+import type { BreakerMetricsRecorder } from './breaker-metrics-recorder.ts';
+import type { BreakerStrategy } from './breakers/breaker-strategy.ts';
 import {
 	CallResultEnum,
 	CircuitRoleEnum,
 	CircuitStateEnum,
 	HealthCheckTypeEnum,
 } from './constants.ts';
-import { CircuitOpenError } from './errors/circuitOpenError.ts';
-import { LeaderElector } from './LeaderElector.ts';
-import { CallResultStore } from './stores/CallResultStore.ts';
-import { CircuitStateStore } from './stores/CircuitStateStore.ts';
+import { CircuitOpenError } from './errors/circuit-open-error.ts';
+import { LeaderElector } from './leader-elector.ts';
+import { CallResultStore } from './stores/call-result-store.ts';
+import { CircuitStateStore } from './stores/circuit-state-store.ts';
 import type { CallResultEvent } from './types.ts';
-import { AbstractLifecycleManager } from './utils/AbstractLifecycleManager.ts';
-import { HealthCheckManager } from './utils/HealthCheckManager.ts';
+import { AbstractLifecycleManager } from './utils/abstract-lifecycle-manager.ts';
+import { HealthCheckManager } from './utils/health-check-manager.ts';
 
 type HealthConfig = {
 	backoff: BackoffStrategy;

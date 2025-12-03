@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HealthCheckTypeEnum } from '../constants.ts';
-import { HealthCheckManager } from './HealthCheckManager.ts';
+import { HealthCheckManager } from './health-check-manager.ts';
 
 describe('HealthCheckManager', () => {
 	it('calls runCheck repeatedly with provided type and increments attempts', async () => {

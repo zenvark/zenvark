@@ -8,7 +8,7 @@ import type {
 import {
 	getOrCreateCounter,
 	getOrCreateHistogram,
-} from './getOrCreateMetric.ts';
+} from './get-or-create-metric.ts';
 
 export type PrometheusBreakerMetricsOptions = {
 	/**

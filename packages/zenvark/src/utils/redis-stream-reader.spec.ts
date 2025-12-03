@@ -1,6 +1,6 @@
 import { describe, it, vi } from 'vitest';
-import { redis } from '../../test/setupRedis.ts';
-import { RedisStreamReader } from './RedisStreamReader.ts';
+import { redis } from '../../test/setup-redis.ts';
+import { RedisStreamReader } from './redis-stream-reader.ts';
 
 describe('RedisStreamReader', () => {
 	it('reads new entries and forwards them to onEntries', async () => {

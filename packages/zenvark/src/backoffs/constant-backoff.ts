@@ -1,4 +1,4 @@
-import type { BackoffStrategy } from './BackoffStrategy.ts';
+import type { BackoffStrategy } from './backoff-strategy.ts';
 
 export interface ConstantBackoffOptions {
 	/**

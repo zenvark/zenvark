@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AbstractLifecycleManager } from './AbstractLifecycleManager.ts';
+import { AbstractLifecycleManager } from './abstract-lifecycle-manager.ts';
 
 class TestLifecycleManager<
 	TConfig = void,

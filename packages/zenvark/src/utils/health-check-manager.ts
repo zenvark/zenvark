@@ -1,5 +1,5 @@
 import type { HealthCheckTypeEnum } from '../constants.ts';
-import { AbstractLifecycleManager } from './AbstractLifecycleManager.ts';
+import { AbstractLifecycleManager } from './abstract-lifecycle-manager.ts';
 import { delay } from './delay.ts';
 
 type RunCheck = (

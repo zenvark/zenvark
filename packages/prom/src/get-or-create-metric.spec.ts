@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
 	getOrCreateCounter,
 	getOrCreateHistogram,
-} from './getOrCreateMetric.ts';
+} from './get-or-create-metric.ts';
 
 describe('getOrCreateMetric', () => {
 	let registry: Registry;

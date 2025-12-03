@@ -1,7 +1,7 @@
 import { Registry } from 'prom-client';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CallResultEnum, HealthCheckTypeEnum } from 'zenvark';
-import { PrometheusBreakerMetrics } from './PrometheusBreakerMetrics.ts';
+import { PrometheusBreakerMetrics } from './prometheus-breaker-metrics.ts';
 
 describe('PrometheusBreakerMetrics', () => {
 	let registry: Registry;

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { redis } from '../../test/setupRedis.ts';
+import { redis } from '../../test/setup-redis.ts';
 import { CircuitStateEnum } from '../constants.ts';
-import { CircuitStateStore } from './CircuitStateStore.ts';
+import { CircuitStateStore } from './circuit-state-store.ts';
 
 describe('CircuitStateStore', () => {
 	it('start is idempotent - calling twice should not throw', async () => {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { redis } from '../../test/setupRedis.ts';
+import { redis } from '../../test/setup-redis.ts';
 import { CallResultEnum } from '../constants.ts';
-import { CallResultStore } from './CallResultStore.ts';
+import { CallResultStore } from './call-result-store.ts';
 
 describe('CallResultStore', () => {
 	it('start is idempotent - calling twice should not throw', async () => {

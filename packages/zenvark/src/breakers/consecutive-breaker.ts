@@ -1,6 +1,6 @@
 import { CallResultEnum } from '../constants.ts';
 import type { CallResultEvent } from '../types.ts';
-import type { BreakerStrategy } from './BreakerStrategy.ts';
+import type { BreakerStrategy } from './breaker-strategy.ts';
 
 export interface ConsecutiveBreakerOptions {
 	/**

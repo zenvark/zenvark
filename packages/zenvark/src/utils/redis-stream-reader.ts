@@ -1,5 +1,5 @@
 import type { Redis } from 'ioredis';
-import { AbstractLifecycleManager } from './AbstractLifecycleManager.ts';
+import { AbstractLifecycleManager } from './abstract-lifecycle-manager.ts';
 import { delay } from './delay.ts';
 
 const XREAD_BLOCK_TIMEOUT_MS = 1000;

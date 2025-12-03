@@ -1,8 +1,8 @@
 export {
 	getOrCreateCounter,
 	getOrCreateHistogram,
-} from './getOrCreateMetric.ts';
+} from './get-or-create-metric.ts';
 export {
 	PrometheusBreakerMetrics,
 	type PrometheusBreakerMetricsOptions,
-} from './PrometheusBreakerMetrics.ts';
+} from './prometheus-breaker-metrics.ts';

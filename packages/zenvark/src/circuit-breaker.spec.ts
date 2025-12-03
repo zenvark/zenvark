@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
-import { redis } from '../test/setupRedis.ts';
-import { ConstantBackoff } from './backoffs/ConstantBackoff.ts';
-import { ConsecutiveBreaker } from './breakers/ConsecutiveBreaker.ts';
-import { CircuitBreaker } from './CircuitBreaker.ts';
+import { redis } from '../test/setup-redis.ts';
+import { ConstantBackoff } from './backoffs/constant-backoff.ts';
+import { ConsecutiveBreaker } from './breakers/consecutive-breaker.ts';
+import { CircuitBreaker } from './circuit-breaker.ts';
 import {
 	CircuitRoleEnum,
 	CircuitStateEnum,
 	type HealthCheckTypeEnum,
 } from './constants.ts';
-import { CircuitOpenError } from './errors/circuitOpenError.ts';
+import { CircuitOpenError } from './errors/circuit-open-error.ts';
 import { delay } from './utils/delay.ts';
 
 describe('CircuitBreaker', () => {

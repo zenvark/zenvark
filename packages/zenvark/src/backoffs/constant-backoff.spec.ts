@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ConstantBackoff } from './ConstantBackoff.ts';
+import { ConstantBackoff } from './constant-backoff.ts';
 
 describe('ConstantBackoff', () => {
 	it('should return the configured constant delay for any attempt', () => {

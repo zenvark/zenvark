@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CallResultEnum } from '../constants.ts';
 import type { CallResultEvent } from '../types.ts';
-import { SamplingBreaker } from './SamplingBreaker.ts';
+import { SamplingBreaker } from './sampling-breaker.ts';
 
 describe('SamplingBreaker', () => {
 	const createEvent = (

@@ -1,8 +1,8 @@
 import type { Redis } from 'ioredis';
 import type { CallResultEnum } from '../constants.ts';
 import type { CallResultEvent } from '../types.ts';
-import { AbstractLifecycleManager } from '../utils/AbstractLifecycleManager.ts';
-import { RedisStreamReader } from '../utils/RedisStreamReader.ts';
+import { AbstractLifecycleManager } from '../utils/abstract-lifecycle-manager.ts';
+import { RedisStreamReader } from '../utils/redis-stream-reader.ts';
 
 type CallResultStoreOptions = {
 	/** Redis client used for storing and reading stream data */

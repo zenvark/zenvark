@@ -1,7 +1,7 @@
 import type { Redis } from 'ioredis';
 import { Mutex } from 'redis-semaphore';
 import { CircuitRoleEnum } from './constants.ts';
-import { AbstractLifecycleManager } from './utils/AbstractLifecycleManager.ts';
+import { AbstractLifecycleManager } from './utils/abstract-lifecycle-manager.ts';
 import { delay } from './utils/delay.ts';
 
 /**

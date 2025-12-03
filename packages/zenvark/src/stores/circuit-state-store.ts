@@ -1,7 +1,7 @@
 import type { Redis } from 'ioredis';
 import { CircuitStateEnum } from '../constants.ts';
-import { AbstractLifecycleManager } from '../utils/AbstractLifecycleManager.ts';
-import { RedisStreamReader } from '../utils/RedisStreamReader.ts';
+import { AbstractLifecycleManager } from '../utils/abstract-lifecycle-manager.ts';
+import { RedisStreamReader } from '../utils/redis-stream-reader.ts';
 
 type CircuitStateEvent = {
 	id: string;
