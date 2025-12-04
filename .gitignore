@@ -10,3 +10,5 @@ node_modules/
 dist/
 build/
 coverage/
+
+/apps/docs/.docusaurus
