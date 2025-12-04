@@ -49,17 +49,18 @@ The circuit is **open** when the protected service is unhealthy and requests are
 The circuit opens when the breaker strategy determines the failure threshold has been exceeded.
 
 **Actions:**
+
 1. Leader evaluates call results against breaker strategy
 2. Leader broadcasts "open circuit" command via Redis
 3. All instances receive update and transition to OPEN
 4. Leader begins health check loop with backoff
-
 
 ### OPEN → CLOSED
 
 The circuit closes when a health check succeeds, indicating the service has recovered.
 
 **Actions:**
+
 1. Leader's health check passes
 2. Leader broadcasts "close circuit" command via Redis
 3. All instances receive update and transition to CLOSED
@@ -71,14 +72,14 @@ The circuit closes when a health check succeeds, indicating the service has reco
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-  // ...
-  onStateChange: (state) => {
-    if (state === CircuitState.OPEN) {
-      logger.error("Circuit opened - service degraded");
-    } else {
-      logger.info("Circuit closed - service recovered");
-    }
-  },
+	// ...
+	onStateChange: (state) => {
+		if (state === CircuitState.OPEN) {
+			logger.error("Circuit opened - service degraded");
+		} else {
+			logger.info("Circuit closed - service recovered");
+		}
+	},
 });
 ```
 
@@ -89,7 +90,7 @@ const circuitBreaker = new CircuitBreaker({
 const currentState = circuitBreaker.state;
 
 if (currentState === CircuitState.OPEN) {
-  // Use fallback, cached data, or default response
-  return getCachedData();
+	// Use fallback, cached data, or default response
+	return getCachedData();
 }
 ```

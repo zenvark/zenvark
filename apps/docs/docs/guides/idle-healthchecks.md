@@ -23,9 +23,9 @@ Enable idle healthchecks by setting the `idleProbeIntervalMs` option:
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-  health: {
-    idleProbeIntervalMs: 30_000, // Check every 30 seconds when idle
-  },
+	health: {
+		idleProbeIntervalMs: 30_000, // Check every 30 seconds when idle
+	},
 });
 ```
 
@@ -57,6 +57,7 @@ The health check function receives a `type` parameter indicating the reason for 
 ### recovery
 
 Used when the circuit is **open** and attempting to recover:
+
 - Circuit is in OPEN state
 - Uses backoff strategy for delays
 - Performed only by the leader instance
@@ -64,6 +65,7 @@ Used when the circuit is **open** and attempting to recover:
 ### idle
 
 Used when the circuit is **closed** but idle:
+
 - Circuit is in CLOSED state
 - Uses fixed `idleProbeIntervalMs` interval
 - Performed only by the leader instance
@@ -74,20 +76,20 @@ You can route to different health endpoints based on the type:
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-  // ...
-  health: {
-    backoff: new ExponentialBackoff({ initialDelayMs: 1000, multiplier: 2 }),
-    async check(type: HealthCheckType, signal: AbortSignal) {
-      if (type === HealthCheckType.RECOVERY) {
-        // More thorough check during recovery
-        await fetch("https://api.example.com/health/deep", { signal });
-      } else {
-        // Lightweight check during idle
-        await fetch("https://api.example.com/health", { signal });
-      }
-    },
-    idleProbeIntervalMs: 30_000,
-  },
+	// ...
+	health: {
+		backoff: new ExponentialBackoff({ initialDelayMs: 1000, multiplier: 2 }),
+		async check(type: HealthCheckType, signal: AbortSignal) {
+			if (type === HealthCheckType.RECOVERY) {
+				// More thorough check during recovery
+				await fetch("https://api.example.com/health/deep", { signal });
+			} else {
+				// Lightweight check during idle
+				await fetch("https://api.example.com/health", { signal });
+			}
+		},
+		idleProbeIntervalMs: 30_000,
+	},
 });
 ```
 
@@ -98,6 +100,7 @@ Only the **leader instance** runs idle healthchecks. Follower instances wait for
 :::
 
 This design:
+
 - Prevents duplicate health checks
 - Reduces load on the protected service
 - Centralizes health monitoring
@@ -109,14 +112,14 @@ To disable idle healthchecks, simply omit the `idleProbeIntervalMs` option:
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-  // ...
-  health: {
-    backoff: new ConstantBackoff({ delayMs: 5000 }),
-    async check(type, signal) {
-      // Only called during recovery (when circuit is OPEN)
-      await healthCheck(signal);
-    },
-    // No idleProbeIntervalMs - idle checks disabled
-  },
+	// ...
+	health: {
+		backoff: new ConstantBackoff({ delayMs: 5000 }),
+		async check(type, signal) {
+			// Only called during recovery (when circuit is OPEN)
+			await healthCheck(signal);
+		},
+		// No idleProbeIntervalMs - idle checks disabled
+	},
 });
 ```

@@ -44,17 +44,16 @@ Always provide an error handler to prevent unhandled exceptions from internal ci
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-  // ...
-  onError: (err) => {
-    logger.error("Circuit breaker internal error", {
-      breakerId: circuitBreaker.id,
-      error: err.message,
-      stack: err.stack,
-    });
-  },
+	// ...
+	onError: (err) => {
+		logger.error("Circuit breaker internal error", {
+			breakerId: circuitBreaker.id,
+			error: err.message,
+			stack: err.stack,
+		});
+	},
 });
 ```
-
 
 ## Health Check Implementation
 

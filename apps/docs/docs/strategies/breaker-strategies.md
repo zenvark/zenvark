@@ -10,12 +10,12 @@ All strategies implement the `BreakerStrategy` interface:
 
 ```typescript
 export interface BreakerStrategy {
-  /**
-   * Check whether the circuit should open based on recent call results.
-   * @param events Array of CallResultEvent (ordered from oldest to newest)
-   * @returns boolean indicating if circuit should open
-   */
-  shouldOpenCircuit(events: CallResultEvent[]): boolean;
+	/**
+	 * Check whether the circuit should open based on recent call results.
+	 * @param events Array of CallResultEvent (ordered from oldest to newest)
+	 * @returns boolean indicating if circuit should open
+	 */
+	shouldOpenCircuit(events: CallResultEvent[]): boolean;
 }
 ```
 
@@ -37,7 +37,7 @@ new ConsecutiveBreaker({
 import { ConsecutiveBreaker } from "zenvark";
 
 const breaker = new ConsecutiveBreaker({
-  threshold: 3, // Open after 3 consecutive failures
+	threshold: 3, // Open after 3 consecutive failures
 });
 ```
 
@@ -73,9 +73,9 @@ new CountBreaker({
 import { CountBreaker } from "zenvark";
 
 const breaker = new CountBreaker({
-  threshold: 0.5,              // Open if 50% or more of recent calls failed
-  size: 100,                   // Evaluate last 100 calls
-  minimumNumberOfCalls: 10,    // Require at least 10 calls before opening
+	threshold: 0.5, // Open if 50% or more of recent calls failed
+	size: 100, // Evaluate last 100 calls
+	minimumNumberOfCalls: 10, // Require at least 10 calls before opening
 });
 ```
 
@@ -112,9 +112,9 @@ new SamplingBreaker({
 import { SamplingBreaker } from "zenvark";
 
 const breaker = new SamplingBreaker({
-  threshold: 0.3,              // Open if 30% of calls in window failed
-  duration: 60000,             // 60 second evaluation window
-  minimumNumberOfCalls: 5,     // Require at least 5 calls before opening
+	threshold: 0.3, // Open if 30% of calls in window failed
+	duration: 60000, // 60 second evaluation window
+	minimumNumberOfCalls: 5, // Require at least 5 calls before opening
 });
 ```
 
@@ -135,25 +135,28 @@ const breaker = new SamplingBreaker({
 
 ## Choosing a Strategy
 
-| Strategy | Best For | Traffic Volume | Response Speed |
-|----------|----------|----------------|----------------|
-| **ConsecutiveBreaker** | Highly reliable services | Any | Very Fast |
-| **CountBreaker** | Variable failure patterns | High | Fast |
-| **SamplingBreaker** | Time-sensitive operations | Low-Medium | Medium |
+| Strategy               | Best For                  | Traffic Volume | Response Speed |
+| ---------------------- | ------------------------- | -------------- | -------------- |
+| **ConsecutiveBreaker** | Highly reliable services  | Any            | Very Fast      |
+| **CountBreaker**       | Variable failure patterns | High           | Fast           |
+| **SamplingBreaker**    | Time-sensitive operations | Low-Medium     | Medium         |
 
 ### Decision Guide
 
 Choose **ConsecutiveBreaker** when:
+
 - Your service should rarely fail
 - You want immediate response to multiple failures
 - Simplicity is important
 
 Choose **CountBreaker** when:
+
 - You have high traffic volume
 - Occasional failures are expected and acceptable
 - You need to tolerate intermittent issues
 
 Choose **SamplingBreaker** when:
+
 - Time-based analysis is important
 - Traffic is relatively low or predictable
 - You want to evaluate service health over specific time periods
@@ -166,14 +169,14 @@ You can implement your own breaker strategy by implementing the `BreakerStrategy
 import { BreakerStrategy, CallResultEvent } from "zenvark";
 
 class CustomBreaker implements BreakerStrategy {
-  shouldOpenCircuit(events: CallResultEvent[]): boolean {
-    // Your custom logic here
-    return false;
-  }
+	shouldOpenCircuit(events: CallResultEvent[]): boolean {
+		// Your custom logic here
+		return false;
+	}
 }
 
 const circuitBreaker = new CircuitBreaker({
-  // ...
-  breaker: new CustomBreaker(),
+	// ...
+	breaker: new CustomBreaker(),
 });
 ```

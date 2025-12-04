@@ -35,18 +35,20 @@ npm run start
 
 ### Controls
 
-| Key | Action |
-|-----|--------|
-| Tab / Shift+Tab | Move focus between controls |
-| Enter / Space | Activate focused control |
-| q / Esc / Ctrl+C | Quit simulator |
+| Key              | Action                      |
+| ---------------- | --------------------------- |
+| Tab / Shift+Tab  | Move focus between controls |
+| Enter / Space    | Activate focused control    |
+| q / Esc / Ctrl+C | Quit simulator              |
 
 ### Available Actions
 
 #### Healthcheck Returns Toggle
+
 Switch between **Success** and **Failure** to simulate dependency recovery/failure during health checks.
 
 #### Circuit A/B Controls
+
 - **Start/Stop**: Start or stop each circuit breaker instance
 - **Trigger Success**: Record a successful call result
 - **Trigger Failure**: Record a failed call result
@@ -91,16 +93,16 @@ Enable detailed logging:
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-  // ...
-  onError: (err) => {
-    console.error("CB Error:", err);
-  },
-  onStateChange: (state) => {
-    console.log("State changed:", state);
-  },
-  onRoleChange: (role) => {
-    console.log("Role changed:", role);
-  },
+	// ...
+	onError: (err) => {
+		console.error("CB Error:", err);
+	},
+	onStateChange: (state) => {
+		console.log("State changed:", state);
+	},
+	onRoleChange: (role) => {
+		console.log("Role changed:", role);
+	},
 });
 ```
 

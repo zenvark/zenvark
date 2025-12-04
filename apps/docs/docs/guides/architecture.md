@@ -81,6 +81,7 @@ For a deeper dive into how Redis Streams facilitate real-time data processing an
 ### 1. Single Source of Truth
 
 Redis serves as the single source of truth for:
+
 - Circuit state (OPEN/CLOSED)
 - Leader election status
 - Call result events
@@ -123,7 +124,6 @@ Redis serves as the single source of truth for:
 - Call results are written to Redis asynchronously
 - State updates pushed via Redis pub/sub
 - Health checks only performed by leader
-
 
 ## Fault Tolerance
 

@@ -33,7 +33,6 @@ Configuration object for the circuit breaker.
 - **`health`** `HealthConfig`
 
   Configuration for health checks while the circuit is in the `OPEN` state.
-
   - **`backoff`** `BackoffStrategy` - Strategy for delays between health check retries. See [Backoff Strategies](../strategies/backoff-strategies.md).
   - **`check`** `(type: HealthCheckType, signal: AbortSignal) => Promise<void>` - Async function that executes the health check. Must throw an `Error` on failure. The `signal` should be respected for early cancellation.
   - **`idleProbeIntervalMs`** `number` (optional) - Interval in milliseconds for idle health checks when circuit is closed and inactive.
@@ -47,7 +46,6 @@ Configuration object for the circuit breaker.
 - **`onStateChange`** `(state: CircuitState) => void`
 
   Notified when the circuit transitions to a new state (`open` or `closed`).
-
   - Triggered for both self-initiated and cross-instance updates
   - Not called during initial state load on `start()`
   - Only called when state actually changes
@@ -56,7 +54,6 @@ Configuration object for the circuit breaker.
 - **`onRoleChange`** `(role: CircuitRole) => void`
 
   Notified when this instance's leader election role changes (`leader` or `follower`).
-
   - Not called during initial role evaluation on `start()`
   - Only called when role actually changes
   - Useful for logging
@@ -74,6 +71,7 @@ start(): Promise<void>
 ```
 
 Starts the circuit breaker and its internal coordination mechanisms, including:
+
 - Redis stream subscriptions for distributed state coordination
 - Leader election process
 - Event processing for call results
@@ -87,6 +85,7 @@ stop(): Promise<void>
 ```
 
 Stops the circuit breaker and cleans up all resources, including:
+
 - Redis stream subscriptions
 - Leader election cleanup
 - Health check loop cancellation

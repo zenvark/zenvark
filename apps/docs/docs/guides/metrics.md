@@ -24,14 +24,14 @@ import { PrometheusBreakerMetrics } from "@zenvark/prom";
 import { register } from "prom-client";
 
 const metrics = new PrometheusBreakerMetrics({
-  register,
-  customLabels: { service: "my-api" },
+	register,
+	customLabels: { service: "my-api" },
 });
 
 const circuitBreaker = new CircuitBreaker({
-  id: "my-service-api",
-  // ... other config
-  metrics,
+	id: "my-service-api",
+	// ... other config
+	metrics,
 });
 ```
 
@@ -44,8 +44,8 @@ import { register } from "prom-client";
 const app = express();
 
 app.get("/metrics", async (req, res) => {
-  res.set("Content-Type", register.contentType);
-  res.end(await register.metrics());
+	res.set("Content-Type", register.contentType);
+	res.end(await register.metrics());
 });
 
 app.listen(9090);
@@ -62,11 +62,13 @@ app.listen(9090);
 **Description:** Duration of protected calls in seconds
 
 **Labels:**
+
 - `breaker_id` - The unique identifier for the circuit breaker
 - `result` - The outcome of the call (`success` or `failure`)
 - Custom labels (if configured)
 
 **Example:**
+
 ```
 zenvark_call_duration_seconds_bucket{breaker_id="payment-api",result="success",service="my-api",le="0.005"} 45
 zenvark_call_duration_seconds_bucket{breaker_id="payment-api",result="success",service="my-api",le="0.01"} 78
@@ -83,10 +85,12 @@ zenvark_call_duration_seconds_count{breaker_id="payment-api",result="success",se
 **Description:** Total number of requests blocked by the circuit breaker when the circuit is open
 
 **Labels:**
+
 - `breaker_id` - The unique identifier for the circuit breaker
 - Custom labels (if configured)
 
 **Example:**
+
 ```
 zenvark_blocked_requests_total{breaker_id="payment-api",service="my-api"} 42
 ```
@@ -100,12 +104,14 @@ zenvark_blocked_requests_total{breaker_id="payment-api",service="my-api"} 42
 **Description:** Duration of health check attempts in seconds
 
 **Labels:**
+
 - `breaker_id` - The unique identifier for the circuit breaker
 - `type` - The type of health check (`recovery` or `idle`)
 - `result` - The outcome of the health check (`success` or `failure`)
 - Custom labels (if configured)
 
 **Example:**
+
 ```
 zenvark_healthcheck_duration_seconds_bucket{breaker_id="payment-api",type="recovery",result="success",service="my-api",le="0.1"} 5
 zenvark_healthcheck_duration_seconds_sum{breaker_id="payment-api",type="recovery",result="success",service="my-api"} 0.45
@@ -120,20 +126,22 @@ The unique identifier for the circuit breaker instance as defined in the configu
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-  id: "payment-gateway-stripe", // This becomes the breaker_id label
-  // ...
+	id: "payment-gateway-stripe", // This becomes the breaker_id label
+	// ...
 });
 ```
 
 ### result
 
 Indicates the outcome of a call or health check:
+
 - `success` - Operation completed successfully
 - `failure` - Operation failed
 
 ### type
 
 The type of health check performed:
+
 - `recovery` - Health check while circuit is open, attempting to recover
 - `idle` - Proactive health check while circuit is closed and idle
 
@@ -143,12 +151,12 @@ Additional key-value pairs provided in the metrics configuration:
 
 ```typescript
 const metrics = new PrometheusBreakerMetrics({
-  register,
-  customLabels: {
-    service: "my-api",
-    environment: "production",
-    region: "us-east-1",
-  },
+	register,
+	customLabels: {
+		service: "my-api",
+		environment: "production",
+		region: "us-east-1",
+	},
 });
 ```
 
@@ -160,21 +168,21 @@ You can implement custom metrics by implementing the `BreakerMetrics` interface:
 import { BreakerMetrics, CallResult, HealthCheckResult } from "zenvark";
 
 class CustomMetrics implements BreakerMetrics {
-  recordCall(result: CallResult): void {
-    // Your custom implementation
-  }
+	recordCall(result: CallResult): void {
+		// Your custom implementation
+	}
 
-  recordBlockedRequest(): void {
-    // Your custom implementation
-  }
+	recordBlockedRequest(): void {
+		// Your custom implementation
+	}
 
-  recordHealthCheck(result: HealthCheckResult): void {
-    // Your custom implementation
-  }
+	recordHealthCheck(result: HealthCheckResult): void {
+		// Your custom implementation
+	}
 }
 
 const circuitBreaker = new CircuitBreaker({
-  // ...
-  metrics: new CustomMetrics(),
+	// ...
+	metrics: new CustomMetrics(),
 });
 ```

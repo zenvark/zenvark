@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'apps/docs/**'
-      - '.github/workflows/deploy-docs.yml'
+      - "apps/docs/**"
+      - ".github/workflows/deploy-docs.yml"
 
 concurrency:
   group: pages
@@ -37,7 +37,7 @@ jobs:
         run: npm ci
 
       - name: Build Documentation
-        run: npm run build --workspace=docs
+        run: npm run build --workspace=apps-docs
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5
