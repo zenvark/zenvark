@@ -71,8 +71,7 @@ const FeatureList: FeatureItem[] = [
     description: (
       <>
         Battle-tested patterns with proper error handling, graceful shutdown,
-        and comprehensive documentation. Includes an interactive terminal UI
-        for development and testing.
+        and comprehensive documentation.
       </>
     ),
   },
