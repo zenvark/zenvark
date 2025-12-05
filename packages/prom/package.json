@@ -1,6 +1,6 @@
 {
 	"name": "@zenvark/prom",
-	"version": "0.0.1",
+	"version": "1.0.0",
 	"description": "Prometheus metrics for Zenvark Circuit Breaker",
 	"keywords": [
 		"zenvark",
@@ -53,10 +53,10 @@
 		"rimraf": "^6.0.1",
 		"typescript": "5.9.3",
 		"vitest": "^4.0.15",
-		"zenvark": "^0.0.1"
+		"zenvark": "^1.0.0"
 	},
 	"peerDependencies": {
 		"prom-client": "^15.0.0",
-		"zenvark": "^0.0.1"
+		"zenvark": "^1.0.0"
 	}
 }
