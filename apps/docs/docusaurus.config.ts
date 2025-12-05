@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 export default {
 	title: 'Zenvark',
 	url: 'https://zenvark.github.io',
-	baseUrl: '/',
+	baseUrl: '/zenvark/',
 	future: {
 		v4: true,
 	},
