@@ -1,15 +1,15 @@
-# zenvark
+# Zenvark
 
 A robust distributed circuit breaker, coordinated via Redis, designed for high-availability applications.
 
 ## Features
 
-- **Distributed Coordination** - Multiple instances coordinate via Redis Streams
-- **Multiple Breaker Strategies** - Consecutive, count-based, and time-based sampling
-- **Flexible Backoff Strategies** - Constant or exponential delays
-- **Leader Election** - Single instance manages health checks and state transitions
-- **Event-Driven** - Real-time coordination powered by Redis Streams
-- **Prometheus Metrics** - Built-in observability with [@zenvark/prom](https://www.npmjs.com/package/@zenvark/prom)
+- 🌐 **Distributed Coordination** - Multiple instances coordinate via Redis Streams
+- ⚙️ **Multiple Breaker Strategies** - Consecutive, count-based, and time-based sampling
+- ⏱️ **Flexible Backoff Strategies** - Constant or exponential delays
+- 👑 **Leader Election** - Single instance manages health checks and state transitions
+- ⚡ **Event-Driven** - Real-time coordination powered by Redis Streams
+- 📊 **Prometheus Metrics** - Built-in observability with [@zenvark/prom](https://www.npmjs.com/package/@zenvark/prom)
 
 ## Installation
 
@@ -64,7 +64,7 @@ await circuitBreaker.stop();
 
 - Node.js 22.x or higher
 - Redis 6.0 or higher (Redis Streams support required)
--
+
 ## Documentation
 
 **Full documentation:** [https://zenvark.github.io/zenvark/](https://zenvark.github.io/zenvark/)
