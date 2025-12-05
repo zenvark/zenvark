@@ -72,8 +72,8 @@ export default {
 							to: '/docs',
 						},
 						{
-							label: 'Installation',
-							to: '/docs/getting-started#installation',
+							label: 'Getting Started',
+							to: '/docs/getting-started',
 						},
 					],
 				},
