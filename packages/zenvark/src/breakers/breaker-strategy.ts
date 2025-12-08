@@ -5,10 +5,10 @@ import type { CallResultEvent } from '../types.ts';
  * based on call result events
  */
 export interface BreakerStrategy {
-	/**
-	 * Check whether the circuit should open based on recent events.
-	 * @param events Array of CallResultEvent (ordered from oldest to newest)
-	 * @returns boolean indicating if circuit should open
-	 */
-	shouldOpenCircuit(events: CallResultEvent[]): boolean;
+  /**
+   * Check whether the circuit should open based on recent events.
+   * @param events Array of CallResultEvent (ordered from oldest to newest)
+   * @returns boolean indicating if circuit should open
+   */
+  shouldOpenCircuit(events: CallResultEvent[]): boolean;
 }

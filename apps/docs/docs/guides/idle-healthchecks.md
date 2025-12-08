@@ -23,9 +23,9 @@ Enable idle healthchecks by setting the `idleProbeIntervalMs` option:
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-	health: {
-		idleProbeIntervalMs: 30_000, // Check every 30 seconds when idle
-	},
+  health: {
+    idleProbeIntervalMs: 30_000, // Check every 30 seconds when idle
+  },
 });
 ```
 
@@ -76,20 +76,20 @@ You can route to different health endpoints based on the type:
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-	// ...
-	health: {
-		backoff: new ExponentialBackoff({ initialDelayMs: 1000, multiplier: 2 }),
-		async check(type: HealthCheckType, signal: AbortSignal) {
-			if (type === HealthCheckType.RECOVERY) {
-				// More thorough check during recovery
-				await fetch("https://api.example.com/health/deep", { signal });
-			} else {
-				// Lightweight check during idle
-				await fetch("https://api.example.com/health", { signal });
-			}
-		},
-		idleProbeIntervalMs: 30_000,
-	},
+  // ...
+  health: {
+    backoff: new ExponentialBackoff({ initialDelayMs: 1000, multiplier: 2 }),
+    async check(type: HealthCheckType, signal: AbortSignal) {
+      if (type === HealthCheckType.RECOVERY) {
+        // More thorough check during recovery
+        await fetch("https://api.example.com/health/deep", { signal });
+      } else {
+        // Lightweight check during idle
+        await fetch("https://api.example.com/health", { signal });
+      }
+    },
+    idleProbeIntervalMs: 30_000,
+  },
 });
 ```
 
@@ -112,14 +112,14 @@ To disable idle healthchecks, simply omit the `idleProbeIntervalMs` option:
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-	// ...
-	health: {
-		backoff: new ConstantBackoff({ delayMs: 5000 }),
-		async check(type, signal) {
-			// Only called during recovery (when circuit is OPEN)
-			await healthCheck(signal);
-		},
-		// No idleProbeIntervalMs - idle checks disabled
-	},
+  // ...
+  health: {
+    backoff: new ConstantBackoff({ delayMs: 5000 }),
+    async check(type, signal) {
+      // Only called during recovery (when circuit is OPEN)
+      await healthCheck(signal);
+    },
+    // No idleProbeIntervalMs - idle checks disabled
+  },
 });
 ```

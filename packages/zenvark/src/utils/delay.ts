@@ -12,14 +12,14 @@ import { isNativeError } from 'node:util/types';
  * @returns A promise that resolves to `void` after the delay or if aborted.
  */
 export const delay = async (
-	ms: number,
-	abortSignal?: AbortSignal,
+  ms: number,
+  abortSignal?: AbortSignal,
 ): Promise<void> => {
-	try {
-		await setTimeoutAsync(ms, undefined, { signal: abortSignal });
-	} catch (err) {
-		if (!isNativeError(err) || err.name !== 'AbortError') {
-			throw err;
-		}
-	}
+  try {
+    await setTimeoutAsync(ms, undefined, { signal: abortSignal });
+  } catch (err) {
+    if (!isNativeError(err) || err.name !== 'AbortError') {
+      throw err;
+    }
+  }
 };

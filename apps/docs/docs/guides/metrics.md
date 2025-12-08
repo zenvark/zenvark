@@ -24,14 +24,14 @@ import { PrometheusBreakerMetrics } from "@zenvark/prom";
 import { register } from "prom-client";
 
 const metrics = new PrometheusBreakerMetrics({
-	register,
-	customLabels: { service: "my-api" },
+  register,
+  customLabels: { service: "my-api" },
 });
 
 const circuitBreaker = new CircuitBreaker({
-	id: "my-service-api",
-	// ... other config
-	metrics,
+  id: "my-service-api",
+  // ... other config
+  metrics,
 });
 ```
 
@@ -44,8 +44,8 @@ import { register } from "prom-client";
 const app = express();
 
 app.get("/metrics", async (req, res) => {
-	res.set("Content-Type", register.contentType);
-	res.end(await register.metrics());
+  res.set("Content-Type", register.contentType);
+  res.end(await register.metrics());
 });
 
 app.listen(9090);
@@ -126,8 +126,8 @@ The unique identifier for the circuit breaker instance as defined in the configu
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-	id: "payment-gateway-stripe", // This becomes the breaker_id label
-	// ...
+  id: "payment-gateway-stripe", // This becomes the breaker_id label
+  // ...
 });
 ```
 
@@ -151,12 +151,12 @@ Additional key-value pairs provided in the metrics configuration:
 
 ```typescript
 const metrics = new PrometheusBreakerMetrics({
-	register,
-	customLabels: {
-		service: "my-api",
-		environment: "production",
-		region: "us-east-1",
-	},
+  register,
+  customLabels: {
+    service: "my-api",
+    environment: "production",
+    region: "us-east-1",
+  },
 });
 ```
 
@@ -168,21 +168,21 @@ You can implement custom metrics by implementing the `BreakerMetrics` interface:
 import { BreakerMetrics, CallResult, HealthCheckResult } from "zenvark";
 
 class CustomMetrics implements BreakerMetrics {
-	recordCall(result: CallResult): void {
-		// Your custom implementation
-	}
+  recordCall(result: CallResult): void {
+    // Your custom implementation
+  }
 
-	recordBlockedRequest(): void {
-		// Your custom implementation
-	}
+  recordBlockedRequest(): void {
+    // Your custom implementation
+  }
 
-	recordHealthCheck(result: HealthCheckResult): void {
-		// Your custom implementation
-	}
+  recordHealthCheck(result: HealthCheckResult): void {
+    // Your custom implementation
+  }
 }
 
 const circuitBreaker = new CircuitBreaker({
-	// ...
-	metrics: new CustomMetrics(),
+  // ...
+  metrics: new CustomMetrics(),
 });
 ```

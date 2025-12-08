@@ -3,10 +3,10 @@ import type { CallResultEvent } from '../types.ts';
 import type { BreakerStrategy } from './breaker-strategy.ts';
 
 export interface ConsecutiveBreakerOptions {
-	/**
-	 * The number of consecutive failures required to open the circuit
-	 */
-	threshold: number;
+  /**
+   * The number of consecutive failures required to open the circuit
+   */
+  threshold: number;
 }
 
 /**
@@ -14,21 +14,21 @@ export interface ConsecutiveBreakerOptions {
  * of consecutive failures.
  */
 export class ConsecutiveBreaker implements BreakerStrategy {
-	private readonly threshold: number;
+  private readonly threshold: number;
 
-	constructor(options: ConsecutiveBreakerOptions) {
-		this.threshold = options.threshold;
-	}
+  constructor(options: ConsecutiveBreakerOptions) {
+    this.threshold = options.threshold;
+  }
 
-	shouldOpenCircuit(events: CallResultEvent[]): boolean {
-		if (events.length < this.threshold) {
-			return false;
-		}
+  shouldOpenCircuit(events: CallResultEvent[]): boolean {
+    if (events.length < this.threshold) {
+      return false;
+    }
 
-		const recentEvents = events.slice(-this.threshold);
+    const recentEvents = events.slice(-this.threshold);
 
-		return recentEvents.every(
-			(event) => event.callResult === CallResult.FAILURE,
-		);
-	}
+    return recentEvents.every(
+      (event) => event.callResult === CallResult.FAILURE,
+    );
+  }
 }

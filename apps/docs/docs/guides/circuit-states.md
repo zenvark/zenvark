@@ -72,14 +72,14 @@ The circuit closes when a health check succeeds, indicating the service has reco
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-	// ...
-	onStateChange: (state) => {
-		if (state === CircuitState.OPEN) {
-			logger.error("Circuit opened - service degraded");
-		} else {
-			logger.info("Circuit closed - service recovered");
-		}
-	},
+  // ...
+  onStateChange: (state) => {
+    if (state === CircuitState.OPEN) {
+      logger.error("Circuit opened - service degraded");
+    } else {
+      logger.info("Circuit closed - service recovered");
+    }
+  },
 });
 ```
 
@@ -90,7 +90,7 @@ const circuitBreaker = new CircuitBreaker({
 const currentState = circuitBreaker.state;
 
 if (currentState === CircuitState.OPEN) {
-	// Use fallback, cached data, or default response
-	return getCachedData();
+  // Use fallback, cached data, or default response
+  return getCachedData();
 }
 ```
