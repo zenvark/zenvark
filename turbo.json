@@ -1,18 +1,18 @@
 {
-	"$schema": "./node_modules/turbo/schema.json",
-	"tasks": {
-		"build": {
-			"dependsOn": ["^build"],
-			"outputs": ["dist/**", "build/**"]
-		},
-		"lint": {
-			"dependsOn": ["^build"]
-		},
-		"lint:fix": {
-			"dependsOn": ["^build"]
-		},
-		"test:ci": {
-			"dependsOn": ["^build"]
-		}
-	}
+  "$schema": "./node_modules/turbo/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "build/**"]
+    },
+    "lint": {
+      "dependsOn": ["^build"]
+    },
+    "lint:fix": {
+      "dependsOn": ["^build"]
+    },
+    "test:ci": {
+      "dependsOn": ["^build"]
+    }
+  }
 }

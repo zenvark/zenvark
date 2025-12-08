@@ -1,63 +1,63 @@
 {
-	"name": "zenvark",
-	"version": "1.0.0",
-	"description": "A distributed circuit breaker coordinated via Redis for high-availability applications",
-	"keywords": [
-		"zenvark",
-		"circuit",
-		"breaker",
-		"circuit-breaker",
-		"redis",
-		"distributed"
-	],
-	"type": "module",
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/zenvark/zenvark.git",
-		"directory": "packages/zenvark"
-	},
-	"homepage": "https://github.com/zenvark/zenvark#readme",
-	"bugs": {
-		"url": "https://github.com/zenvark/zenvark/issues"
-	},
-	"engines": {
-		"node": ">=22"
-	},
-	"files": [
-		"dist"
-	],
-	"main": "dist/index.js",
-	"exports": {
-		".": "./dist/index.js",
-		"./package.json": "./package.json"
-	},
-	"publishConfig": {
-		"access": "public"
-	},
-	"scripts": {
-		"build": "rimraf dist && tsc -p tsconfig.build.json",
-		"docker:start:dev": "docker compose up -d",
-		"docker:stop:dev": "docker compose down",
-		"lint": "biome check . && tsc",
-		"lint:fix": "biome check --write",
-		"test": "vitest",
-		"test:coverage": "vitest --coverage",
-		"pretest:ci": "npm run docker:start:dev",
-		"test:ci": "npm run test:coverage",
-		"posttest:ci": "npm run docker:stop:dev"
-	},
-	"devDependencies": {
-		"@lokalise/tsconfig": "^3.0.0",
-		"@types/node": "^24.10.1",
-		"@vitest/coverage-v8": "^4.0.15",
-		"rimraf": "^6.0.1",
-		"typescript": "5.9.3",
-		"vitest": "^4.0.15"
-	},
-	"dependencies": {
-		"@lokalise/node-core": "^14.1.0",
-		"ioredis": "^5.8.1",
-		"redis-semaphore": "^5.6.2"
-	}
+  "name": "zenvark",
+  "version": "1.0.0",
+  "description": "A distributed circuit breaker coordinated via Redis for high-availability applications",
+  "keywords": [
+    "zenvark",
+    "circuit",
+    "breaker",
+    "circuit-breaker",
+    "redis",
+    "distributed"
+  ],
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zenvark/zenvark.git",
+    "directory": "packages/zenvark"
+  },
+  "homepage": "https://github.com/zenvark/zenvark#readme",
+  "bugs": {
+    "url": "https://github.com/zenvark/zenvark/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "docker:start:dev": "docker compose up -d",
+    "docker:stop:dev": "docker compose down",
+    "lint": "biome check . && tsc",
+    "lint:fix": "biome check --write",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "pretest:ci": "npm run docker:start:dev",
+    "test:ci": "npm run test:coverage",
+    "posttest:ci": "npm run docker:stop:dev"
+  },
+  "devDependencies": {
+    "@lokalise/tsconfig": "^3.0.0",
+    "@types/node": "^24.10.1",
+    "@vitest/coverage-v8": "^4.0.15",
+    "rimraf": "^6.0.1",
+    "typescript": "5.9.3",
+    "vitest": "^4.0.15"
+  },
+  "dependencies": {
+    "@lokalise/node-core": "^14.1.0",
+    "ioredis": "^5.8.1",
+    "redis-semaphore": "^5.6.2"
+  }
 }

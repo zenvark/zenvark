@@ -93,16 +93,16 @@ Enable detailed logging:
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-	// ...
-	onError: (err) => {
-		console.error("CB Error:", err);
-	},
-	onStateChange: (state) => {
-		console.log("State changed:", state);
-	},
-	onRoleChange: (role) => {
-		console.log("Role changed:", role);
-	},
+  // ...
+  onError: (err) => {
+    console.error("CB Error:", err);
+  },
+  onStateChange: (state) => {
+    console.log("State changed:", state);
+  },
+  onRoleChange: (role) => {
+    console.log("Role changed:", role);
+  },
 });
 ```
 

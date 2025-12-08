@@ -1,62 +1,62 @@
 {
-	"name": "@zenvark/prom",
-	"version": "1.0.0",
-	"description": "Prometheus metrics for Zenvark Circuit Breaker",
-	"keywords": [
-		"zenvark",
-		"circuit",
-		"breaker",
-		"circuit-breaker",
-		"prometheus",
-		"metrics",
-		"monitoring",
-		"observability"
-	],
-	"license": "MIT",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/zenvark/zenvark.git",
-		"directory": "packages/prom"
-	},
-	"homepage": "https://github.com/zenvark/zenvark#readme",
-	"bugs": {
-		"url": "https://github.com/zenvark/zenvark/issues"
-	},
-	"engines": {
-		"node": ">=22"
-	},
-	"files": [
-		"dist"
-	],
-	"type": "module",
-	"main": "dist/index.js",
-	"exports": {
-		".": "./dist/index.js",
-		"./package.json": "./package.json"
-	},
-	"publishConfig": {
-		"access": "public"
-	},
-	"scripts": {
-		"build": "rimraf dist && tsc -p tsconfig.build.json",
-		"lint": "biome check . && tsc",
-		"lint:fix": "biome check --write",
-		"test": "vitest",
-		"test:coverage": "npm test -- --coverage",
-		"test:ci": "npm run test:coverage"
-	},
-	"devDependencies": {
-		"@lokalise/tsconfig": "^3.0.0",
-		"@types/node": "^24.10.1",
-		"@vitest/coverage-v8": "^4.0.15",
-		"prom-client": "^15.0.0",
-		"rimraf": "^6.0.1",
-		"typescript": "5.9.3",
-		"vitest": "^4.0.15",
-		"zenvark": "^1.0.0"
-	},
-	"peerDependencies": {
-		"prom-client": "^15.0.0",
-		"zenvark": "^1.0.0"
-	}
+  "name": "@zenvark/prom",
+  "version": "1.0.0",
+  "description": "Prometheus metrics for Zenvark Circuit Breaker",
+  "keywords": [
+    "zenvark",
+    "circuit",
+    "breaker",
+    "circuit-breaker",
+    "prometheus",
+    "metrics",
+    "monitoring",
+    "observability"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zenvark/zenvark.git",
+    "directory": "packages/prom"
+  },
+  "homepage": "https://github.com/zenvark/zenvark#readme",
+  "bugs": {
+    "url": "https://github.com/zenvark/zenvark/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "lint": "biome check . && tsc",
+    "lint:fix": "biome check --write",
+    "test": "vitest",
+    "test:coverage": "npm test -- --coverage",
+    "test:ci": "npm run test:coverage"
+  },
+  "devDependencies": {
+    "@lokalise/tsconfig": "^3.0.0",
+    "@types/node": "^24.10.1",
+    "@vitest/coverage-v8": "^4.0.15",
+    "prom-client": "^15.0.0",
+    "rimraf": "^6.0.1",
+    "typescript": "5.9.3",
+    "vitest": "^4.0.15",
+    "zenvark": "^1.0.0"
+  },
+  "peerDependencies": {
+    "prom-client": "^15.0.0",
+    "zenvark": "^1.0.0"
+  }
 }

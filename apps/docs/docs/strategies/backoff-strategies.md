@@ -10,13 +10,13 @@ Backoff strategies are stateless and immutable. They implement the following int
 
 ```typescript
 export interface BackoffStrategy {
-	/**
-	 * Calculates the delay in milliseconds before the specified attempt.
-	 *
-	 * @param attempt - The attempt number, starting from 1.
-	 * @returns The delay in milliseconds to wait before this attempt.
-	 */
-	getDelayMs(attempt: number): number;
+  /**
+   * Calculates the delay in milliseconds before the specified attempt.
+   *
+   * @param attempt - The attempt number, starting from 1.
+   * @returns The delay in milliseconds to wait before this attempt.
+   */
+  getDelayMs(attempt: number): number;
 }
 ```
 
@@ -42,7 +42,7 @@ new ConstantBackoff({
 import { ConstantBackoff } from "zenvark";
 
 const backoff = new ConstantBackoff({
-	delayMs: 5000, // Wait 5 seconds between each attempt
+  delayMs: 5000, // Wait 5 seconds between each attempt
 });
 ```
 
@@ -84,9 +84,9 @@ new ExponentialBackoff({
 import { ExponentialBackoff } from "zenvark";
 
 const backoff = new ExponentialBackoff({
-	initialDelayMs: 1000, // Start with 1 second
-	multiplier: 2, // Double the delay each time
-	maxDelayMs: 30000, // Cap at 30 seconds
+  initialDelayMs: 1000, // Start with 1 second
+  multiplier: 2, // Double the delay each time
+  maxDelayMs: 30000, // Cap at 30 seconds
 });
 ```
 
@@ -155,28 +155,28 @@ You can implement your own backoff strategy by implementing the `BackoffStrategy
 import { BackoffStrategy } from "zenvark";
 
 class FibonacciBackoff implements BackoffStrategy {
-	constructor(private baseDelayMs: number) {}
+  constructor(private baseDelayMs: number) {}
 
-	getDelayMs(attempt: number): number {
-		return this.fibonacci(attempt) * this.baseDelayMs;
-	}
+  getDelayMs(attempt: number): number {
+    return this.fibonacci(attempt) * this.baseDelayMs;
+  }
 
-	private fibonacci(n: number): number {
-		if (n <= 1) return 1;
-		let a = 1,
-			b = 1;
-		for (let i = 2; i < n; i++) {
-			[a, b] = [b, a + b];
-		}
-		return b;
-	}
+  private fibonacci(n: number): number {
+    if (n <= 1) return 1;
+    let a = 1,
+      b = 1;
+    for (let i = 2; i < n; i++) {
+      [a, b] = [b, a + b];
+    }
+    return b;
+  }
 }
 
 const circuitBreaker = new CircuitBreaker({
-	// ...
-	health: {
-		backoff: new FibonacciBackoff(1000),
-		// ...
-	},
+  // ...
+  health: {
+    backoff: new FibonacciBackoff(1000),
+    // ...
+  },
 });
 ```

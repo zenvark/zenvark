@@ -28,47 +28,47 @@ Here's a complete example showing how to set up and use a circuit breaker:
 import { Redis } from "ioredis";
 import { register } from "prom-client";
 import {
-	CircuitBreaker,
-	ConsecutiveBreaker,
-	ConstantBackoff,
-	CircuitOpenError,
-	HealthCheckType,
+  CircuitBreaker,
+  ConsecutiveBreaker,
+  ConstantBackoff,
+  CircuitOpenError,
+  HealthCheckType,
 } from "zenvark";
 import { PrometheusBreakerMetrics } from "@zenvark/prom";
 
 const redis = new Redis("redis://localhost:6379");
 
 const circuitBreaker = new CircuitBreaker({
-	id: "my-service-api", // Unique ID for this circuit breaker
-	redis,
-	breaker: new ConsecutiveBreaker({ threshold: 5 }), // Open after 5 consecutive failures
-	health: {
-		backoff: new ConstantBackoff({ delayMs: 5000 }), // Wait 5 seconds between health checks
-		async check(type: HealthCheckType, signal: AbortSignal) {
-			// Your health check logic
-			const response = await fetch("https://api.example.com/health", {
-				signal,
-			});
-			if (!response.ok) throw new Error("Health check failed");
-		},
-		idleProbeIntervalMs: 30_000, // Run first probe 30s after last call, then every 30s while idle
-	},
-	onError(err: Error) {
-		// Handle or log internal circuit breaker errors here to prevent unhandled exceptions.
-		console.error("Circuit Breaker Internal Error:", err);
-	},
-	onRoleChange(role) {
-		// Observe leader election role changes: 'leader' | 'follower'
-		console.log("Circuit role changed to", role);
-	},
-	onStateChange(state) {
-		// Observe state transitions across the cluster: 'open' | 'closed'
-		console.log("Circuit state changed to", state);
-	},
-	metrics: new PrometheusBreakerMetrics({
-		register, // Prometheus registry instance
-		customLabels: { service: "my-api" }, // Add custom labels to your metrics
-	}),
+  id: "my-service-api", // Unique ID for this circuit breaker
+  redis,
+  breaker: new ConsecutiveBreaker({ threshold: 5 }), // Open after 5 consecutive failures
+  health: {
+    backoff: new ConstantBackoff({ delayMs: 5000 }), // Wait 5 seconds between health checks
+    async check(type: HealthCheckType, signal: AbortSignal) {
+      // Your health check logic
+      const response = await fetch("https://api.example.com/health", {
+        signal,
+      });
+      if (!response.ok) throw new Error("Health check failed");
+    },
+    idleProbeIntervalMs: 30_000, // Run first probe 30s after last call, then every 30s while idle
+  },
+  onError(err: Error) {
+    // Handle or log internal circuit breaker errors here to prevent unhandled exceptions.
+    console.error("Circuit Breaker Internal Error:", err);
+  },
+  onRoleChange(role) {
+    // Observe leader election role changes: 'leader' | 'follower'
+    console.log("Circuit role changed to", role);
+  },
+  onStateChange(state) {
+    // Observe state transitions across the cluster: 'open' | 'closed'
+    console.log("Circuit state changed to", state);
+  },
+  metrics: new PrometheusBreakerMetrics({
+    register, // Prometheus registry instance
+    customLabels: { service: "my-api" }, // Add custom labels to your metrics
+  }),
 });
 
 // Start the circuit breaker and its internal coordination mechanisms
@@ -76,18 +76,18 @@ await circuitBreaker.start();
 
 // Execute operations protected by the circuit breaker
 try {
-	const result = await circuitBreaker.execute(async () => {
-		// Your potentially failing operation
-		return await fetch("http://api.example.com/data");
-	});
-	console.log("Success:", result);
+  const result = await circuitBreaker.execute(async () => {
+    // Your potentially failing operation
+    return await fetch("http://api.example.com/data");
+  });
+  console.log("Success:", result);
 } catch (err) {
-	// `instanceof` for CircuitOpenError works reliably across realms
-	if (err instanceof CircuitOpenError) {
-		// Circuit is currently open – skipping request
-	} else {
-		// Underlying operation failed
-	}
+  // `instanceof` for CircuitOpenError works reliably across realms
+  if (err instanceof CircuitOpenError) {
+    // Circuit is currently open – skipping request
+  } else {
+    // Underlying operation failed
+  }
 }
 
 // Clean up resources when your application shuts down
@@ -102,15 +102,15 @@ Create a circuit breaker instance with your desired configuration:
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-	id: "my-service-api",
-	redis,
-	breaker: new ConsecutiveBreaker({ threshold: 5 }),
-	health: {
-		backoff: new ConstantBackoff({ delayMs: 5000 }),
-		async check(type, signal) {
-			// Health check implementation
-		},
-	},
+  id: "my-service-api",
+  redis,
+  breaker: new ConsecutiveBreaker({ threshold: 5 }),
+  health: {
+    backoff: new ConstantBackoff({ delayMs: 5000 }),
+    async check(type, signal) {
+      // Health check implementation
+    },
+  },
 });
 ```
 
@@ -128,15 +128,15 @@ Wrap your operations with the circuit breaker:
 
 ```typescript
 try {
-	const result = await circuitBreaker.execute(async () => {
-		return await callExternalService();
-	});
+  const result = await circuitBreaker.execute(async () => {
+    return await callExternalService();
+  });
 } catch (err) {
-	if (err instanceof CircuitOpenError) {
-		// Handle blocked requests
-	} else {
-		// Handle operation failures
-	}
+  if (err instanceof CircuitOpenError) {
+    // Handle blocked requests
+  } else {
+    // Handle operation failures
+  }
 }
 ```
 
