@@ -1,6 +1,6 @@
-import type {ReactNode} from 'react';
-import clsx from 'clsx';
 import Heading from '@theme/Heading';
+import clsx from 'clsx';
+import type { ReactNode } from 'react';
 import styles from './styles.module.css';
 
 type FeatureItem = {
@@ -16,8 +16,8 @@ const FeatureList: FeatureItem[] = [
     description: (
       <>
         Multiple instances coordinate circuit state using Redis, ensuring
-        consistent behavior across your services. State changes propagate
-        in real-time to all instances.
+        consistent behavior across your services. State changes propagate in
+        real-time to all instances.
       </>
     ),
   },
@@ -37,9 +37,9 @@ const FeatureList: FeatureItem[] = [
     icon: '👑',
     description: (
       <>
-        Automatic leader election ensures a single instance manages health checks
-        and state transitions, preventing race conditions and reducing load on
-        protected services.
+        Automatic leader election ensures a single instance manages health
+        checks and state transitions, preventing race conditions and reducing
+        load on protected services.
       </>
     ),
   },
@@ -60,8 +60,8 @@ const FeatureList: FeatureItem[] = [
     description: (
       <>
         Native Prometheus metrics integration provides visibility into circuit
-        health, call durations, blocked requests, and health check results
-        out of the box.
+        health, call durations, blocked requests, and health check results out
+        of the box.
       </>
     ),
   },
@@ -77,7 +77,7 @@ const FeatureList: FeatureItem[] = [
   },
 ];
 
-function Feature({title, icon, description}: FeatureItem) {
+function Feature({ title, icon, description }: FeatureItem) {
   return (
     <div className={clsx('col col--4')}>
       <div className="text--center" style={{ fontSize: '4rem' }}>

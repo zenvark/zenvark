@@ -1,19 +1,16 @@
 {
-  "name": "apps-docs",
+  "name": "@apps/docs",
   "private": true,
-	"engines": {
-		"node": ">=22"
-	},
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "docusaurus": "docusaurus",
-    "start": "docusaurus start",
     "build": "docusaurus build",
-    "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
-    "clear": "docusaurus clear",
-    "serve": "docusaurus serve",
-    "write-translations": "docusaurus write-translations",
-    "write-heading-ids": "docusaurus write-heading-ids",
+    "dev": "docusaurus start",
+    "docker:start": "docker compose up -d",
+    "docker:stop": "docker compose down",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
     "typecheck": "tsc"
   },
   "dependencies": {
@@ -29,7 +26,7 @@
     "@docusaurus/module-type-aliases": "3.9.2",
     "@docusaurus/tsconfig": "3.9.2",
     "@docusaurus/types": "3.9.2",
-    "typescript": "~5.6.2"
+    "typescript": "5.9.3"
   },
   "browserslist": {
     "production": [

@@ -1,15 +1,15 @@
-import type {ReactNode} from 'react';
-import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
-import Layout from '@theme/Layout';
-import HomepageFeatures from '@site/src/components/HomepageFeatures';
 import Heading from '@theme/Heading';
+import Layout from '@theme/Layout';
+import clsx from 'clsx';
+import type { ReactNode } from 'react';
+import HomepageFeatures from '../components/HomepageFeatures';
 
 import styles from './index.module.css';
 
 function HomepageHeader() {
-  const {siteConfig} = useDocusaurusContext();
+  const { siteConfig } = useDocusaurusContext();
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
@@ -18,15 +18,14 @@ function HomepageHeader() {
         </Heading>
         <p className="hero__subtitle">{siteConfig.tagline}</p>
         <div className={styles.buttons}>
-          <Link
-            className="button button--secondary button--lg"
-            to="/docs">
+          <Link className="button button--secondary button--lg" to="/docs">
             Get Started
           </Link>
           <Link
             className="button button--outline button--lg"
             to="/docs/getting-started"
-            style={{ marginLeft: '1rem' }}>
+            style={{ marginLeft: '1rem' }}
+          >
             Quick Start
           </Link>
         </div>
@@ -36,11 +35,13 @@ function HomepageHeader() {
 }
 
 export default function Home(): ReactNode {
-  const {siteConfig} = useDocusaurusContext();
+  useDocusaurusContext();
+
   return (
     <Layout
       title="Distributed Circuit Breaker"
-      description="A robust distributed circuit breaker for high-availability applications, coordinated via Redis">
+      description="A robust distributed circuit breaker for high-availability applications, coordinated via Redis"
+    >
       <HomepageHeader />
       <main>
         <HomepageFeatures />

@@ -11,6 +11,9 @@
     "lint:fix": {
       "dependsOn": ["^build"]
     },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
     "test:ci": {
       "dependsOn": ["^build"]
     }

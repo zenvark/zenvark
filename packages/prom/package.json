@@ -18,7 +18,7 @@
     "url": "git+https://github.com/zenvark/zenvark.git",
     "directory": "packages/prom"
   },
-  "homepage": "https://github.com/zenvark/zenvark#readme",
+  "homepage": "https://zenvark.github.io/zenvark",
   "bugs": {
     "url": "https://github.com/zenvark/zenvark/issues"
   },
@@ -39,8 +39,9 @@
   },
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json",
-    "lint": "biome check . && tsc",
+    "lint": "biome check",
     "lint:fix": "biome check --write",
+    "typecheck": "tsc",
     "test": "vitest",
     "test:coverage": "npm test -- --coverage",
     "test:ci": "npm run test:coverage"
