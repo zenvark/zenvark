@@ -3,7 +3,7 @@
 	"changelog": "@changesets/cli/changelog",
 	"baseBranch": "main",
 	"commit": false,
-	"fixed": [["zenvark", "@zenvark/*", "!@zenvark/terminal-ui"]],
+	"fixed": [["zenvark", "@zenvark/*"]],
 	"access": "public",
 	"updateInternalDependencies": "patch",
 	"___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {

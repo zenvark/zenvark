@@ -1,7 +1,7 @@
 {
-    "extends": "@lokalise/tsconfig/tsc",
-    "compilerOptions": {
-        "jsx": "react-jsx"
-    },
-    "include": ["index.tsx"]
+  "extends": "@lokalise/tsconfig/tsc",
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  },
+  "include": ["index.tsx"]
 }

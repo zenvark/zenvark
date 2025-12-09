@@ -1,4 +1,4 @@
-import type {SidebarsConfig} from '@docusaurus/plugin-content-docs';
+import type { SidebarsConfig } from '@docusaurus/plugin-content-docs';
 
 const sidebars: SidebarsConfig = {
   tutorialSidebar: [
@@ -8,18 +8,13 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'API Reference',
       collapsed: false,
-      items: [
-        'api/circuit-breaker',
-      ],
+      items: ['api/circuit-breaker'],
     },
     {
       type: 'category',
       label: 'Strategies',
       collapsed: false,
-      items: [
-        'strategies/breaker-strategies',
-        'strategies/backoff-strategies',
-      ],
+      items: ['strategies/breaker-strategies', 'strategies/backoff-strategies'],
     },
     {
       type: 'category',
