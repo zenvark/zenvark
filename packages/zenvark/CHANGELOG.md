@@ -1,5 +1,11 @@
 # zenvark
 
+## 1.0.2
+
+### Patch Changes
+
+- 9999866: adjust package json config
+
 ## 1.0.1
 
 ### Patch Changes
