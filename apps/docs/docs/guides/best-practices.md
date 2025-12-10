@@ -48,7 +48,7 @@ const breakerId = "my-service-api";
 const circuitBreaker = new CircuitBreaker({
   id: breakerId,
   // ...
-  onError: (err) => {
+  onError: (err: Error) => {
     console.error("Circuit breaker error", {
       breakerId,
       cause: err,
