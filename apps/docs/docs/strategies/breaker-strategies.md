@@ -34,10 +34,12 @@ new ConsecutiveBreaker({
 ### Example
 
 ```typescript
-import { ConsecutiveBreaker } from "zenvark";
+import { CircuitBreaker, ConsecutiveBreaker } from "zenvark";
 
-const breaker = new ConsecutiveBreaker({
-  threshold: 3, // Open after 3 consecutive failures
+const circuitBreaker = new CircuitBreaker({
+  breaker: new ConsecutiveBreaker({
+    threshold: 3, // Open after 3 consecutive failures
+  }),
 });
 ```
 
@@ -166,7 +168,11 @@ Choose **SamplingBreaker** when:
 You can implement your own breaker strategy by implementing the `BreakerStrategy` interface:
 
 ```typescript
-import { BreakerStrategy, CallResultEvent } from "zenvark";
+import {
+  type BreakerStrategy,
+  type CallResultEvent,
+  CircuitBreaker,
+} from "zenvark";
 
 class CustomBreaker implements BreakerStrategy {
   shouldOpenCircuit(events: CallResultEvent[]): boolean {

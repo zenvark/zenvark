@@ -1,5 +1,5 @@
 ---
-sidebar_position: 10
+sidebar_position: 6
 ---
 
 # Development
@@ -11,11 +11,6 @@ Tools and resources for developing with Zenvark.
 For local development and demos, this package includes an Ink-based terminal UI that simulates two distributed circuit breaker instances coordinating via Redis.
 
 The simulator lets you trigger successes/failures, toggle health check outcomes, and observe leader election and state transitions in real time.
-
-### Prerequisites
-
-- Node.js 22.x or higher
-- Docker (for Redis)
 
 ### Starting the Simulator
 
@@ -92,15 +87,17 @@ npm run docker:stop
 Enable detailed logging:
 
 ```typescript
+import { CircuitBreaker, CircuitState, CircuitRole } from "zenvark";
+
 const circuitBreaker = new CircuitBreaker({
   // ...
-  onError: (err) => {
-    console.error("CB Error:", err);
+  onError: (err: Error) => {
+    console.error("Circuit breaker error:", err);
   },
-  onStateChange: (state) => {
+  onStateChange: (state: CircuitState) => {
     console.log("State changed:", state);
   },
-  onRoleChange: (role) => {
+  onRoleChange: (role: CircuitRole) => {
     console.log("Role changed:", role);
   },
 });

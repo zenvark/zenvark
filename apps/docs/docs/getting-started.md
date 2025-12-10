@@ -6,6 +6,12 @@ sidebar_position: 2
 
 This guide will help you get started with Zenvark in your application.
 
+## Prerequisites
+
+- **Node.js**: 22.x or higher
+- **Redis**: 6.0 or higher
+  - Redis Streams support required (available in Redis 5.0+, but 6.0+ recommended)
+
 ## Installation
 
 Install Zenvark and its dependencies:
@@ -33,6 +39,8 @@ import {
   ConstantBackoff,
   CircuitOpenError,
   HealthCheckType,
+  CircuitRole,
+  CircuitState,
 } from "zenvark";
 import { PrometheusBreakerMetrics } from "@zenvark/prom";
 
@@ -53,16 +61,16 @@ const circuitBreaker = new CircuitBreaker({
     },
     idleProbeIntervalMs: 30_000, // Run first probe 30s after last call, then every 30s while idle
   },
-  onError(err: Error) {
+  onError: (err: Error) => {
     // Handle or log internal circuit breaker errors here to prevent unhandled exceptions.
-    console.error("Circuit Breaker Internal Error:", err);
+    console.error("Circuit breaker error:", err);
   },
-  onRoleChange(role) {
-    // Observe leader election role changes: 'leader' | 'follower'
+  onRoleChange: (role: CircuitRole) => {
+    // Observe leader election role changes
     console.log("Circuit role changed to", role);
   },
-  onStateChange(state) {
-    // Observe state transitions across the cluster: 'open' | 'closed'
+  onStateChange: (state: CircuitState) => {
+    // Observe state transitions across the cluster
     console.log("Circuit state changed to", state);
   },
   metrics: new PrometheusBreakerMetrics({
@@ -78,7 +86,7 @@ await circuitBreaker.start();
 try {
   const result = await circuitBreaker.execute(async () => {
     // Your potentially failing operation
-    return await fetch("http://api.example.com/data");
+    return await fetch("https://api.example.com/data");
   });
   console.log("Success:", result);
 } catch (err) {
@@ -107,7 +115,7 @@ const circuitBreaker = new CircuitBreaker({
   breaker: new ConsecutiveBreaker({ threshold: 5 }),
   health: {
     backoff: new ConstantBackoff({ delayMs: 5000 }),
-    async check(type, signal) {
+    async check(type: HealthCheckType, signal: AbortSignal) {
       // Health check implementation
     },
   },

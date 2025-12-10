@@ -43,7 +43,7 @@ const circuitBreaker = new CircuitBreaker({
       if (!response.ok) throw new Error("Health check failed");
     },
   },
-  onError: (err) => console.error("Circuit Breaker Error:", err),
+  onError: (err) => console.error("Circuit breaker error:", err),
 });
 
 await circuitBreaker.start();

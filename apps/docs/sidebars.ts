@@ -6,9 +6,16 @@ const sidebars: SidebarsConfig = {
     'getting-started',
     {
       type: 'category',
-      label: 'API Reference',
+      label: 'Guides',
       collapsed: false,
-      items: ['api/circuit-breaker'],
+      items: [
+        'guides/architecture',
+        'guides/circuit-states',
+        'guides/healthchecks',
+        'guides/metrics',
+        'guides/best-practices',
+        'guides/development',
+      ],
     },
     {
       type: 'category',
@@ -18,17 +25,14 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Guides',
+      label: 'API Reference',
       collapsed: false,
       items: [
-        'guides/architecture',
-        'guides/metrics',
-        'guides/circuit-states',
-        'guides/idle-healthchecks',
-        'guides/best-practices',
+        'api/circuit-breaker',
+        'api/enums-and-errors',
+        'api/interfaces-and-types',
       ],
     },
-    'development',
   ],
 };
 

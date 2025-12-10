@@ -1,5 +1,5 @@
 ---
-sidebar_position: 2
+sidebar_position: 4
 ---
 
 # Metrics & Observability
@@ -162,21 +162,25 @@ const metrics = new PrometheusBreakerMetrics({
 
 ## Custom Metrics Implementation
 
-You can implement custom metrics by implementing the `BreakerMetrics` interface:
+You can implement custom metrics by implementing the `BreakerMetricsRecorder` interface:
 
 ```typescript
-import { BreakerMetrics, CallResult, HealthCheckResult } from "zenvark";
+import { BreakerMetricsRecorder, CallResult, HealthCheckResult } from "zenvark";
 
-class CustomMetrics implements BreakerMetrics {
-  recordCall(result: CallResult): void {
+class CustomMetrics implements BreakerMetricsRecorder {
+  initialize?(breakerId: string): void {
+    // Optional: Initialize metrics with breaker ID
+  }
+
+  recordCall(params: RecordCallParams): void {
     // Your custom implementation
   }
 
-  recordBlockedRequest(): void {
+  recordBlockedRequest(params: RecordBlockedRequestParams): void {
     // Your custom implementation
   }
 
-  recordHealthCheck(result: HealthCheckResult): void {
+  recordHealthCheck(params: RecordHealthCheckParams): void {
     // Your custom implementation
   }
 }
