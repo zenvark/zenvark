@@ -2,9 +2,9 @@
 sidebar_position: 2
 ---
 
-# Types & Errors
+# Enums & Errors
 
-This page documents the types, enums, and error classes exported by Zenvark.
+This page documents the enums and error classes exported by Zenvark.
 
 ## Errors
 
@@ -181,99 +181,3 @@ const circuitBreaker = new CircuitBreaker({
   },
 });
 ```
-
-## Interfaces & types
-
-### BreakerStrategy
-
-Interface for implementing custom breaker strategies.
-
-```typescript
-interface BreakerStrategy {
-  shouldOpenCircuit(events: CallResultEvent[]): boolean;
-}
-```
-
-See [Breaker Strategies](../strategies/breaker-strategies.md#custom-strategies) for implementation examples.
-
-### BackoffStrategy
-
-Interface for implementing custom backoff strategies.
-
-```typescript
-interface BackoffStrategy {
-  getDelayMs(attempt: number): number;
-}
-```
-
-See [Backoff Strategies](../strategies/backoff-strategies.md#custom-strategies) for implementation examples.
-
-### BreakerMetricsRecorder
-
-Interface for implementing custom metrics collection.
-
-```typescript
-interface BreakerMetricsRecorder {
-  initialize?(breakerId: string): void;
-  recordCall(params: RecordCallParams): void;
-  recordBlockedRequest(params: RecordBlockedRequestParams): void;
-  recordHealthCheck(params: RecordHealthCheckParams): void;
-}
-```
-
-See [Metrics & Observability](../guides/metrics.md#custom-metrics-implementation) for implementation examples.
-
-### CallResultEvent
-
-Represents a call execution event with timing and outcome information.
-
-```typescript
-type CallResultEvent = {
-  id: string;
-  callResult: CallResult;
-  timestamp: number;
-};
-```
-
-Used in breaker strategies to evaluate call history and determine if the circuit should open.
-
-### RecordCallParams
-
-Parameters for recording a call execution.
-
-```typescript
-type RecordCallParams = {
-  breakerId: string;
-  result: CallResult;
-  durationMs: number;
-};
-```
-
-Used by `BreakerMetricsRecorder.recordCall()` to record successful or failed calls.
-
-### RecordBlockedRequestParams
-
-Parameters for recording a blocked request.
-
-```typescript
-type RecordBlockedRequestParams = {
-  breakerId: string;
-};
-```
-
-Used by `BreakerMetricsRecorder.recordBlockedRequest()` when requests are blocked due to an open circuit.
-
-### RecordHealthCheckParams
-
-Parameters for recording a health check execution.
-
-```typescript
-type RecordHealthCheckParams = {
-  breakerId: string;
-  type: HealthCheckType;
-  result: CallResult;
-  durationMs: number;
-};
-```
-
-Used by `BreakerMetricsRecorder.recordHealthCheck()` to record health check attempts.

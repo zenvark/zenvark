@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# CircuitBreaker API Reference
+# CircuitBreaker
 
 The main class for creating and managing circuit breakers.
 

@@ -6,18 +6,6 @@ const sidebars: SidebarsConfig = {
     'getting-started',
     {
       type: 'category',
-      label: 'API Reference',
-      collapsed: false,
-      items: ['api/circuit-breaker', 'api/types-and-errors'],
-    },
-    {
-      type: 'category',
-      label: 'Strategies',
-      collapsed: false,
-      items: ['strategies/breaker-strategies', 'strategies/backoff-strategies'],
-    },
-    {
-      type: 'category',
       label: 'Guides',
       collapsed: false,
       items: [
@@ -27,6 +15,22 @@ const sidebars: SidebarsConfig = {
         'guides/metrics',
         'guides/best-practices',
         'guides/development',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Strategies',
+      collapsed: false,
+      items: ['strategies/breaker-strategies', 'strategies/backoff-strategies'],
+    },
+    {
+      type: 'category',
+      label: 'API Reference',
+      collapsed: false,
+      items: [
+        'api/circuit-breaker',
+        'api/enums-and-errors',
+        'api/interfaces-and-types',
       ],
     },
   ],
