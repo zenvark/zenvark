@@ -12,12 +12,6 @@ This page documents the types, enums, and error classes exported by Zenvark.
 
 Error thrown when attempting to execute a function while the circuit is open.
 
-#### Import
-
-```typescript
-import { CircuitOpenError } from "zenvark";
-```
-
 #### Usage
 
 ```typescript
@@ -59,12 +53,6 @@ if (err instanceof CircuitOpenError) {
 
 Represents the current state of the circuit breaker.
 
-#### Import
-
-```typescript
-import { CircuitState } from "zenvark";
-```
-
 #### Values
 
 - **`CircuitState.CLOSED`** - The circuit is closed and requests are allowed through
@@ -99,12 +87,6 @@ See [Circuit States](../guides/circuit-states.md) for more information.
 ### CircuitRole
 
 Represents the leader election role of a circuit breaker instance.
-
-#### Import
-
-```typescript
-import { CircuitRole } from "zenvark";
-```
 
 #### Values
 
@@ -141,12 +123,6 @@ See [Architecture](../guides/architecture.md#leader-election) for more informati
 
 Indicates the reason for a health check execution.
 
-#### Import
-
-```typescript
-import { HealthCheckType } from "zenvark";
-```
-
 #### Values
 
 - **`HealthCheckType.RECOVERY`** - Health check while circuit is open, attempting to recover
@@ -176,7 +152,37 @@ const circuitBreaker = new CircuitBreaker({
 
 See [Health Checks](../guides/healthchecks.md) for more information.
 
-## Interfaces
+---
+
+### CallResult
+
+Represents the outcome of a protected call execution.
+
+#### Values
+
+- **`CallResult.SUCCESS`** - The call completed successfully
+- **`CallResult.FAILURE`** - The call failed
+
+#### Usage
+
+```typescript
+import { CircuitBreaker, CallResult } from "zenvark";
+
+const circuitBreaker = new CircuitBreaker({
+  // ...
+  metrics: {
+    recordCall(params) {
+      if (params.result === CallResult.SUCCESS) {
+        console.log(`Success in ${params.durationMs}ms`);
+      } else {
+        console.log(`Failure in ${params.durationMs}ms`);
+      }
+    },
+  },
+});
+```
+
+## Interfaces & types
 
 ### BreakerStrategy
 
@@ -202,45 +208,72 @@ interface BackoffStrategy {
 
 See [Backoff Strategies](../strategies/backoff-strategies.md#custom-strategies) for implementation examples.
 
-### BreakerMetrics
+### BreakerMetricsRecorder
 
 Interface for implementing custom metrics collection.
 
 ```typescript
-interface BreakerMetrics {
-  recordCall(result: CallResult): void;
-  recordBlockedRequest(): void;
-  recordHealthCheck(result: HealthCheckResult): void;
+interface BreakerMetricsRecorder {
+  initialize?(breakerId: string): void;
+  recordCall(params: RecordCallParams): void;
+  recordBlockedRequest(params: RecordBlockedRequestParams): void;
+  recordHealthCheck(params: RecordHealthCheckParams): void;
 }
 ```
 
 See [Metrics & Observability](../guides/metrics.md#custom-metrics-implementation) for implementation examples.
 
-## Type Aliases
+### CallResultEvent
 
-### CallResult
-
-Represents the result of a protected call execution.
+Represents a call execution event with timing and outcome information.
 
 ```typescript
-type CallResult = {
-  success: boolean;
+type CallResultEvent = {
+  id: string;
+  callResult: CallResult;
+  timestamp: number;
+};
+```
+
+Used in breaker strategies to evaluate call history and determine if the circuit should open.
+
+### RecordCallParams
+
+Parameters for recording a call execution.
+
+```typescript
+type RecordCallParams = {
+  breakerId: string;
+  result: CallResult;
   durationMs: number;
 };
 ```
 
-Used in custom metrics implementations to record call outcomes.
+Used by `BreakerMetricsRecorder.recordCall()` to record successful or failed calls.
 
-### HealthCheckResult
+### RecordBlockedRequestParams
 
-Represents the result of a health check execution.
+Parameters for recording a blocked request.
 
 ```typescript
-type HealthCheckResult = {
+type RecordBlockedRequestParams = {
+  breakerId: string;
+};
+```
+
+Used by `BreakerMetricsRecorder.recordBlockedRequest()` when requests are blocked due to an open circuit.
+
+### RecordHealthCheckParams
+
+Parameters for recording a health check execution.
+
+```typescript
+type RecordHealthCheckParams = {
+  breakerId: string;
   type: HealthCheckType;
-  success: boolean;
+  result: CallResult;
   durationMs: number;
 };
 ```
 
-Used in custom metrics implementations to record health check outcomes.
+Used by `BreakerMetricsRecorder.recordHealthCheck()` to record health check attempts.
