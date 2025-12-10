@@ -23,7 +23,7 @@ When the circuit opens due to failures, the leader instance automatically begins
 
 ### Backoff Strategy
 
-Recovery health checks use a backoff strategy to control retry timing. See the [Backoff Strategies](/docs/strategies/backoff-strategies) guide for available options.
+Recovery health checks use a backoff strategy to control retry timing. See the [Backoff Strategies](../strategies/backoff-strategies.md) guide for available options.
 
 ```typescript
 import { CircuitBreaker, ExponentialBackoff } from "zenvark";
@@ -80,4 +80,26 @@ const circuitBreaker = new CircuitBreaker({
     idleProbeIntervalMs: 30_000, // Check every 30 seconds when idle
   },
 });
+```
+
+## Handling AbortSignal and Timeouts
+
+The `signal` parameter in health checks allows Zenvark to cancel ongoing health checks when needed (e.g., when the circuit breaker stops). Always pass it to async operations:
+
+```typescript
+import { HealthCheckType } from "zenvark";
+
+// ✅ Good: Signal passed to fetch
+async check(type: HealthCheckType, signal: AbortSignal) {
+  const response = await fetch("https://api.example.com/health", { signal });
+  if (!response.ok) {
+    throw new Error(`Health check failed: ${response.status}`);
+  }
+}
+
+// ❌ Bad: Signal ignored
+async check(type: HealthCheckType, signal: AbortSignal) {
+  const response = await fetch("https://api.example.com/health");
+  // Health check won't be cancellable
+}
 ```

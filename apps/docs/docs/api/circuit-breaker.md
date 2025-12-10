@@ -45,7 +45,7 @@ Configuration object for the circuit breaker.
 
 - **`onStateChange`** `(state: CircuitState) => void`
 
-  Notified when the circuit transitions to a new state (`open` or `closed`).
+  Notified when the circuit transitions to a new state (`CircuitState.OPEN` or `CircuitState.CLOSED`).
   - Triggered for both self-initiated and cross-instance updates
   - Not called during initial state load on `start()`
   - Only called when state actually changes
@@ -53,7 +53,7 @@ Configuration object for the circuit breaker.
 
 - **`onRoleChange`** `(role: CircuitRole) => void`
 
-  Notified when this instance's leader election role changes (`leader` or `follower`).
+  Notified when this instance's leader election role changes (`CircuitRole.LEADER` or `CircuitRole.FOLLOWER`).
   - Not called during initial role evaluation on `start()`
   - Only called when role actually changes
   - Useful for logging

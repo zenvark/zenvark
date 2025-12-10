@@ -118,69 +118,11 @@ async check(type: HealthCheckType, signal: AbortSignal) {
 ### Health Check Guidelines
 
 1. **Keep it simple**: Check only what's necessary
-2. **Respect the signal**: Always pass `AbortSignal` to async operations
+2. **Respect the signal**: Always pass `AbortSignal` to async operations (see [Health Checks](./healthchecks.md#handling-abortsignal-and-timeouts) for examples)
 3. **Throw errors**: Always throw `Error` objects on failure
 4. **Avoid side effects**: Don't modify data or state
 5. **Set timeouts**: Prevent hanging health checks
 6. **Be consistent**: Return quickly and predictably
-
-### Handling AbortSignal and Timeouts
-
-The `signal` parameter in health checks allows Zenvark to cancel ongoing health checks when needed (e.g., when the circuit breaker stops). Always pass it to async operations:
-
-```typescript
-import { HealthCheckType } from "zenvark";
-
-// ✅ Good: Signal passed to fetch
-async check(type: HealthCheckType, signal: AbortSignal) {
-  const response = await fetch("https://api.example.com/health", { signal });
-  if (!response.ok) {
-    throw new Error(`Health check failed: ${response.status}`);
-  }
-}
-
-// ✅ Good: Custom timeout with signal
-async check(type: HealthCheckType, signal: AbortSignal) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-  try {
-    // Combine signals: respect both timeout and external abort
-    const response = await fetch("https://api.example.com/health", {
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Health check failed: ${response.status}`);
-    }
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
-// ❌ Bad: Signal ignored
-async check(type: HealthCheckType, signal: AbortSignal) {
-  const response = await fetch("https://api.example.com/health");
-  // Health check won't be cancellable
-}
-```
-
-**Handling AbortError:**
-
-```typescript
-async check(type: HealthCheckType, signal: AbortSignal) {
-  try {
-    const response = await fetch("https://api.example.com/health", { signal });
-    if (!response.ok) throw new Error(`Health check failed: ${response.status}`);
-  } catch (err) {
-    if (err.name === "AbortError") {
-      // Health check was cancelled - this is expected during shutdown
-      throw new Error("Health check cancelled");
-    }
-    // Re-throw other errors
-    throw err;
-  }
-}
 
 ## Resource Management
 

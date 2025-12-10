@@ -90,7 +90,7 @@ Enable detailed logging:
 const circuitBreaker = new CircuitBreaker({
   // ...
   onError: (err) => {
-    console.error("CB Error:", err);
+    console.error("Circuit breaker error:", err);
   },
   onStateChange: (state) => {
     console.log("State changed:", state);

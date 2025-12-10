@@ -59,15 +59,15 @@ const circuitBreaker = new CircuitBreaker({
     },
     idleProbeIntervalMs: 30_000, // Run first probe 30s after last call, then every 30s while idle
   },
-  onError(err: Error) {
+  onError: (err: Error) => {
     // Handle or log internal circuit breaker errors here to prevent unhandled exceptions.
-    console.error("Circuit Breaker Internal Error:", err);
+    console.error("Circuit breaker error:", err);
   },
-  onRoleChange(role) {
+  onRoleChange: (role) => {
     // Observe leader election role changes: 'leader' | 'follower'
     console.log("Circuit role changed to", role);
   },
-  onStateChange(state) {
+  onStateChange: (state) => {
     // Observe state transitions across the cluster: 'open' | 'closed'
     console.log("Circuit state changed to", state);
   },
