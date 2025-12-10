@@ -43,17 +43,47 @@ Always provide an error handler to prevent unhandled exceptions from internal ci
 ### Required Error Handler
 
 ```typescript
+const breakerId = "my-service-api";
+
 const circuitBreaker = new CircuitBreaker({
+  id: breakerId,
   // ...
   onError: (err) => {
-    logger.error("Circuit breaker internal error", {
-      breakerId: circuitBreaker.id,
-      error: err.message,
-      stack: err.stack,
+    console.error("Circuit breaker error", {
+      breakerId,
+      cause: err,
     });
   },
 });
 ```
+
+### Understanding Internal Errors
+
+The `onError` callback receives errors from internal circuit breaker operations. These errors are **not** from your protected operations (those are thrown by `execute()`), but from the circuit breaker's coordination mechanisms.
+
+**Common error scenarios:**
+
+1. **Redis Connection Errors**
+   - Occur when Redis becomes unavailable
+   - Circuit breaker continues with last known state
+   - Automatic recovery when Redis reconnects
+
+2. **Stream Reading Errors**
+   - Occur when reading from Redis Streams fails
+   - Circuit breaker retries automatically
+   - May indicate network issues or Redis problems
+
+3. **Leader Election Issues**
+   - Occur during leader election failures
+   - Circuit breaker attempts re-election
+   - Usually resolves automatically
+
+**Important Notes:**
+
+- These errors are **informational** - the circuit breaker handles recovery internally
+- You should log them for monitoring and alerting
+- No action is required from your application code
+- Circuit breaker continues operating with cached state during temporary failures
 
 ## Health Check Implementation
 
@@ -62,6 +92,8 @@ Keep health checks simple, focused, and reliable.
 ### Good Health Checks ✅
 
 ```typescript
+import { HealthCheckType } from "zenvark";
+
 // Simple HTTP endpoint check
 async check(type: HealthCheckType, signal: AbortSignal) {
   const response = await fetch("/health", { signal });
@@ -91,6 +123,64 @@ async check(type: HealthCheckType, signal: AbortSignal) {
 4. **Avoid side effects**: Don't modify data or state
 5. **Set timeouts**: Prevent hanging health checks
 6. **Be consistent**: Return quickly and predictably
+
+### Handling AbortSignal and Timeouts
+
+The `signal` parameter in health checks allows Zenvark to cancel ongoing health checks when needed (e.g., when the circuit breaker stops). Always pass it to async operations:
+
+```typescript
+import { HealthCheckType } from "zenvark";
+
+// ✅ Good: Signal passed to fetch
+async check(type: HealthCheckType, signal: AbortSignal) {
+  const response = await fetch("https://api.example.com/health", { signal });
+  if (!response.ok) {
+    throw new Error(`Health check failed: ${response.status}`);
+  }
+}
+
+// ✅ Good: Custom timeout with signal
+async check(type: HealthCheckType, signal: AbortSignal) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    // Combine signals: respect both timeout and external abort
+    const response = await fetch("https://api.example.com/health", {
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Health check failed: ${response.status}`);
+    }
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// ❌ Bad: Signal ignored
+async check(type: HealthCheckType, signal: AbortSignal) {
+  const response = await fetch("https://api.example.com/health");
+  // Health check won't be cancellable
+}
+```
+
+**Handling AbortError:**
+
+```typescript
+async check(type: HealthCheckType, signal: AbortSignal) {
+  try {
+    const response = await fetch("https://api.example.com/health", { signal });
+    if (!response.ok) throw new Error(`Health check failed: ${response.status}`);
+  } catch (err) {
+    if (err.name === "AbortError") {
+      // Health check was cancelled - this is expected during shutdown
+      throw new Error("Health check cancelled");
+    }
+    // Re-throw other errors
+    throw err;
+  }
+}
 
 ## Resource Management
 
@@ -142,11 +232,11 @@ const breakers = [
 ];
 
 // Start all
-await Promise.all(breakers.map(cb => cb.start()));
+await Promise.all(breakers.map(circuitBreaker => circuitBreaker.start()));
 
 // Clean shutdown
 process.on("SIGTERM", async () => {
-  await Promise.all(breakers.map(cb => cb.stop()));
+  await Promise.all(breakers.map(circuitBreaker => circuitBreaker.stop()));
   process.exit(0);
 });
 ```

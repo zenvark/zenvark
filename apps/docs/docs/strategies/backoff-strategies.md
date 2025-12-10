@@ -39,10 +39,14 @@ new ConstantBackoff({
 ### Example
 
 ```typescript
-import { ConstantBackoff } from "zenvark";
+import { CircuitBreaker, ConstantBackoff } from "zenvark";
 
-const backoff = new ConstantBackoff({
-  delayMs: 5000, // Wait 5 seconds between each attempt
+const circuitBreaker = new CircuitBreaker({
+  health: {
+    backoff: new ConstantBackoff({
+      delayMs: 5000, // Wait 5 seconds between each attempt
+    }),
+  },
 });
 ```
 

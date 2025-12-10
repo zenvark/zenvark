@@ -1,5 +1,5 @@
 ---
-sidebar_position: 3
+sidebar_position: 2
 ---
 
 # Circuit States
@@ -71,13 +71,15 @@ The circuit closes when a health check succeeds, indicating the service has reco
 ### Using Callbacks
 
 ```typescript
+import { CircuitBreaker, CircuitState } from "zenvark";
+
 const circuitBreaker = new CircuitBreaker({
   // ...
   onStateChange: (state) => {
     if (state === CircuitState.OPEN) {
-      logger.error("Circuit opened - service degraded");
+      console.error("Circuit opened - service degraded");
     } else {
-      logger.info("Circuit closed - service recovered");
+      console.info("Circuit closed - service recovered");
     }
   },
 });
@@ -86,6 +88,8 @@ const circuitBreaker = new CircuitBreaker({
 ### Checking Current State
 
 ```typescript
+import { CircuitState } from "zenvark";
+
 // Read-only property
 const currentState = circuitBreaker.state;
 

@@ -119,7 +119,7 @@ The result of the executed function.
 - Any error thrown by the provided function
 
 :::warning
-The `execute()` method does **not** perform any retry logic on failure. If retries are needed, you must implement them externally by wrapping your calls to `execute()`. Native retry support will be added in a future release.
+The `execute()` method does **not** perform any retry logic on failure. If retries are needed, you must implement them externally by wrapping your calls to `execute()`. See the [Best Practices](../guides/best-practices.md) guide for retry implementation patterns.
 :::
 
 ## Properties

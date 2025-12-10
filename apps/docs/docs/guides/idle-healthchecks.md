@@ -1,5 +1,5 @@
 ---
-sidebar_position: 4
+sidebar_position: 3
 ---
 
 # Idle Healthchecks
@@ -75,6 +75,8 @@ Used when the circuit is **closed** but idle:
 You can route to different health endpoints based on the type:
 
 ```typescript
+import { CircuitBreaker, HealthCheckType, ExponentialBackoff } from "zenvark";
+
 const circuitBreaker = new CircuitBreaker({
   // ...
   health: {

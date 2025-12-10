@@ -8,7 +8,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'API Reference',
       collapsed: false,
-      items: ['api/circuit-breaker'],
+      items: ['api/circuit-breaker', 'api/types-and-errors'],
     },
     {
       type: 'category',
@@ -22,13 +22,13 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: [
         'guides/architecture',
-        'guides/metrics',
         'guides/circuit-states',
         'guides/idle-healthchecks',
+        'guides/metrics',
         'guides/best-practices',
+        'guides/development',
       ],
     },
-    'development',
   ],
 };
 

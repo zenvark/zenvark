@@ -6,6 +6,12 @@ sidebar_position: 2
 
 This guide will help you get started with Zenvark in your application.
 
+## Prerequisites
+
+- **Node.js**: 22.x or higher
+- **Redis**: 6.0 or higher
+  - Redis Streams support required (available in Redis 5.0+, but 6.0+ recommended)
+
 ## Installation
 
 Install Zenvark and its dependencies:
@@ -78,7 +84,7 @@ await circuitBreaker.start();
 try {
   const result = await circuitBreaker.execute(async () => {
     // Your potentially failing operation
-    return await fetch("http://api.example.com/data");
+    return await fetch("https://api.example.com/data");
   });
   console.log("Success:", result);
 } catch (err) {

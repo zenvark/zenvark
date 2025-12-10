@@ -11,11 +11,9 @@ Zenvark helps you build resilient systems by preventing cascading failures and g
 
 ## Why Distributed?
 
-When multiple instances of an application are running concurrently (whether they are part of a microservice, a monolith scaled horizontally, or any other distributed setup), a traditional in-memory circuit breaker on a single instance isn't enough.
+Unlike traditional in-memory circuit breakers, Zenvark coordinates state across all application instances. When one instance detects failures and opens the circuit, all other instances are immediately notified and also block requests, ensuring consistent protection across your entire distributed system.
 
-If one instance detects a problem and opens its circuit, other instances, unaware of the issue, might continue to send requests to the failing dependency.
-
-A distributed circuit breaker ensures that if any one instance detects a problem and opens the circuit, **all other instances become aware** of this state change and also open their circuits. This collective awareness prevents individual instances from continuing to hammer an unhealthy service, effectively stopping cascading failures and ensuring consistent resilience across all running instances of your application.
+Learn more about [distributed coordination and architecture](./guides/architecture.md).
 
 ## Key Features
 
@@ -25,11 +23,6 @@ A distributed circuit breaker ensures that if any one instance detects a problem
 - **Leader Election**: Ensures a single instance is responsible for critical circuit state management and health checks, preventing race conditions
 - **Event-Driven**: Real-time state coordination and event processing powered by Redis Streams
 - **Prometheus Metrics**: Built-in observability with customizable labels for easy monitoring
-
-## Prerequisites
-
-- **Node.js**: 22.x or higher
-- **Redis**: 6.0 or higher (Redis Streams support required)
 
 ## Next Steps
 
