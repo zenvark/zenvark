@@ -55,9 +55,9 @@ Represents a call execution event with timing and outcome information.
 
 ```typescript
 type CallResultEvent = {
-  id: string;         // Unique identifier for this call event (Redis stream ID)
-  callResult: CallResult;  // The outcome of the call (SUCCESS or FAILURE)
-  timestamp: number;  // Unix timestamp in milliseconds when the call occurred
+  id: string; // Unique identifier for this call event (Redis stream ID)
+  callResult: CallResult; // The outcome of the call (SUCCESS or FAILURE)
+  timestamp: number; // Unix timestamp in milliseconds when the call occurred
 };
 ```
 

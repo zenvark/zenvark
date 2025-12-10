@@ -168,7 +168,11 @@ Choose **SamplingBreaker** when:
 You can implement your own breaker strategy by implementing the `BreakerStrategy` interface:
 
 ```typescript
-import { type BreakerStrategy, type CallResultEvent, CircuitBreaker } from "zenvark";
+import {
+  type BreakerStrategy,
+  type CallResultEvent,
+  CircuitBreaker,
+} from "zenvark";
 
 class CustomBreaker implements BreakerStrategy {
   shouldOpenCircuit(events: CallResultEvent[]): boolean {

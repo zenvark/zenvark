@@ -73,6 +73,7 @@ Traditional circuit breakers often implement three states: CLOSED, OPEN, and **H
 ### Traditional Half-Open State
 
 In a traditional circuit breaker:
+
 1. Circuit opens after failures
 2. After a timeout, circuit transitions to **HALF-OPEN**
 3. A few real production requests are allowed through as "tests"
@@ -81,6 +82,7 @@ In a traditional circuit breaker:
 ### Zenvark's Approach: Dedicated Health Checks
 
 Zenvark eliminates the half-open state by using dedicated health check functions:
+
 1. Circuit opens after failures
 2. **Leader instance performs dedicated health checks** (not production traffic)
 3. When a health check succeeds, circuit closes immediately
@@ -89,21 +91,25 @@ Zenvark eliminates the half-open state by using dedicated health check functions
 ### Benefits of This Approach
 
 **1. Separation of Concerns**
+
 - Production traffic is never used for testing recovery
 - Health checks can be simpler and faster than full operations
 - No risk of failed test requests impacting users
 
 **2. Consistent Testing**
+
 - Health checks run the same logic every time
 - No dependency on whether users happen to make requests during recovery
 - Predictable recovery behavior
 
 **3. Distributed Coordination**
+
 - Only the leader performs health checks
 - Prevents multiple instances from testing simultaneously
 - Reduces load on recovering services
 
 **4. Flexibility**
+
 - Health checks can target specific health endpoints
 - Can be different from (simpler than) production operations
 - Configurable backoff strategies control retry timing

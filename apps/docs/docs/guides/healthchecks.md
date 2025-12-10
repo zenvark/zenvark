@@ -51,16 +51,17 @@ Idle health checks are optional and provide proactive monitoring when the circui
 
 Consider a circuit breaker with `idleProbeIntervalMs: 10000` (10 seconds):
 
-| Time | Event | Description |
-|------|-------|-------------|
-| **0s** | Circuit breaker starts | Waiting for first activity |
-| **5s** | Call executed | Idle timer starts (10s countdown) |
-| **15s** | **Idle Probe #1** | First health check runs (10s after call) |
-| **25s** | **Idle Probe #2** | Second health check runs (10s after previous probe) |
-| **30s** | Call executed | Timer cancelled and restarted |
-| **40s** | **Idle Probe #3** | Health check resumes (10s after call at 30s) |
+| Time    | Event                  | Description                                         |
+| ------- | ---------------------- | --------------------------------------------------- |
+| **0s**  | Circuit breaker starts | Waiting for first activity                          |
+| **5s**  | Call executed          | Idle timer starts (10s countdown)                   |
+| **15s** | **Idle Probe #1**      | First health check runs (10s after call)            |
+| **25s** | **Idle Probe #2**      | Second health check runs (10s after previous probe) |
+| **30s** | Call executed          | Timer cancelled and restarted                       |
+| **40s** | **Idle Probe #3**      | Health check resumes (10s after call at 30s)        |
 
 **Key points:**
+
 - The **first probe** runs after the circuit breaker starts or after the last call completes (not immediately)
 - **Subsequent probes** run at fixed intervals while the circuit stays idle
 - A new call **interrupts** the idle timer and restarts it from zero
