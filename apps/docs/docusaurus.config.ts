@@ -70,7 +70,7 @@ export default {
           items: [
             {
               label: 'Introduction',
-              to: '/docs',
+              to: '/docs/intro',
             },
             {
               label: 'Getting Started',
