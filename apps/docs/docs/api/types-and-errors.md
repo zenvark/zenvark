@@ -174,7 +174,7 @@ const circuitBreaker = new CircuitBreaker({
 });
 ```
 
-See [Idle Health Checks](../guides/idle-healthchecks.md#health-check-types) for more information.
+See [Health Checks](../guides/healthchecks.md) for more information.
 
 ## Interfaces
 

@@ -23,7 +23,7 @@ const sidebars: SidebarsConfig = {
       items: [
         'guides/architecture',
         'guides/circuit-states',
-        'guides/idle-healthchecks',
+        'guides/healthchecks',
         'guides/metrics',
         'guides/best-practices',
         'guides/development',
