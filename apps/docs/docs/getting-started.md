@@ -39,6 +39,8 @@ import {
   ConstantBackoff,
   CircuitOpenError,
   HealthCheckType,
+  CircuitRole,
+  CircuitState,
 } from "zenvark";
 import { PrometheusBreakerMetrics } from "@zenvark/prom";
 
@@ -63,12 +65,12 @@ const circuitBreaker = new CircuitBreaker({
     // Handle or log internal circuit breaker errors here to prevent unhandled exceptions.
     console.error("Circuit breaker error:", err);
   },
-  onRoleChange: (role) => {
-    // Observe leader election role changes: 'leader' | 'follower'
+  onRoleChange: (role: CircuitRole) => {
+    // Observe leader election role changes
     console.log("Circuit role changed to", role);
   },
-  onStateChange: (state) => {
-    // Observe state transitions across the cluster: 'open' | 'closed'
+  onStateChange: (state: CircuitState) => {
+    // Observe state transitions across the cluster
     console.log("Circuit state changed to", state);
   },
   metrics: new PrometheusBreakerMetrics({
@@ -113,7 +115,7 @@ const circuitBreaker = new CircuitBreaker({
   breaker: new ConsecutiveBreaker({ threshold: 5 }),
   health: {
     backoff: new ConstantBackoff({ delayMs: 5000 }),
-    async check(type, signal) {
+    async check(type: HealthCheckType, signal: AbortSignal) {
       // Health check implementation
     },
   },

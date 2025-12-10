@@ -119,7 +119,7 @@ import { CircuitBreaker, CircuitState } from "zenvark";
 
 const circuitBreaker = new CircuitBreaker({
   // ...
-  onStateChange: (state) => {
+  onStateChange: (state: CircuitState) => {
     if (state === CircuitState.OPEN) {
       console.error("Circuit opened - service degraded");
     } else {

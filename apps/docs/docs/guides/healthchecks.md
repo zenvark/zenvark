@@ -36,7 +36,7 @@ const circuitBreaker = new CircuitBreaker({
       multiplier: 2,
       maxDelayMs: 30_000,
     }),
-    async check(type, signal) {
+    async check(type: HealthCheckType, signal: AbortSignal) {
       await fetch("https://api.example.com/health", { signal });
     },
   },
@@ -74,7 +74,7 @@ Enable idle health checks by setting the `idleProbeIntervalMs` option:
 const circuitBreaker = new CircuitBreaker({
   health: {
     backoff: new ConstantBackoff({ delayMs: 5000 }),
-    async check(type, signal) {
+    async check(type: HealthCheckType, signal: AbortSignal) {
       await fetch("https://api.example.com/health", { signal });
     },
     idleProbeIntervalMs: 30_000, // Check every 30 seconds when idle

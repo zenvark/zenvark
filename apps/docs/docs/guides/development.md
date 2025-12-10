@@ -87,15 +87,17 @@ npm run docker:stop
 Enable detailed logging:
 
 ```typescript
+import { CircuitBreaker, CircuitState, CircuitRole } from "zenvark";
+
 const circuitBreaker = new CircuitBreaker({
   // ...
-  onError: (err) => {
+  onError: (err: Error) => {
     console.error("Circuit breaker error:", err);
   },
-  onStateChange: (state) => {
+  onStateChange: (state: CircuitState) => {
     console.log("State changed:", state);
   },
-  onRoleChange: (role) => {
+  onRoleChange: (role: CircuitRole) => {
     console.log("Role changed:", role);
   },
 });

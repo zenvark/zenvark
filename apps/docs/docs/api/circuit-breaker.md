@@ -58,7 +58,7 @@ Configuration object for the circuit breaker.
   - Only called when role actually changes
   - Useful for logging
 
-- **`metrics`** `BreakerMetrics`
+- **`metrics`** `BreakerMetricsRecorder`
 
   Prometheus metrics configuration for built-in observability. See [Metrics & Observability](../guides/metrics.md).
 

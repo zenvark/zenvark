@@ -65,7 +65,7 @@ import { CircuitBreaker, CircuitState } from "zenvark";
 
 const circuitBreaker = new CircuitBreaker({
   // ...
-  onStateChange: (state) => {
+  onStateChange: (state: CircuitState) => {
     if (state === CircuitState.OPEN) {
       console.log("Circuit opened - service is unhealthy");
     } else if (state === CircuitState.CLOSED) {
@@ -100,7 +100,7 @@ import { CircuitBreaker, CircuitRole } from "zenvark";
 
 const circuitBreaker = new CircuitBreaker({
   // ...
-  onRoleChange: (role) => {
+  onRoleChange: (role: CircuitRole) => {
     if (role === CircuitRole.LEADER) {
       console.log("This instance became the leader");
     } else if (role === CircuitRole.FOLLOWER) {
@@ -166,18 +166,15 @@ Represents the outcome of a protected call execution.
 #### Usage
 
 ```typescript
-import { CircuitBreaker, CallResult } from "zenvark";
+import { BreakerMetricsRecorder, CallResult, RecordCallParams } from "zenvark";
 
-const circuitBreaker = new CircuitBreaker({
-  // ...
-  metrics: {
-    recordCall(params) {
-      if (params.result === CallResult.SUCCESS) {
-        console.log(`Success in ${params.durationMs}ms`);
-      } else {
-        console.log(`Failure in ${params.durationMs}ms`);
-      }
-    },
-  },
-});
+class CustomMetrics implements BreakerMetricsRecorder {
+  recordCall(params: RecordCallParams): void {
+    if (params.result === CallResult.SUCCESS) {
+      console.log(`Success in ${params.durationMs}ms`);
+    } else if (params.result === CallResult.FAILURE) {
+      console.log(`Failure in ${params.durationMs}ms`);
+    }
+  }
+}
 ```
