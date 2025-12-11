@@ -67,7 +67,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 
     this.circuitStateStore = new CircuitStateStore({
       redis: this.redis,
-      redisStreamKey: `circuit:${this.id}:state`,
+      redisStreamKey: `zenvark:${this.id}:state`,
       onStreamReadError: (err: unknown) => {
         this.handleError('CircuitStateStore stream read error', err);
       },
@@ -78,7 +78,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 
     this.callResultStore = new CallResultStore({
       redis: this.redis,
-      redisStreamKey: `circuit:${this.id}:call-result`,
+      redisStreamKey: `zenvark:${this.id}:call-result`,
       maxLen: 1000,
       onStreamReadError: (err: unknown) => {
         this.handleError('CallResultStore stream read error', err);
@@ -90,7 +90,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 
     this.elector = new LeaderElector({
       redis: this.redis,
-      key: `circuit:${options.id}:leader`,
+      key: `zenvark:${options.id}:leader`,
       onAcquireError: (err: unknown) => {
         this.handleError('LeaderElector acquire error', err);
       },
