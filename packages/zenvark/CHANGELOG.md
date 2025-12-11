@@ -1,5 +1,11 @@
 # zenvark
 
+## 1.0.3
+
+### Patch Changes
+
+- 3382c42: fix redis key naming
+
 ## 1.0.2
 
 ### Patch Changes
