@@ -90,7 +90,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 
     this.elector = new LeaderElector({
       redis: this.redis,
-      key: `zenvark:${options.id}:leader`,
+      key: `zenvark:${this.id}:leader`,
       onAcquireError: (err: unknown) => {
         this.handleError('LeaderElector acquire error', err);
       },
