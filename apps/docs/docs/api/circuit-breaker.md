@@ -26,6 +26,10 @@ Configuration object for the circuit breaker.
 
   An initialized ioredis client instance. This client is used for all distributed coordination, leader election, and event streaming.
 
+  :::info Connection Management
+  The circuit breaker automatically creates its own isolated Redis connection using `.duplicate({ lazyConnect: true })`. This ensures proper lifecycle management and prevents interference with the parent connection. The duplicated connection is established during `start()` and closed during `stop()`. Your original Redis instance remains unaffected.
+  :::
+
 - **`breaker`** `BreakerStrategy`
 
   The strategy that determines when the circuit should open due to failures. See [Breaker Strategies](../strategies/breaker-strategies.md) for available options.
@@ -72,6 +76,7 @@ start(): Promise<void>
 
 Starts the circuit breaker and its internal coordination mechanisms, including:
 
+- Establishing the isolated Redis connection
 - Redis stream subscriptions for distributed state coordination
 - Leader election process
 - Event processing for call results
@@ -89,6 +94,7 @@ Stops the circuit breaker and cleans up all resources, including:
 - Redis stream subscriptions
 - Leader election cleanup
 - Health check loop cancellation
+- Closing the isolated Redis connection
 
 **You should call this method during application shutdown.**
 
