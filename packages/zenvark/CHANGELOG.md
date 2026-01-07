@@ -1,5 +1,11 @@
 # zenvark
 
+## 1.0.4
+
+### Patch Changes
+
+- 2855e72: call onError for stream write errors instead of throwing them
+
 ## 1.0.3
 
 ### Patch Changes
