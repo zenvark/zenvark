@@ -166,11 +166,15 @@ process.on("SIGINT", async () => {
 
 ### Multiple Circuit Breakers
 
+When using multiple circuit breakers, they can all share the same Redis instance. Each circuit breaker will create its own isolated connection automatically.
+
 ```typescript
+const redis = new Redis("redis://localhost:6379");
+
 const breakers = [
-  new CircuitBreaker({ id: "service-a", ... }),
-  new CircuitBreaker({ id: "service-b", ... }),
-  new CircuitBreaker({ id: "service-c", ... }),
+  new CircuitBreaker({ id: "service-a", redis, ... }),
+  new CircuitBreaker({ id: "service-b", redis, ... }),
+  new CircuitBreaker({ id: "service-c", redis, ... }),
 ];
 
 // Start all

@@ -55,7 +55,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
   constructor(options: CircuitBreakerOptions) {
     super();
     this.id = options.id;
-    this.redis = options.redis;
+    this.redis = options.redis.duplicate({ lazyConnect: true });
     this.breaker = options.breaker;
     this.health = options.health;
     this.onError = options.onError;
@@ -157,6 +157,8 @@ export class CircuitBreaker extends AbstractLifecycleManager {
   }
 
   protected override async startInternal(): Promise<void> {
+    await this.redis.connect();
+
     await Promise.all([
       this.callResultStore.start(),
       this.circuitStateStore.start(),
@@ -172,6 +174,8 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       this.elector.stop(),
       this.stopHealthChecks(),
     ]);
+
+    await this.redis.quit();
   }
 
   get role(): CircuitRole {
