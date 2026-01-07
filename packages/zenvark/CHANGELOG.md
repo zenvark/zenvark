@@ -1,5 +1,11 @@
 # zenvark
 
+## 1.1.0
+
+### Minor Changes
+
+- 4b0f059: use duplicated redis connection for circuit
+
 ## 1.0.4
 
 ### Patch Changes
