@@ -10,6 +10,7 @@ describe('CallResultStore', () => {
       redisStreamKey: 'test-stream',
       maxLen: 1000,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
       onEventsAdded: vi.fn(),
     });
 
@@ -25,6 +26,7 @@ describe('CallResultStore', () => {
       redisStreamKey: 'test-stream',
       maxLen: 1000,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
       onEventsAdded: vi.fn(),
     });
 
@@ -37,6 +39,7 @@ describe('CallResultStore', () => {
       redisStreamKey: 'test',
       maxLen: 1000,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
       onEventsAdded: vi.fn(),
     });
 
@@ -77,6 +80,7 @@ describe('CallResultStore', () => {
       redisStreamKey: 'test',
       maxLen: 1000,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
       onEventsAdded: onEventsAddedSpy,
     });
 
@@ -102,6 +106,7 @@ describe('CallResultStore', () => {
       redisStreamKey: 'test',
       maxLen: 1000,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
       onEventsAdded: onEventsAddedSpy1,
     });
 
@@ -110,6 +115,7 @@ describe('CallResultStore', () => {
       redisStreamKey: 'test',
       maxLen: 1000,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
       onEventsAdded: onEventsAddedSpy2,
     });
 
@@ -145,6 +151,7 @@ describe('CallResultStore', () => {
       redisStreamKey: 'test-maxlen',
       maxLen: 3,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
       onEventsAdded: onEventsAddedSpy,
     });
 
@@ -177,6 +184,7 @@ describe('CallResultStore', () => {
       redisStreamKey: 'test-restart',
       maxLen: 3,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
       onEventsAdded: onEventsAddedSpy,
     });
 

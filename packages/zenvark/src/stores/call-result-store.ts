@@ -13,6 +13,8 @@ type CallResultStoreOptions = {
   maxLen: number;
   /** Called when an error occurs while reading from the Redis stream */
   onStreamReadError: (err: unknown) => void;
+  /** Called when an error occurs while writing to the Redis stream */
+  onStreamWriteError: (err: unknown) => void;
   /** Called whenever new events are added. Receives the full list of current events. */
   onEventsAdded: (events: CallResultEvent[]) => void | Promise<void>;
 };
@@ -22,6 +24,7 @@ export class CallResultStore extends AbstractLifecycleManager {
   private readonly redisStreamKey: string;
   private readonly streamReader: RedisStreamReader;
   private readonly maxLen: number;
+  private readonly onStreamWriteError: (err: unknown) => void;
   private readonly onEventsAdded: (
     events: CallResultEvent[],
   ) => void | Promise<void>;
@@ -33,6 +36,7 @@ export class CallResultStore extends AbstractLifecycleManager {
     this.redis = options.redis;
     this.redisStreamKey = options.redisStreamKey;
     this.maxLen = options.maxLen;
+    this.onStreamWriteError = options.onStreamWriteError;
     this.onEventsAdded = options.onEventsAdded;
 
     this.streamReader = new RedisStreamReader({
@@ -78,17 +82,21 @@ export class CallResultStore extends AbstractLifecycleManager {
   }
 
   async storeCallResult(callResult: CallResult): Promise<void> {
-    await this.redis.xadd(
-      this.redisStreamKey,
-      'MAXLEN',
-      '~',
-      this.maxLen,
-      '*',
-      'callResult',
-      callResult,
-      'timestamp',
-      Date.now().toString(),
-    );
+    try {
+      await this.redis.xadd(
+        this.redisStreamKey,
+        'MAXLEN',
+        '~',
+        this.maxLen,
+        '*',
+        'callResult',
+        callResult,
+        'timestamp',
+        Date.now().toString(),
+      );
+    } catch (err) {
+      this.onStreamWriteError(err);
+    }
   }
 
   private mapEntryToCallResultEvent(

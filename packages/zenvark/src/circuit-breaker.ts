@@ -71,6 +71,9 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       onStreamReadError: (err: unknown) => {
         this.handleError('CircuitStateStore stream read error', err);
       },
+      onStreamWriteError: (err: unknown) => {
+        this.handleError('CircuitStateStore stream write error', err);
+      },
       onStateChange: (state) => {
         this.onStateChange?.(state);
       },
@@ -82,6 +85,9 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       maxLen: 1000,
       onStreamReadError: (err: unknown) => {
         this.handleError('CallResultStore stream read error', err);
+      },
+      onStreamWriteError: (err: unknown) => {
+        this.handleError('CallResultStore stream write error', err);
       },
       onEventsAdded: (events) => {
         void this.handleEventsAdded(events);
