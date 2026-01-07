@@ -9,6 +9,7 @@ describe('CircuitStateStore', () => {
       redis,
       redisStreamKey: 'test-circuit',
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
     });
 
     await store.start();
@@ -21,6 +22,7 @@ describe('CircuitStateStore', () => {
       redis,
       redisStreamKey: 'test-circuit',
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
     });
 
     await expect(store.stop()).resolves.not.toThrow();
@@ -31,6 +33,7 @@ describe('CircuitStateStore', () => {
       redis,
       redisStreamKey: 'test-circuit-stream',
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
     });
 
     await store.setState(CircuitState.OPEN);
@@ -77,6 +80,7 @@ describe('CircuitStateStore', () => {
       redis,
       redisStreamKey,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
     });
 
     await store.start();
@@ -91,6 +95,7 @@ describe('CircuitStateStore', () => {
       redis,
       redisStreamKey: 'test-default-state',
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
     });
 
     await store.start();
@@ -109,6 +114,7 @@ describe('CircuitStateStore', () => {
       redis,
       redisStreamKey,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
       onStateChange: onStateChange1,
     });
 
@@ -118,6 +124,7 @@ describe('CircuitStateStore', () => {
       redis,
       redisStreamKey,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
       onStateChange: onStateChange2,
     });
 
@@ -144,6 +151,7 @@ describe('CircuitStateStore', () => {
       redis,
       redisStreamKey: 'test-restart',
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
       onStateChange,
     });
 
@@ -163,6 +171,7 @@ describe('CircuitStateStore', () => {
       redis,
       redisStreamKey: 'test-initial-timestamp',
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
     });
 
     expect(store.getLastStateChangeTimestamp()).toBe(0);
@@ -185,6 +194,7 @@ describe('CircuitStateStore', () => {
       redis,
       redisStreamKey,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
     });
 
     await store.start();
@@ -203,6 +213,7 @@ describe('CircuitStateStore', () => {
       redis,
       redisStreamKey,
       onStreamReadError: vi.fn(),
+      onStreamWriteError: vi.fn(),
     });
 
     await store.start();

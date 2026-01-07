@@ -16,6 +16,8 @@ type CircuitStateStoreOptions = {
   redisStreamKey: string;
   /** Called when an error occurs while reading from the Redis stream */
   onStreamReadError: (err: unknown) => void;
+  /** Called when an error occurs while writing to the Redis stream */
+  onStreamWriteError: (err: unknown) => void;
   /** Called whenever the state changes to a new value. Not called during initial load. */
   onStateChange?: (state: CircuitState) => void;
 };
@@ -24,6 +26,7 @@ export class CircuitStateStore extends AbstractLifecycleManager {
   private readonly redis: Redis;
   private readonly redisStreamKey: string;
   private readonly streamReader: RedisStreamReader;
+  private readonly onStreamWriteError: (err: unknown) => void;
   private readonly onStateChange?: (state: CircuitState) => void;
 
   private currentState: CircuitStateEvent = {
@@ -36,6 +39,7 @@ export class CircuitStateStore extends AbstractLifecycleManager {
     super();
     this.redis = options.redis;
     this.redisStreamKey = options.redisStreamKey;
+    this.onStreamWriteError = options.onStreamWriteError;
     this.onStateChange = options.onStateChange;
 
     this.streamReader = new RedisStreamReader({
@@ -76,17 +80,21 @@ export class CircuitStateStore extends AbstractLifecycleManager {
   }
 
   async setState(state: CircuitState): Promise<void> {
-    await this.redis.xadd(
-      this.redisStreamKey,
-      'MAXLEN',
-      '~',
-      10,
-      '*',
-      'state',
-      state,
-      'timestamp',
-      Date.now().toString(),
-    );
+    try {
+      await this.redis.xadd(
+        this.redisStreamKey,
+        'MAXLEN',
+        '~',
+        10,
+        '*',
+        'state',
+        state,
+        'timestamp',
+        Date.now().toString(),
+      );
+    } catch (err) {
+      this.onStreamWriteError(err);
+    }
   }
 
   /**
