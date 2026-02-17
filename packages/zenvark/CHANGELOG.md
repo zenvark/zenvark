@@ -1,5 +1,11 @@
 # zenvark
 
+## 1.1.1
+
+### Patch Changes
+
+- 77054f5: Log internal errors to console.error by default instead of throwing
+
 ## 1.1.0
 
 ### Minor Changes
