@@ -38,9 +38,15 @@ new CircuitBreaker({ id: "circuit-1", ... })
 
 ## Error Handling
 
-Always provide an error handler to prevent unhandled exceptions from internal circuit breaker operations.
+The circuit breaker handles errors from internal operations (Redis streams, leader election, health checks) separately from errors in your protected operations.
 
-### Required Error Handler
+### Default Behavior
+
+If you don't provide an `onError` callback, errors are logged to `console.error` with the prefix `[zenvark] Unhandled error:`. This ensures errors are visible without crashing your application.
+
+### Recommended: Custom Error Handler
+
+For production applications, provide a custom error handler to integrate with your logging and monitoring systems:
 
 ```typescript
 const breakerId = "my-service-api";
@@ -49,7 +55,7 @@ const circuitBreaker = new CircuitBreaker({
   id: breakerId,
   // ...
   onError: (err: Error) => {
-    console.error("Circuit breaker error", {
+    logger.error("Circuit breaker error", {
       breakerId,
       cause: err,
     });
