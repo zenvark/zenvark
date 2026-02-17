@@ -62,7 +62,8 @@ const circuitBreaker = new CircuitBreaker({
     idleProbeIntervalMs: 30_000, // Run first probe 30s after last call, then every 30s while idle
   },
   onError: (err: Error) => {
-    // Handle or log internal circuit breaker errors here to prevent unhandled exceptions.
+    // Optional: Handle internal circuit breaker errors.
+    // If not provided, errors are logged to console.error by default.
     console.error("Circuit breaker error:", err);
   },
   onRoleChange: (role: CircuitRole) => {

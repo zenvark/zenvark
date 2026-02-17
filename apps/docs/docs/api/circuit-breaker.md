@@ -45,7 +45,7 @@ Configuration object for the circuit breaker.
 
 - **`onError`** `(err: Error) => void`
 
-  Callback for handling internal circuit breaker errors (e.g., Redis stream read failures, leader election issues). Highly recommended to prevent unhandled exceptions.
+  Callback for handling internal circuit breaker errors (e.g., Redis stream read failures, leader election issues). If not provided, errors are logged to `console.error` with the prefix `[zenvark] Unhandled error:`. Providing a custom handler is recommended for production applications to integrate with your logging and monitoring systems.
 
 - **`onStateChange`** `(state: CircuitState) => void`
 

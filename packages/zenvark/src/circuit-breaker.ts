@@ -316,7 +316,8 @@ export class CircuitBreaker extends AbstractLifecycleManager {
     const err = new Error(message, { cause });
 
     if (!this.onError) {
-      throw err;
+      console.error('[zenvark] Unhandled error:', err);
+      return;
     }
     this.onError(err);
   }
