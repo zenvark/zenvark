@@ -75,6 +75,9 @@ export class CircuitBreaker extends AbstractLifecycleManager {
         this.handleError('CircuitStateStore stream write error', err);
       },
       onStateChange: (state) => {
+        if (this.elector.isLeader) {
+          this.metrics?.recordStateChange?.({ breakerId: this.id, state });
+        }
         this.onStateChange?.(state);
       },
     });
@@ -102,6 +105,11 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       },
       onRoleChange: (role) => {
         if (role === CircuitRole.LEADER) {
+          this.metrics?.recordStateChange?.({
+            breakerId: this.id,
+            state: this.state,
+          });
+
           if (this.state === CircuitState.OPEN) {
             void this.runRecoveryHealthChecks();
           } else if (this.health.idleProbeIntervalMs) {
