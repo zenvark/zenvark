@@ -52,4 +52,10 @@ export type BreakerMetricsRecorder = {
    * Record a circuit state change. Also called on startup with the initial state.
    */
   recordStateChange?(params: RecordStateChangeParams): void;
+
+  /**
+   * Remove the circuit state metric for a breaker. Called when this node loses leadership
+   * so stale gauge values are no longer visible in scrapes.
+   */
+  clearState?(breakerId: string): void;
 };

@@ -139,4 +139,14 @@ export class PrometheusBreakerMetrics implements BreakerMetricsRecorder {
       );
     }
   }
+
+  /**
+   * Remove all state gauge series for a breaker. Called when this node loses leadership
+   * so the ex-leader's stale values disappear from scrapes.
+   */
+  clearState(breakerId: string): void {
+    for (const state of Object.values(CircuitState)) {
+      this.stateGauge.remove(this.getLabels(breakerId, { state }));
+    }
+  }
 }

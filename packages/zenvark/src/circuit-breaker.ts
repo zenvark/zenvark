@@ -116,6 +116,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
             void this.rescheduleIdleHealthChecks();
           }
         } else {
+          this.metrics?.clearState?.(this.id);
           void this.stopHealthChecks();
         }
 
