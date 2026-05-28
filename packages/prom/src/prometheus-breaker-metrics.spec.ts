@@ -1,6 +1,6 @@
 import { Registry } from 'prom-client';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { CallResult, HealthCheckType } from 'zenvark';
+import { CallResult, CircuitState, HealthCheckType } from 'zenvark';
 import { PrometheusBreakerMetrics } from './prometheus-breaker-metrics.ts';
 
 describe('PrometheusBreakerMetrics', () => {
@@ -111,6 +111,59 @@ describe('PrometheusBreakerMetrics', () => {
     expect(allMetrics).toContain(`breaker_id="${breakerId}"`);
     expect(allMetrics).toContain(`env="${customLabels.env}"`);
     expect(allMetrics).toContain(`version="${customLabels.version}"`);
+  });
+
+  describe('recordStateChange', () => {
+    it('sets active state gauge to 1 and all other states to 0', async () => {
+      const bm = new PrometheusBreakerMetrics({ registry });
+
+      bm.recordStateChange({ breakerId, state: CircuitState.OPEN });
+
+      const allMetrics = await registry.metrics();
+
+      expect(allMetrics).toMatch(
+        new RegExp(`zenvark_state{[^}]*state="open"[^}]*} 1`),
+      );
+      expect(allMetrics).toMatch(
+        new RegExp(`zenvark_state{[^}]*state="closed"[^}]*} 0`),
+      );
+    });
+
+    it('transitions active state correctly when state changes', async () => {
+      const bm = new PrometheusBreakerMetrics({ registry });
+
+      bm.recordStateChange({ breakerId, state: CircuitState.OPEN });
+      bm.recordStateChange({ breakerId, state: CircuitState.CLOSED });
+
+      const allMetrics = await registry.metrics();
+
+      expect(allMetrics).toMatch(
+        new RegExp(`zenvark_state{[^}]*state="closed"[^}]*} 1`),
+      );
+      expect(allMetrics).toMatch(
+        new RegExp(`zenvark_state{[^}]*state="open"[^}]*} 0`),
+      );
+    });
+  });
+
+  describe('clearState', () => {
+    it('removes all state gauge series for the given breaker', async () => {
+      const bm = new PrometheusBreakerMetrics({ registry });
+
+      bm.recordStateChange({ breakerId, state: CircuitState.OPEN });
+
+      const beforeClear = await registry.metrics();
+      expect(beforeClear).toMatch(
+        new RegExp(`zenvark_state{[^}]*breaker_id="${breakerId}"[^}]*}`),
+      );
+
+      bm.clearState(breakerId);
+
+      const afterClear = await registry.metrics();
+      expect(afterClear).not.toMatch(
+        new RegExp(`zenvark_state{[^}]*breaker_id="${breakerId}"[^}]*}`),
+      );
+    });
   });
 
   describe('initialize', () => {
