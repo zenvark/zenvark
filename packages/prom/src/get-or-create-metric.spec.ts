@@ -1,7 +1,8 @@
-import { Counter, Histogram, Registry } from 'prom-client';
+import { Counter, Gauge, Histogram, Registry } from 'prom-client';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   getOrCreateCounter,
+  getOrCreateGauge,
   getOrCreateHistogram,
 } from './get-or-create-metric.ts';
 
@@ -73,6 +74,57 @@ describe('getOrCreateMetric', () => {
 
       expect(result).toBeInstanceOf(Histogram);
       expect(registry.getSingleMetric(config.name)).toBe(result);
+    });
+  });
+
+  describe('getOrCreateGauge', () => {
+    it('should return existing gauge if found in registry', () => {
+      const config = {
+        name: 'test_gauge',
+        help: 'Test gauge',
+        labelNames: ['label1'] as const,
+        registers: [registry],
+      };
+
+      const existingGauge = new Gauge(config);
+
+      const result = getOrCreateGauge(registry, config);
+
+      expect(result).toBe(existingGauge);
+    });
+
+    it('should create new gauge if not found in registry', () => {
+      const config = {
+        name: 'test_gauge',
+        help: 'Test gauge',
+        labelNames: ['label1'] as const,
+        registers: [registry],
+      };
+
+      const result = getOrCreateGauge(registry, config);
+
+      expect(result).toBeInstanceOf(Gauge);
+      expect(registry.getSingleMetric(config.name)).toBe(result);
+    });
+  });
+
+  describe('type-based fallback (getTypeParam)', () => {
+    it('should treat an object with type="counter" as a counter', () => {
+      const counterLike = { type: 'counter' };
+      const mockRegistry = {
+        getSingleMetric: () => counterLike,
+      } as unknown as Registry;
+
+      const config = {
+        name: 'test_counter',
+        help: 'Test counter',
+        labelNames: [] as const,
+        registers: [registry],
+      };
+
+      const result = getOrCreateCounter(mockRegistry, config);
+
+      expect(result).toBe(counterLike);
     });
   });
 });

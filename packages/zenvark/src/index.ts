@@ -6,6 +6,7 @@ export type {
   RecordBlockedRequestParams,
   RecordCallParams,
   RecordHealthCheckParams,
+  RecordStateChangeParams,
 } from './breaker-metrics-recorder.ts';
 export type { BreakerStrategy } from './breakers/breaker-strategy.ts';
 export { ConsecutiveBreaker } from './breakers/consecutive-breaker.ts';

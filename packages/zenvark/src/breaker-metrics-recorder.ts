@@ -1,4 +1,4 @@
-import type { CallResult, HealthCheckType } from './constants.ts';
+import type { CallResult, CircuitState, HealthCheckType } from './constants.ts';
 
 export type RecordCallParams = {
   breakerId: string;
@@ -15,6 +15,11 @@ export type RecordHealthCheckParams = {
   type: HealthCheckType;
   result: CallResult;
   durationMs: number;
+};
+
+export type RecordStateChangeParams = {
+  breakerId: string;
+  state: CircuitState;
 };
 
 /**
@@ -42,4 +47,15 @@ export type BreakerMetricsRecorder = {
    * Record healthcheck attempt
    */
   recordHealthCheck(params: RecordHealthCheckParams): void;
+
+  /**
+   * Record a circuit state change. Also called on startup with the initial state.
+   */
+  recordStateChange?(params: RecordStateChangeParams): void;
+
+  /**
+   * Remove the circuit state metric for a breaker. Called when this node loses leadership
+   * so stale gauge values are no longer visible in scrapes.
+   */
+  clearState?(breakerId: string): void;
 };

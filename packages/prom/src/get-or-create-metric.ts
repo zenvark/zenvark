@@ -1,6 +1,8 @@
 import {
   Counter,
   type CounterConfiguration,
+  Gauge,
+  type GaugeConfiguration,
   Histogram,
   type HistogramConfiguration,
   type Registry,
@@ -41,4 +43,17 @@ export const getOrCreateHistogram = <TLabels extends string>(
   const existingMetric = register.getSingleMetric(config.name);
 
   return isHistogram(existingMetric) ? existingMetric : new Histogram(config);
+};
+
+const isGauge = (metric: unknown): metric is Gauge => {
+  return metric instanceof Gauge || getTypeParam(metric) === 'gauge';
+};
+
+export const getOrCreateGauge = <TLabels extends string>(
+  register: Registry,
+  config: GaugeConfiguration<TLabels>,
+): Gauge<TLabels> => {
+  const existingMetric = register.getSingleMetric(config.name);
+
+  return isGauge(existingMetric) ? existingMetric : new Gauge(config);
 };

@@ -1,12 +1,15 @@
-import type { Counter, Histogram, Registry } from 'prom-client';
+import type { Counter, Gauge, Histogram, Registry } from 'prom-client';
 import type {
   BreakerMetricsRecorder,
   RecordBlockedRequestParams,
   RecordCallParams,
   RecordHealthCheckParams,
+  RecordStateChangeParams,
 } from 'zenvark';
+import { CircuitState } from 'zenvark';
 import {
   getOrCreateCounter,
+  getOrCreateGauge,
   getOrCreateHistogram,
 } from './get-or-create-metric.ts';
 
@@ -33,6 +36,7 @@ export class PrometheusBreakerMetrics implements BreakerMetricsRecorder {
   private readonly callDurationHistogram: Histogram<string>;
   private readonly blockedRequestsCounter: Counter<string>;
   private readonly healthcheckDurationHistogram: Histogram<string>;
+  private readonly stateGauge: Gauge<string>;
 
   constructor(options: PrometheusBreakerMetricsOptions) {
     const prefix = options.prefix ?? 'zenvark';
@@ -60,6 +64,13 @@ export class PrometheusBreakerMetrics implements BreakerMetricsRecorder {
       help: 'Duration of health check attempts executed by the circuit breaker in seconds.',
       labelNames: ['breaker_id', 'type', 'result', ...customLabelNames],
       buckets: [0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
+      registers: [options.registry],
+    });
+
+    this.stateGauge = getOrCreateGauge(options.registry, {
+      name: `${prefix}_state`,
+      help: 'Current state of the circuit breaker. The active state label has value 1, all others 0.',
+      labelNames: ['breaker_id', 'state', ...customLabelNames],
       registers: [options.registry],
     });
   }
@@ -115,5 +126,27 @@ export class PrometheusBreakerMetrics implements BreakerMetricsRecorder {
     });
 
     this.healthcheckDurationHistogram.observe(labels, params.durationMs / 1000);
+  }
+
+  /**
+   * Record a circuit state change. Sets the active state label to 1 and all others to 0.
+   */
+  recordStateChange(params: RecordStateChangeParams): void {
+    for (const state of Object.values(CircuitState)) {
+      this.stateGauge.set(
+        this.getLabels(params.breakerId, { state }),
+        params.state === state ? 1 : 0,
+      );
+    }
+  }
+
+  /**
+   * Remove all state gauge series for a breaker. Called when this node loses leadership
+   * so the ex-leader's stale values disappear from scrapes.
+   */
+  clearState(breakerId: string): void {
+    for (const state of Object.values(CircuitState)) {
+      this.stateGauge.remove(this.getLabels(breakerId, { state }));
+    }
   }
 }
