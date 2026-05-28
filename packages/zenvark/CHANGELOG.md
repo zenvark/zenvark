@@ -1,5 +1,11 @@
 # zenvark
 
+## 1.2.0
+
+### Minor Changes
+
+- 28de14c: Add Prometheus circuit state gauge metric
+
 ## 1.1.1
 
 ### Patch Changes
