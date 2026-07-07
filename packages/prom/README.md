@@ -1,6 +1,6 @@
 # @zenvark/prom
 
-Prometheus metrics integration for [Zenvark Circuit Breaker](https://github.com/zenvark/zenvark).
+Prometheus metrics integration for the [Zenvark Circuit Breaker](https://www.npmjs.com/package/zenvark) and the [Zenvark Semaphore](https://www.npmjs.com/package/@zenvark/semaphore).
 
 ## Installation
 
@@ -40,19 +40,56 @@ const circuitBreaker = new CircuitBreaker({
 await circuitBreaker.start();
 ```
 
+For the adaptive semaphore, pass `PrometheusSemaphoreMetrics` the same way:
+
+```typescript
+import { AdaptiveSemaphore } from "@zenvark/semaphore";
+import { PrometheusSemaphoreMetrics } from "@zenvark/prom";
+import { register } from "prom-client";
+
+const semaphore = new AdaptiveSemaphore({
+  id: "my-provider-api",
+  redis,
+  initialLimit: 10,
+  maxLimit: 1000,
+  metrics: new PrometheusSemaphoreMetrics({
+    registry: register,
+    customLabels: { service: "my-api", environment: "production" },
+  }),
+});
+```
+
 ## Available Metrics
 
-| Metric                                 | Type      | Description                      | Labels                         |
-| -------------------------------------- | --------- | -------------------------------- | ------------------------------ |
-| `zenvark_call_duration_seconds`        | Histogram | Duration of protected calls      | `breaker_id`, `result`         |
-| `zenvark_blocked_requests_total`       | Counter   | Requests blocked by open circuit | `breaker_id`                   |
-| `zenvark_healthcheck_duration_seconds` | Histogram | Health check attempt duration    | `breaker_id`, `type`, `result` |
+### Circuit breaker
+
+| Metric                                 | Type      | Description                                  | Labels                         |
+| -------------------------------------- | --------- | -------------------------------------------- | ------------------------------ |
+| `zenvark_call_duration_seconds`        | Histogram | Duration of protected calls                  | `breaker_id`, `result`         |
+| `zenvark_blocked_requests_total`       | Counter   | Requests blocked by open circuit             | `breaker_id`                   |
+| `zenvark_healthcheck_duration_seconds` | Histogram | Health check attempt duration                | `breaker_id`, `type`, `result` |
+| `zenvark_state`                        | Gauge     | Circuit state (active state 1, all others 0) | `breaker_id`, `state`          |
+
+### Semaphore
+
+| Metric                                    | Type      | Description                                 | Labels                             |
+| ----------------------------------------- | --------- | ------------------------------------------- | ---------------------------------- |
+| `zenvark_semaphore_acquire_wait_seconds`  | Histogram | Time spent waiting for a lease              | `semaphore_id`, `class`, `result`  |
+| `zenvark_semaphore_hold_duration_seconds` | Histogram | Time a lease was held                       | `semaphore_id`, `class`, `outcome` |
+| `zenvark_semaphore_limit`                 | Gauge     | This process's view of the fleet-wide limit | `semaphore_id`                     |
+| `zenvark_semaphore_throttle_events_total` | Counter   | Caller-reported throttle events             | `semaphore_id`                     |
+
+The limit gauge is set on every process whose cached view changes, so a scrape of any instance reads the current fleet-wide limit. Sum or average across instances accordingly.
 
 ### Label Values
 
 - `breaker_id` - Circuit breaker instance identifier
 - `type` - Health check type: `recovery` or `idle`
-- `result` - Outcome: `success` or `failure`
+- `result` - Breaker call outcome (`success` or `failure`), or semaphore acquire outcome (`acquired` or `timeout`)
+- `state` - Circuit state: `closed` or `open`
+- `semaphore_id` - Semaphore instance identifier
+- `class` - Semaphore priority class (empty when acquired without a class)
+- `outcome` - Lease release outcome: `success`, `throttled` or `failure`
 - Custom labels - Additional key-value pairs from configuration
 
 ## Custom Labels

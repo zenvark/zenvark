@@ -1,22 +1,23 @@
 {
-  "name": "@zenvark/prom",
+  "name": "@zenvark/semaphore",
   "version": "1.2.0",
-  "description": "Prometheus metrics for Zenvark Circuit Breaker",
+  "description": "An adaptive distributed semaphore coordinated via Redis, with AIMD capacity control and priority classes",
   "keywords": [
     "zenvark",
-    "circuit",
-    "breaker",
-    "circuit-breaker",
-    "prometheus",
-    "metrics",
-    "monitoring",
-    "observability"
+    "semaphore",
+    "concurrency",
+    "aimd",
+    "adaptive",
+    "rate-limit",
+    "redis",
+    "distributed"
   ],
+  "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/zenvark/zenvark.git",
-    "directory": "packages/prom"
+    "directory": "packages/semaphore"
   },
   "homepage": "https://zenvark.github.io/zenvark",
   "bugs": {
@@ -28,7 +29,6 @@
   "files": [
     "dist"
   ],
-  "type": "module",
   "main": "dist/index.js",
   "exports": {
     ".": "./dist/index.js",
@@ -39,32 +39,28 @@
   },
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "docker:start": "docker compose up -d",
+    "docker:stop": "docker compose down",
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "typecheck": "tsc",
     "test": "vitest",
-    "test:coverage": "npm test -- --coverage",
-    "test:ci": "npm run test:coverage"
+    "test:coverage": "vitest --coverage",
+    "pretest:ci": "npm run docker:start",
+    "test:ci": "npm run test:coverage",
+    "posttest:ci": "npm run docker:stop"
   },
   "devDependencies": {
     "@lokalise/tsconfig": "^3.0.0",
     "@types/node": "^24.10.1",
     "@vitest/coverage-v8": "^4.0.15",
-    "@zenvark/semaphore": "^1.2.0",
-    "prom-client": "^15.0.0",
     "rimraf": "^6.0.1",
     "typescript": "5.9.3",
-    "vitest": "^4.0.15",
-    "zenvark": "^1.2.0"
+    "vitest": "^4.0.15"
   },
-  "peerDependencies": {
-    "@zenvark/semaphore": "^1.2.0",
-    "prom-client": "^15.0.0",
-    "zenvark": "^1.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@zenvark/semaphore": {
-      "optional": true
-    }
+  "dependencies": {
+    "@lokalise/node-core": "^14.1.0",
+    "ioredis": "^5.8.1",
+    "redis-semaphore": "^5.7.0"
   }
 }
