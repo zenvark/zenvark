@@ -1,12 +1,15 @@
 {
   "name": "zenvark",
   "version": "1.2.0",
-  "description": "A distributed circuit breaker coordinated via Redis for high-availability applications",
+  "description": "Distributed resilience primitives coordinated via Redis: a circuit breaker and an adaptive semaphore for high-availability applications",
   "keywords": [
     "zenvark",
     "circuit",
     "breaker",
     "circuit-breaker",
+    "semaphore",
+    "concurrency",
+    "aimd",
     "redis",
     "distributed"
   ],

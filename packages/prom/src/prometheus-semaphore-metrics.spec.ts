@@ -1,10 +1,6 @@
-import {
-  AcquireResult,
-  LeaseOutcome,
-  LimitChangeDirection,
-} from '@zenvark/semaphore';
 import { Registry } from 'prom-client';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { AcquireResult, LeaseOutcome, LimitChangeDirection } from 'zenvark';
 import { PrometheusSemaphoreMetrics } from './prometheus-semaphore-metrics.ts';
 
 describe('PrometheusSemaphoreMetrics', () => {

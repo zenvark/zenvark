@@ -1,11 +1,11 @@
+import type { Counter, Gauge, Histogram, Registry } from 'prom-client';
 import type {
   RecordAcquireParams,
   RecordLimitChangeParams,
   RecordReleaseParams,
   RecordThrottleParams,
   SemaphoreMetricsRecorder,
-} from '@zenvark/semaphore';
-import type { Counter, Gauge, Histogram, Registry } from 'prom-client';
+} from 'zenvark';
 import {
   getOrCreateCounter,
   getOrCreateGauge,

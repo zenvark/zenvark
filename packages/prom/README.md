@@ -1,6 +1,6 @@
 # @zenvark/prom
 
-Prometheus metrics integration for the [Zenvark Circuit Breaker](https://www.npmjs.com/package/zenvark) and the [Zenvark Semaphore](https://www.npmjs.com/package/@zenvark/semaphore).
+Prometheus metrics integration for the [Zenvark](https://www.npmjs.com/package/zenvark) circuit breaker and adaptive semaphore.
 
 ## Installation
 
@@ -43,7 +43,7 @@ await circuitBreaker.start();
 For the adaptive semaphore, pass `PrometheusSemaphoreMetrics` the same way:
 
 ```typescript
-import { AdaptiveSemaphore } from "@zenvark/semaphore";
+import { AdaptiveSemaphore } from "zenvark";
 import { PrometheusSemaphoreMetrics } from "@zenvark/prom";
 import { register } from "prom-client";
 

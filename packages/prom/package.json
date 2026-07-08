@@ -50,7 +50,6 @@
     "@lokalise/tsconfig": "^3.0.0",
     "@types/node": "^24.10.1",
     "@vitest/coverage-v8": "^4.0.15",
-    "@zenvark/semaphore": "^1.2.0",
     "prom-client": "^15.0.0",
     "rimraf": "^6.0.1",
     "typescript": "5.9.3",
@@ -58,13 +57,7 @@
     "zenvark": "^1.2.0"
   },
   "peerDependencies": {
-    "@zenvark/semaphore": "^1.2.0",
     "prom-client": "^15.0.0",
-    "zenvark": "^1.0.0"
-  },
-  "peerDependenciesMeta": {
-    "@zenvark/semaphore": {
-      "optional": true
-    }
+    "zenvark": "^1.2.0"
   }
 }
