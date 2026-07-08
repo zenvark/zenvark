@@ -46,9 +46,9 @@ const semaphore = new AdaptiveSemaphore({
   id: "my-provider-api", // keys live at zenvark:my-provider-api:*
   redis, // shared ioredis instance, used as-is
   initialLimit: 10,
-  minLimit: 2,
-  maxLimit: 1000,
-  leaseTtlMs: 30_000, // auto-refresh at 80%
+  minLimit: 2, // default: 1
+  maxLimit: 1000, // default
+  leaseTtlMs: 30_000, // default; auto-refresh at 80%
   aimd: {
     // defaults shown; normally omit the whole block
     decreaseFactor: 0.5,
@@ -69,7 +69,7 @@ const semaphore = new AdaptiveSemaphore({
 // explicit form
 const lease = await semaphore.acquire({
   class: "interactive",
-  timeoutMs: 10_000, // max wait for a slot
+  timeoutMs: 10_000, // max wait for a slot (default: 10000)
   signal: abortSignal, // optional cancellation
 });
 try {
@@ -151,7 +151,7 @@ const breaker = new CircuitBreaker({
   onError,
   semaphore: {
     instance: semaphore, // lifecycle stays with the caller; the breaker never disposes it
-    timeoutMs: 10_000, // default max wait for a slot
+    timeoutMs: 10_000, // default max wait for a slot; optional, falls back to the acquire default
     classifyError: isRateLimitSignal, // default THROTTLED-vs-FAILURE mapping
   },
 });

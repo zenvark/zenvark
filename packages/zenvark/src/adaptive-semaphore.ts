@@ -13,7 +13,9 @@ import type { SemaphoreClassConfig, SemaphoreState } from './types.ts';
 import { delay } from './utils/delay.ts';
 
 const DEFAULT_MIN_LIMIT = 1;
+const DEFAULT_MAX_LIMIT = 1000;
 const DEFAULT_LEASE_TTL_MS = 30_000;
+const DEFAULT_ACQUIRE_TIMEOUT_MS = 10_000;
 const DEFAULT_DECREASE_FACTOR = 0.5;
 const DEFAULT_INCREASE_STEP = 1;
 const DEFAULT_WINDOW_MS = 5_000;
@@ -21,6 +23,24 @@ const DEFAULT_COOLDOWN_MS = 10_000;
 const LIMIT_CACHE_TTL_MS = 1_000;
 const RETRY_INTERVAL_MIN_MS = 100;
 const RETRY_INTERVAL_MAX_MS = 500;
+
+// Multiplicative decrease as one atomic script: a separate GET/SET pair
+// could overwrite a concurrent INCRBY from maybeAdaptUp on another process.
+const DECREASE_LIMIT_SCRIPT = `
+local current = tonumber(redis.call('GET', KEYS[1]))
+if current == nil then
+  current = tonumber(ARGV[3])
+end
+local next = math.floor(current * tonumber(ARGV[1]))
+local min = tonumber(ARGV[2])
+if next < min then
+  next = min
+end
+if next ~= current then
+  redis.call('SET', KEYS[1], next)
+end
+return next
+`;
 
 export type AimdOptions = {
   /**
@@ -74,9 +94,9 @@ export type AdaptiveSemaphoreOptions = {
   initialLimit: number;
 
   /**
-   * Hard ceiling for additive increases.
+   * Hard ceiling for additive increases (default: 1000).
    */
-  maxLimit: number;
+  maxLimit?: number;
 
   /**
    * Floor for multiplicative decreases (default: 1).
@@ -124,10 +144,10 @@ export type AdaptiveSemaphoreOptions = {
 
 export type AcquireOptions = {
   /**
-   * Maximum time to wait for a slot in milliseconds. On expiry, the acquire
-   * rejects with AcquireTimeoutError.
+   * Maximum time to wait for a slot in milliseconds (default: 10000).
+   * On expiry, the acquire rejects with AcquireTimeoutError.
    */
-  timeoutMs: number;
+  timeoutMs?: number;
 
   /**
    * Priority class to acquire under. Must be a configured `classes` key.
@@ -209,7 +229,7 @@ export class AdaptiveSemaphore {
     this.redis = options.redis;
     this.initialLimit = options.initialLimit;
     this.minLimit = options.minLimit ?? DEFAULT_MIN_LIMIT;
-    this.maxLimit = options.maxLimit;
+    this.maxLimit = options.maxLimit ?? DEFAULT_MAX_LIMIT;
     this.leaseTtlMs = options.leaseTtlMs ?? DEFAULT_LEASE_TTL_MS;
     this.decreaseFactor =
       options.aimd?.decreaseFactor ?? DEFAULT_DECREASE_FACTOR;
@@ -241,7 +261,8 @@ export class AdaptiveSemaphore {
     if (this.disposed) {
       throw new SemaphoreDisposedError(this.id);
     }
-    if (!Number.isFinite(options.timeoutMs) || options.timeoutMs < 0) {
+    const timeoutMs = options.timeoutMs ?? DEFAULT_ACQUIRE_TIMEOUT_MS;
+    if (!Number.isFinite(timeoutMs) || timeoutMs < 0) {
       throw new Error('timeoutMs must be a non-negative number');
     }
     if (options.class !== undefined && !(options.class in this.classes)) {
@@ -256,7 +277,7 @@ export class AdaptiveSemaphore {
       : controller.signal;
     this.pendingAcquires.add(controller);
     try {
-      return await this.acquireWithRedis(options, signal);
+      return await this.acquireWithRedis({ ...options, timeoutMs }, signal);
     } finally {
       this.pendingAcquires.delete(controller);
     }
@@ -314,7 +335,7 @@ export class AdaptiveSemaphore {
   }
 
   private async acquireWithRedis(
-    options: AcquireOptions,
+    options: AcquireOptions & { timeoutMs: number },
     signal: AbortSignal,
   ): Promise<Lease> {
     const startedAt = performance.now();
@@ -335,6 +356,9 @@ export class AdaptiveSemaphore {
           {
             lockTimeout: this.leaseTtlMs,
             acquireAttemptsLimit: 1,
+            // A denied attempt still waits retryInterval inside tryAcquire
+            // before returning false, so this outer loop is paced by the
+            // jittered interval rather than spinning against Redis.
             retryInterval: this.retryIntervalFor(deadline),
             onLockLost: (err) =>
               this.handleError(
@@ -378,7 +402,7 @@ export class AdaptiveSemaphore {
   }
 
   private async acquireWithFallback(
-    options: AcquireOptions,
+    options: AcquireOptions & { timeoutMs: number },
     signal: AbortSignal,
     startedAt: number,
     deadline: number,
@@ -476,14 +500,16 @@ export class AdaptiveSemaphore {
     if (claimed === null) {
       return;
     }
-    const current = await this.readLimitFromRedis();
-    const next = Math.max(
-      this.minLimit,
-      Math.floor(current * this.decreaseFactor),
+    const next = Number(
+      await this.redis.eval(
+        DECREASE_LIMIT_SCRIPT,
+        1,
+        this.limitKey,
+        String(this.decreaseFactor),
+        String(this.minLimit),
+        String(this.initialLimit),
+      ),
     );
-    if (next !== current) {
-      await this.redis.set(this.limitKey, String(next));
-    }
     this.updateCachedLimit(next);
   }
 
@@ -679,13 +705,11 @@ export class AdaptiveSemaphore {
     if (!Number.isInteger(minLimit) || minLimit < 1) {
       throw new Error('minLimit must be an integer >= 1');
     }
-    if (!Number.isInteger(options.maxLimit) || options.maxLimit < 1) {
+    const maxLimit = options.maxLimit ?? DEFAULT_MAX_LIMIT;
+    if (!Number.isInteger(maxLimit) || maxLimit < 1) {
       throw new Error('maxLimit must be an integer >= 1');
     }
-    if (
-      options.initialLimit < minLimit ||
-      options.initialLimit > options.maxLimit
-    ) {
+    if (options.initialLimit < minLimit || options.initialLimit > maxLimit) {
       throw new Error('initialLimit must be within [minLimit, maxLimit]');
     }
     const decreaseFactor =

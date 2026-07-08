@@ -39,6 +39,20 @@ const createBrokenRedis = () =>
 
 describe('AdaptiveSemaphore', () => {
   describe('acquire and release', () => {
+    it('works with only the required options, using default maxLimit and timeout', async () => {
+      const semaphore = new AdaptiveSemaphore({
+        id: SEMAPHORE_ID,
+        redis,
+        initialLimit: 1,
+        onError: () => {},
+      });
+
+      const lease = await semaphore.acquire({});
+      expect(semaphore.getState().inflight).toBe(1);
+      await lease.release(LeaseOutcome.SUCCESS);
+      expect(semaphore.getState().inflight).toBe(0);
+    });
+
     it('acquires a lease, tracks it and returns the slot on release', async () => {
       const semaphore = createSemaphore({ initialLimit: 5 });
 
@@ -753,6 +767,17 @@ describe('AdaptiveSemaphore', () => {
       string,
     ][])('rejects invalid options %j', (overrides, message) => {
       expect(() => createSemaphore(overrides)).toThrow(message);
+    });
+
+    it('checks initialLimit against the default maxLimit of 1000', () => {
+      expect(
+        () =>
+          new AdaptiveSemaphore({
+            id: SEMAPHORE_ID,
+            redis,
+            initialLimit: 1001,
+          }),
+      ).toThrow('initialLimit must be within [minLimit, maxLimit]');
     });
 
     it('rejects a negative acquire timeout', async () => {

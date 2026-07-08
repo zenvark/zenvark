@@ -37,9 +37,10 @@ export type BreakerSemaphoreOptions = {
   instance: AdaptiveSemaphore;
 
   /**
-   * Default maximum time to wait for a lease, in milliseconds.
+   * Default maximum time to wait for a lease, in milliseconds. Falls back
+   * to the semaphore's own acquire default (10000) when omitted.
    */
-  timeoutMs: number;
+  timeoutMs?: number;
 
   /**
    * Default priority class to acquire under.

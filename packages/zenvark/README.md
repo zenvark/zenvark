@@ -92,8 +92,6 @@ const semaphore = new AdaptiveSemaphore({
   id: "my-provider-api",
   redis,
   initialLimit: 10,
-  minLimit: 2,
-  maxLimit: 1000,
   onError: (err) => console.error("Semaphore error:", err),
 });
 
@@ -132,7 +130,7 @@ The steady state is a sawtooth just under the real ceiling. The library never in
 | `redis`         | `Redis`                                | (required)      | An `ioredis` instance, used as-is (no `duplicate()`; the semaphore only issues request/response commands). Safe to share with a `CircuitBreaker`.           |
 | `initialLimit`  | `number`                               | (required)      | Starting capacity. Pick a conservative value; AIMD converges from there.                                                                                    |
 | `minLimit`      | `number`                               | `1`             | Floor for multiplicative decreases.                                                                                                                         |
-| `maxLimit`      | `number`                               | (required)      | Hard ceiling for additive increases. A runaway guard, not a tuning knob.                                                                                    |
+| `maxLimit`      | `number`                               | `1000`          | Hard ceiling for additive increases. A runaway guard, not a tuning knob.                                                                                    |
 | `leaseTtlMs`    | `number`                               | `30_000`        | Lease TTL. Held leases auto-renew at 80% of the TTL; a crashed holder's slot returns within one TTL.                                                        |
 | `aimd`          | `AimdOptions`                          | see below       | Adaptation constants. Consumers normally omit the whole block.                                                                                              |
 | `classes`       | `Record<string, SemaphoreClassConfig>` | `{}`            | Named priority classes, each with an optional `reservedShare` (0–1). See [Priority classes](#priority-classes).                                             |
@@ -152,11 +150,11 @@ The steady state is a sawtooth just under the real ceiling. The library never in
 
 #### `acquire(options)`
 
-| Option      | Type          | Default    | Description                                                                                               |
-| ----------- | ------------- | ---------- | --------------------------------------------------------------------------------------------------------- |
-| `class`     | `string`      | –          | Priority class to acquire under. Must be one of the configured `classes` keys.                            |
-| `timeoutMs` | `number`      | (required) | Maximum time to wait for a slot (jittered polling inside). On expiry, rejects with `AcquireTimeoutError`. |
-| `signal`    | `AbortSignal` | –          | Optional cancellation for the wait.                                                                       |
+| Option      | Type          | Default  | Description                                                                                               |
+| ----------- | ------------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| `class`     | `string`      | –        | Priority class to acquire under. Must be one of the configured `classes` keys.                            |
+| `timeoutMs` | `number`      | `10_000` | Maximum time to wait for a slot (jittered polling inside). On expiry, rejects with `AcquireTimeoutError`. |
+| `signal`    | `AbortSignal` | –        | Optional cancellation for the wait.                                                                       |
 
 Returns a `Lease` with an idempotent `release(outcome: LeaseOutcome)`. `withLease(options, fn)` takes the same options plus an optional `classifyError: (err: unknown) => boolean` (should this error count as `THROTTLED`? defaults to no) and handles release for you.
 
@@ -171,7 +169,6 @@ const semaphore = new AdaptiveSemaphore({
   id: "my-provider-api",
   redis,
   initialLimit: 20,
-  maxLimit: 1000,
   classes: {
     interactive: { reservedShare: 0.25 }, // may use full L
     background: {}, // capped at L - ceil(0.25 * L)
@@ -206,7 +203,6 @@ const semaphore = new AdaptiveSemaphore({
   id: "my-provider-api",
   redis,
   initialLimit: 10,
-  maxLimit: 1000,
   classes: {
     interactive: { reservedShare: 0.25 },
     background: {},
@@ -220,7 +216,6 @@ const circuitBreaker = new CircuitBreaker({
   health,
   semaphore: {
     instance: semaphore, // the breaker never disposes it; lifecycle stays with you
-    timeoutMs: 10_000, // default max wait for a slot
     classifyError: isRateLimitError, // which errors release the lease as THROTTLED
   },
 });

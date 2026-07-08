@@ -338,6 +338,17 @@ describe('CircuitBreaker', () => {
       await circuit.stop();
     });
 
+    it('uses the semaphore acquire timeout when lease timeoutMs is omitted', async () => {
+      const { circuit, semaphore } = await createGatedCircuit({ lease: {} });
+
+      const result = await circuit.execute(() => Promise.resolve('ok'));
+
+      expect(result).toBe('ok');
+      expect(semaphore.getState().inflight).toBe(0);
+
+      await circuit.stop();
+    });
+
     it('releases THROTTLED for classified errors while breaker accounting is unchanged', async () => {
       const metrics = createBreakerMetrics();
       const { circuit } = await createGatedCircuit({
