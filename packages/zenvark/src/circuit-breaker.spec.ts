@@ -355,7 +355,10 @@ describe('CircuitBreaker', () => {
         initialLimit: 10,
         lease: {
           timeoutMs: 1_000,
-          classifyError: (err) => err instanceof Error && err.message === '429',
+          outcomeOnError: (err) =>
+            err instanceof Error && err.message === '429'
+              ? LeaseOutcome.THROTTLED
+              : LeaseOutcome.FAILURE,
         },
         metrics,
       });
@@ -492,7 +495,7 @@ describe('CircuitBreaker', () => {
         initialLimit: 10,
         lease: {
           timeoutMs: 1_000,
-          classifyError: () => {
+          outcomeOnError: () => {
             throw new Error('classifier bug');
           },
         },

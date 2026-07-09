@@ -162,10 +162,13 @@ export type AcquireOptions = {
 
 export type WithLeaseOptions = AcquireOptions & {
   /**
-   * Decides whether a thrown error counts as THROTTLED (true) or
-   * FAILURE (false). Omit to treat every error as FAILURE.
+   * Maps a thrown error to the outcome the lease is released with:
+   * THROTTLED when the remote pushed back (feeds the AIMD decrease),
+   * FAILURE for unrelated errors (neutral for adaptation), or SUCCESS
+   * to release the slot as if the call had succeeded. Omit to treat
+   * every error as FAILURE.
    */
-  classifyError?: (err: unknown) => boolean;
+  outcomeOnError?: (err: unknown) => LeaseOutcome;
 };
 
 export class Lease {
@@ -285,8 +288,8 @@ export class AdaptiveSemaphore {
 
   /**
    * Acquire a lease, run the callback, and release with the right outcome:
-   * SUCCESS when it resolves, THROTTLED when it throws and `classifyError`
-   * returns true, FAILURE otherwise. The callback's error is rethrown.
+   * SUCCESS when it resolves, otherwise whatever `outcomeOnError` returns
+   * (FAILURE when omitted). The callback's error is rethrown.
    */
   async withLease<T>(
     options: WithLeaseOptions,
@@ -298,9 +301,8 @@ export class AdaptiveSemaphore {
       await lease.release(LeaseOutcome.SUCCESS);
       return result;
     } catch (err) {
-      const throttled = this.classifyError(options.classifyError, err);
       await lease.release(
-        throttled ? LeaseOutcome.THROTTLED : LeaseOutcome.FAILURE,
+        this.resolveErrorOutcome(options.outcomeOnError, err),
       );
       throw err;
     }
@@ -667,12 +669,12 @@ export class AdaptiveSemaphore {
     });
   }
 
-  private classifyError(
-    classifier: ((err: unknown) => boolean) | undefined,
+  private resolveErrorOutcome(
+    classifier: ((err: unknown) => LeaseOutcome) | undefined,
     err: unknown,
-  ): boolean {
+  ): LeaseOutcome {
     if (!classifier) {
-      return false;
+      return LeaseOutcome.FAILURE;
     }
     try {
       return classifier(err);
@@ -681,7 +683,7 @@ export class AdaptiveSemaphore {
         `Error classifier of semaphore "${this.id}" threw; treating the outcome as FAILURE`,
         classifierErr,
       );
-      return false;
+      return LeaseOutcome.FAILURE;
     }
   }
 

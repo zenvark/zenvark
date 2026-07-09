@@ -453,8 +453,10 @@ describe('AdaptiveSemaphore', () => {
         semaphore.withLease(
           {
             timeoutMs: 1_000,
-            classifyError: (err) =>
-              err instanceof Error && err.message === '429',
+            outcomeOnError: (err) =>
+              err instanceof Error && err.message === '429'
+                ? LeaseOutcome.THROTTLED
+                : LeaseOutcome.FAILURE,
           },
           () => Promise.reject(new Error('429')),
         ),
@@ -484,7 +486,7 @@ describe('AdaptiveSemaphore', () => {
         semaphore.withLease(
           {
             timeoutMs: 1_000,
-            classifyError: () => {
+            outcomeOnError: () => {
               throw new Error('classifier bug');
             },
           },
@@ -705,8 +707,10 @@ describe('AdaptiveSemaphore', () => {
               .withLease(
                 {
                   timeoutMs: 2_000,
-                  classifyError: (err) =>
-                    err instanceof Error && err.message === '429',
+                  outcomeOnError: (err) =>
+                    err instanceof Error && err.message === '429'
+                      ? LeaseOutcome.THROTTLED
+                      : LeaseOutcome.FAILURE,
                 },
                 callProvider,
               )

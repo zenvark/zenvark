@@ -1,4 +1,8 @@
-# Zenvark adaptive semaphore — design
+---
+sidebar_position: 6
+---
+
+# Semaphore Design
 
 Zenvark ships two distributed resilience primitives. The circuit breaker is reactive: it cuts callers off from a dependency that is already failing. The adaptive semaphore is proactive: it bounds the number of simultaneous operations across a fleet of processes against an external constraint whose real ceiling is unknown or variable — for example, a third-party API rate limit shared by one API key.
 
@@ -8,12 +12,14 @@ The semaphore knows nothing about HTTP, providers, or queues. It manages three t
 2. **Adaptation** — an AIMD controller (additive increase, multiplicative decrease) that moves capacity toward the real ceiling based on outcomes the caller reports.
 3. **Priority classes** — optional reserved shares of capacity, so latency-sensitive callers are never fully crowded out by bulk callers.
 
-The semaphore and the `CircuitBreaker` often guard the same call, so the breaker has built-in support for it — see "Composing with CircuitBreaker".
+The semaphore and the `CircuitBreaker` often guard the same call, so the breaker has built-in support for it — see [Composing with CircuitBreaker](#composing-with-circuitbreaker).
+
+This page covers the design rationale; for usage, options, and examples see the [Adaptive Semaphore guide](./adaptive-semaphore.md).
 
 ## Referenced art
 
 - [Netflix/concurrency-limits](https://github.com/Netflix/concurrency-limits) — the reference implementation of adaptive concurrency limits. Java, in-process only. The AIMD rules here follow its guidance, notably "increase only when the limit is binding".
-- [swarthy/redis-semaphore](https://github.com/swarthy/redis-semaphore) — TypeScript distributed semaphore on Redis with lease TTLs and auto-refresh. Used unmodified as the gate — see "Gate implementation".
+- [swarthy/redis-semaphore](https://github.com/swarthy/redis-semaphore) — TypeScript distributed semaphore on Redis with lease TTLs and auto-refresh. Used unmodified as the gate — see [Gate implementation](#gate-implementation-redis-semaphore-unmodified).
 
 ## Concepts
 
@@ -85,13 +91,18 @@ try {
 
 // or the wrapper, which handles release and maps errors via a classifier
 const result = await semaphore.withLease(
-  { class: "background", timeoutMs: 60_000, classifyError: isRateLimitSignal },
+  {
+    class: "background",
+    timeoutMs: 60_000,
+    outcomeOnError: (err) =>
+      isRateLimitSignal(err) ? LeaseOutcome.THROTTLED : LeaseOutcome.FAILURE,
+  },
   () => callProvider(),
 );
 ```
 
 - `acquire` rejects with `AcquireTimeoutError` when `timeoutMs` elapses, and with `SemaphoreDisposedError` after `dispose()`.
-- `withLease` is single-attempt: an acquire timeout is not retried internally; retry policy belongs to the caller. `classifyError` is optional — when omitted, every thrown error releases as `FAILURE`.
+- `withLease` is single-attempt: an acquire timeout is not retried internally; retry policy belongs to the caller. `outcomeOnError` is optional — when omitted, every thrown error releases as `FAILURE`.
 - `Lease.release(outcome)` is idempotent: only the first call has an effect.
 - Held leases keep renewing until released, so long-running operations are safe.
 - Waiting is jittered polling (~100–500 ms), not FIFO. Waiter fairness is a non-goal; put a fairness layer (e.g. a job queue) upstream if you need one.
@@ -102,7 +113,7 @@ const result = await semaphore.withLease(
 - **Increase**: `L := min(maxLimit, L + increaseStep)`, at most once per `windowMs`, and only if the window saw demand at the cap (at least one denied acquire) and no throttles. The demand guard keeps `L` from inflating while traffic is quiet.
 - Steady state is a sawtooth just under the real ceiling. If halving causes throughput collapse on bursty traffic, soften `decreaseFactor` to 0.7–0.8.
 
-The evaluation window is time-based. A pluggable strategy interface (for Vegas- or gradient-style controllers) is deferred — see "Future work".
+The evaluation window is time-based. A pluggable strategy interface (for Vegas- or gradient-style controllers) is deferred.
 
 ## Gate implementation: redis-semaphore, unmodified
 
@@ -152,7 +163,7 @@ const breaker = new CircuitBreaker({
   semaphore: {
     instance: semaphore, // lifecycle stays with the caller; the breaker never disposes it
     timeoutMs: 10_000, // default max wait for a slot; optional, falls back to the acquire default
-    classifyError: isRateLimitSignal, // default THROTTLED-vs-FAILURE mapping
+    outcomeOnError, // default error-to-outcome mapping
   },
 });
 
@@ -172,9 +183,9 @@ With a configured semaphore, `execute` sequences the call itself:
 1. **Open check before the lease.** An open circuit rejects with `CircuitOpenError` and records a blocked request — no slot is waited for or consumed.
 2. **Lease acquisition, outside breaker accounting.** `AcquireTimeoutError` propagates without touching the breaker's call results or duration metrics. If the circuit opens mid-wait, the breaker aborts the pending acquire and the caller gets `CircuitOpenError` immediately, also counted as a blocked request.
 3. **Re-check after the lease.** If the circuit opened during the wait but the acquire won the race, the lease is released as `FAILURE` and `CircuitOpenError` is thrown.
-4. **The call, with unchanged breaker accounting.** Any error thrown by `fn` records as a breaker failure, exactly as without a semaphore. `classifyError` decides only the lease outcome: `THROTTLED` (feeds the AIMD decrease) or `FAILURE` (neutral).
+4. **The call, with unchanged breaker accounting.** Any error thrown by `fn` records as a breaker failure, exactly as without a semaphore. `outcomeOnError` decides only the lease outcome: `THROTTLED` (feeds the AIMD decrease) or `FAILURE` (neutral).
 
-The constructor's `semaphore` block carries the defaults (`timeoutMs`, `class`, `classifyError`); `execute`'s second argument overrides them per call (`{ lease: { timeoutMs?, class?, classifyError?, signal? } }`). Once a semaphore is configured, every `execute` is gated; passing `lease` options without a configured semaphore is an error.
+The constructor's `semaphore` block carries the defaults (`timeoutMs`, `class`, `outcomeOnError`); `execute`'s second argument overrides them per call (`{ lease: { timeoutMs?, class?, outcomeOnError?, signal? } }`). Once a semaphore is configured, every `execute` is gated; passing `lease` options without a configured semaphore is an error.
 
 Both primitives stay fully usable standalone. Their ids need not match: a breaker typically guards a dependency (a downstream service), a semaphore a quota (an API key or tenant). Both live under the `zenvark:` namespace on the same Redis.
 

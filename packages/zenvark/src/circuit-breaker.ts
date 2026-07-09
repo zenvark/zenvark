@@ -48,18 +48,20 @@ export type BreakerSemaphoreOptions = {
   class?: string;
 
   /**
-   * Decides whether an error thrown by the protected call releases the
-   * lease as THROTTLED (true) or FAILURE (false). This only drives the
-   * semaphore's limit adaptation; breaker accounting is unaffected — any
-   * thrown error is still recorded as a breaker failure.
+   * Maps an error thrown by the protected call to the outcome the lease
+   * is released with: THROTTLED (feeds the semaphore's limit adaptation),
+   * FAILURE (neutral, the default when omitted), or SUCCESS (the error is
+   * not a capacity signal). This only drives the semaphore; breaker
+   * accounting is unaffected — any thrown error is still recorded as a
+   * breaker failure.
    */
-  classifyError?: (err: unknown) => boolean;
+  outcomeOnError?: (err: unknown) => LeaseOutcome;
 };
 
 export type ExecuteLeaseOptions = {
   timeoutMs?: number;
   class?: string;
-  classifyError?: (err: unknown) => boolean;
+  outcomeOnError?: (err: unknown) => LeaseOutcome;
   signal?: AbortSignal;
 };
 
@@ -361,8 +363,8 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       return await this.runCall(fn);
     }
 
-    const classifyError =
-      options?.lease?.classifyError ?? this.semaphore.classifyError;
+    const outcomeOnError =
+      options?.lease?.outcomeOnError ?? this.semaphore.outcomeOnError;
     const lease = await this.acquireLease(this.semaphore, options?.lease);
 
     // The circuit may have opened while we were waiting for the lease
@@ -378,10 +380,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       await lease.release(LeaseOutcome.SUCCESS);
       return result;
     } catch (err) {
-      const throttled = this.classifyThrottle(classifyError, err);
-      await lease.release(
-        throttled ? LeaseOutcome.THROTTLED : LeaseOutcome.FAILURE,
-      );
+      await lease.release(this.resolveErrorOutcome(outcomeOnError, err));
       throw err;
     }
   }
@@ -442,12 +441,12 @@ export class CircuitBreaker extends AbstractLifecycleManager {
     }
   }
 
-  private classifyThrottle(
-    classifier: ((err: unknown) => boolean) | undefined,
+  private resolveErrorOutcome(
+    classifier: ((err: unknown) => LeaseOutcome) | undefined,
     err: unknown,
-  ): boolean {
+  ): LeaseOutcome {
     if (!classifier) {
-      return false;
+      return LeaseOutcome.FAILURE;
     }
     try {
       return classifier(err);
@@ -456,7 +455,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
         `Semaphore error classifier of breaker "${this.id}" threw; treating the outcome as FAILURE`,
         classifierErr,
       );
-      return false;
+      return LeaseOutcome.FAILURE;
     }
   }
 
