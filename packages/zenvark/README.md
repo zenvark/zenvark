@@ -1,15 +1,31 @@
 # Zenvark
 
-A robust distributed circuit breaker, coordinated via Redis, designed for high-availability applications.
+Distributed resilience primitives, coordinated via Redis, designed for high-availability applications:
+
+- A **circuit breaker** — reactive; cuts callers off from a dependency that is already failing.
+- An **adaptive semaphore** — proactive; adapts a fleet-wide concurrency limit to what the dependency can actually handle.
+
+They work independently or combined, with the breaker gating every call through the semaphore.
 
 ## Features
+
+### Circuit breaker
 
 - 🌐 **Distributed Coordination** - Multiple instances coordinate via Redis Streams
 - ⚙️ **Multiple Breaker Strategies** - Consecutive, count-based, and time-based sampling
 - ⏱️ **Flexible Backoff Strategies** - Constant or exponential delays
 - 👑 **Leader Election** - Single instance manages health checks and state transitions
 - ⚡ **Event-Driven** - Real-time coordination powered by Redis Streams
-- 📊 **Prometheus Metrics** - Built-in observability with [@zenvark/prom](https://www.npmjs.com/package/@zenvark/prom)
+
+### Adaptive semaphore
+
+- 🌐 **Distributed Leases** - One Redis-backed count of in-flight operations, enforced fleet-wide rather than per process
+- 📈 **AIMD Adaptation** - Capacity converges toward the real ceiling based on caller-reported outcomes; no fixed rate limit to configure
+- 🎟️ **Priority Classes** - Optional reserved capacity shares, so latency-sensitive callers are never fully crowded out by bulk callers
+- 💓 **Crash-Safe Holds** - Leases carry a TTL and auto-renew while held; slots owned by crashed processes return to the pool within one TTL
+- 🧩 **Built-in Breaker Integration** - Pass the semaphore to a `CircuitBreaker` and every `execute` call is gated
+
+Both primitives report through **Prometheus metrics** via [@zenvark/prom](https://www.npmjs.com/package/@zenvark/prom).
 
 ## Installation
 
@@ -17,7 +33,7 @@ A robust distributed circuit breaker, coordinated via Redis, designed for high-a
 npm install zenvark ioredis
 ```
 
-## Quick Start
+## Quick Start: Circuit Breaker
 
 ```typescript
 import { Redis } from "ioredis";
@@ -62,6 +78,10 @@ try {
 await circuitBreaker.stop();
 ```
 
+## Adaptive Semaphore
+
+The breaker can gate every `execute` call through an `AdaptiveSemaphore` — a fleet-wide concurrency limit, coordinated via Redis, that converges to what the dependency can actually handle. It also works standalone. Usage, options, and how adaptation works are covered in the [Adaptive Semaphore guide](https://zenvark.github.io/zenvark/docs/guides/adaptive-semaphore).
+
 ## Prerequisites
 
 - Node.js 22.x or higher
@@ -76,6 +96,8 @@ await circuitBreaker.stop();
 - [Breaker Strategies](https://zenvark.github.io/zenvark/docs/strategies/breaker-strategies)
 - [Backoff Strategies](https://zenvark.github.io/zenvark/docs/strategies/backoff-strategies)
 - [Architecture](https://zenvark.github.io/zenvark/docs/guides/architecture)
+- [Adaptive Semaphore](https://zenvark.github.io/zenvark/docs/guides/adaptive-semaphore)
+- [Semaphore Design](https://zenvark.github.io/zenvark/docs/guides/semaphore-design)
 - [Best Practices](https://zenvark.github.io/zenvark/docs/guides/best-practices)
 
 ## License

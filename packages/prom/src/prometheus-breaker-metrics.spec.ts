@@ -121,12 +121,8 @@ describe('PrometheusBreakerMetrics', () => {
 
       const allMetrics = await registry.metrics();
 
-      expect(allMetrics).toMatch(
-        new RegExp(`zenvark_state{[^}]*state="open"[^}]*} 1`),
-      );
-      expect(allMetrics).toMatch(
-        new RegExp(`zenvark_state{[^}]*state="closed"[^}]*} 0`),
-      );
+      expect(allMetrics).toMatch(/zenvark_state{[^}]*state="open"[^}]*} 1/);
+      expect(allMetrics).toMatch(/zenvark_state{[^}]*state="closed"[^}]*} 0/);
     });
 
     it('transitions active state correctly when state changes', async () => {
@@ -137,12 +133,8 @@ describe('PrometheusBreakerMetrics', () => {
 
       const allMetrics = await registry.metrics();
 
-      expect(allMetrics).toMatch(
-        new RegExp(`zenvark_state{[^}]*state="closed"[^}]*} 1`),
-      );
-      expect(allMetrics).toMatch(
-        new RegExp(`zenvark_state{[^}]*state="open"[^}]*} 0`),
-      );
+      expect(allMetrics).toMatch(/zenvark_state{[^}]*state="closed"[^}]*} 1/);
+      expect(allMetrics).toMatch(/zenvark_state{[^}]*state="open"[^}]*} 0/);
     });
   });
 

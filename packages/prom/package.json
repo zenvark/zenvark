@@ -58,6 +58,6 @@
   },
   "peerDependencies": {
     "prom-client": "^15.0.0",
-    "zenvark": "^1.0.0"
+    "zenvark": "^1.2.0"
   }
 }

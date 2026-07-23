@@ -1,4 +1,5 @@
 import type { Redis } from 'ioredis';
+import type { AdaptiveSemaphore, Lease } from './adaptive-semaphore.ts';
 import type { BackoffStrategy } from './backoffs/backoff-strategy.ts';
 import type { BreakerMetricsRecorder } from './breaker-metrics-recorder.ts';
 import type { BreakerStrategy } from './breakers/breaker-strategy.ts';
@@ -7,6 +8,7 @@ import {
   CircuitRole,
   CircuitState,
   HealthCheckType,
+  LeaseOutcome,
 } from './constants.ts';
 import { CircuitOpenError } from './errors/circuit-open-error.ts';
 import { LeaderElector } from './leader-elector.ts';
@@ -26,11 +28,63 @@ type OnErrorCallback = (err: Error) => void;
 type OnRoleChangeCallback = (role: CircuitRole) => void;
 type OnStateChangeCallback = (state: CircuitState) => void;
 
+export type BreakerSemaphoreOptions = {
+  /**
+   * The semaphore gating calls to the protected resource. Its lifecycle
+   * stays with the caller: the breaker never disposes it, so it can be
+   * shared with other consumers.
+   */
+  instance: AdaptiveSemaphore;
+
+  /**
+   * Default maximum time to wait for a lease, in milliseconds. Falls back
+   * to the semaphore's own acquire default (10000) when omitted.
+   */
+  timeoutMs?: number;
+
+  /**
+   * Default priority class to acquire under.
+   */
+  class?: string;
+
+  /**
+   * Maps an error thrown by the protected call to the outcome the lease
+   * is released with: THROTTLED (feeds the semaphore's limit adaptation),
+   * FAILURE (neutral, the default when omitted), or SUCCESS (the error is
+   * not a capacity signal). This only drives the semaphore; breaker
+   * accounting is unaffected — any thrown error is still recorded as a
+   * breaker failure.
+   */
+  outcomeOnError?: (err: unknown) => LeaseOutcome;
+};
+
+export type ExecuteLeaseOptions = {
+  timeoutMs?: number;
+  class?: string;
+  outcomeOnError?: (err: unknown) => LeaseOutcome;
+  signal?: AbortSignal;
+};
+
+export type ExecuteOptions = {
+  /**
+   * Per-call overrides of the semaphore lease defaults configured on the
+   * breaker. Requires the `semaphore` constructor option.
+   */
+  lease?: ExecuteLeaseOptions;
+};
+
 export type CircuitBreakerOptions = {
   id: string;
   redis: Redis;
   breaker: BreakerStrategy;
   health: HealthConfig;
+  /**
+   * Optional adaptive semaphore gating every `execute` call. The breaker
+   * checks the circuit before acquiring a lease (so blocked requests are
+   * counted and never queue), releases the lease with the classified
+   * outcome afterwards, and aborts waiting acquires when the circuit opens.
+   */
+  semaphore?: BreakerSemaphoreOptions;
   onError?: OnErrorCallback;
   onRoleChange?: OnRoleChangeCallback;
   onStateChange?: OnStateChangeCallback;
@@ -42,10 +96,12 @@ export class CircuitBreaker extends AbstractLifecycleManager {
   private readonly redis: Redis;
   private readonly breaker: BreakerStrategy;
   private readonly health: HealthConfig;
+  private readonly semaphore?: BreakerSemaphoreOptions;
   private readonly onError?: OnErrorCallback;
   private readonly onRoleChange?: OnRoleChangeCallback;
   private readonly onStateChange?: OnStateChangeCallback;
   private readonly metrics?: BreakerMetricsRecorder;
+  private readonly pendingLeaseAcquires = new Set<AbortController>();
 
   private readonly circuitStateStore: CircuitStateStore;
   private readonly callResultStore: CallResultStore;
@@ -58,6 +114,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
     this.redis = options.redis.duplicate({ lazyConnect: true });
     this.breaker = options.breaker;
     this.health = options.health;
+    this.semaphore = options.semaphore;
     this.onError = options.onError;
     this.onRoleChange = options.onRoleChange;
     this.onStateChange = options.onStateChange;
@@ -77,6 +134,9 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       onStateChange: (state) => {
         if (this.elector.isLeader) {
           this.metrics?.recordStateChange?.({ breakerId: this.id, state });
+        }
+        if (state === CircuitState.OPEN) {
+          this.abortPendingLeaseAcquires();
         }
         this.onStateChange?.(state);
       },
@@ -291,13 +351,81 @@ export class CircuitBreaker extends AbstractLifecycleManager {
     await this.callResultStore.storeCallResult(callResult);
   }
 
-  async execute<T>(fn: () => Promise<T>): Promise<T> {
+  async execute<T>(fn: () => Promise<T>, options?: ExecuteOptions): Promise<T> {
+    this.throwIfCircuitOpen();
+
+    if (!this.semaphore) {
+      if (options?.lease) {
+        throw new Error(
+          `Semaphore lease options require a semaphore to be configured on breaker "${this.id}"`,
+        );
+      }
+      return await this.runCall(fn);
+    }
+
+    const outcomeOnError =
+      options?.lease?.outcomeOnError ?? this.semaphore.outcomeOnError;
+    const lease = await this.acquireLease(this.semaphore, options?.lease);
+
+    // The circuit may have opened while we were waiting for the lease
+    try {
+      this.throwIfCircuitOpen();
+    } catch (err) {
+      await lease.release(LeaseOutcome.FAILURE);
+      throw err;
+    }
+
+    try {
+      const result = await this.runCall(fn);
+      await lease.release(LeaseOutcome.SUCCESS);
+      return result;
+    } catch (err) {
+      await lease.release(this.resolveErrorOutcome(outcomeOnError, err));
+      throw err;
+    }
+  }
+
+  private async acquireLease(
+    semaphore: BreakerSemaphoreOptions,
+    overrides: ExecuteLeaseOptions | undefined,
+  ): Promise<Lease> {
+    const controller = new AbortController();
+    this.pendingLeaseAcquires.add(controller);
+    try {
+      return await semaphore.instance.acquire({
+        timeoutMs: overrides?.timeoutMs ?? semaphore.timeoutMs,
+        class: overrides?.class ?? semaphore.class,
+        signal: overrides?.signal
+          ? AbortSignal.any([overrides.signal, controller.signal])
+          : controller.signal,
+      });
+    } catch (err) {
+      if (err instanceof CircuitOpenError) {
+        // The wait was aborted because the circuit opened
+        this.metrics?.recordBlockedRequest({ breakerId: this.id });
+      }
+      throw err;
+    } finally {
+      this.pendingLeaseAcquires.delete(controller);
+    }
+  }
+
+  private abortPendingLeaseAcquires(): void {
+    for (const controller of this.pendingLeaseAcquires) {
+      controller.abort(new CircuitOpenError(this.id));
+    }
+    this.pendingLeaseAcquires.clear();
+  }
+
+  private throwIfCircuitOpen(): void {
     if (this.state === CircuitState.OPEN) {
       this.metrics?.recordBlockedRequest({ breakerId: this.id });
 
       throw new CircuitOpenError(this.id);
     }
+  }
 
+  private async runCall<T>(fn: () => Promise<T>): Promise<T> {
     const startedAt = performance.now();
 
     try {
@@ -310,6 +438,24 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       void this.recordCallResult(CallResult.FAILURE, startedAt);
 
       throw err;
+    }
+  }
+
+  private resolveErrorOutcome(
+    classifier: ((err: unknown) => LeaseOutcome) | undefined,
+    err: unknown,
+  ): LeaseOutcome {
+    if (!classifier) {
+      return LeaseOutcome.FAILURE;
+    }
+    try {
+      return classifier(err);
+    } catch (classifierErr) {
+      this.handleError(
+        `Semaphore error classifier of breaker "${this.id}" threw; treating the outcome as FAILURE`,
+        classifierErr,
+      );
+      return LeaseOutcome.FAILURE;
     }
   }
 
