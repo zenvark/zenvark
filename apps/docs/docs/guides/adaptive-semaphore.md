@@ -185,5 +185,3 @@ With a semaphore configured, `execute` guarantees:
 - **Breaker accounting is unchanged.** Any error thrown by your function records as a breaker failure, exactly as without a semaphore. `outcomeOnError` decides only the lease outcome: `THROTTLED` (triggers the AIMD decrease) or `FAILURE` (no adaptation).
 
 A breaker without the `semaphore` option behaves exactly as before, and the semaphore remains fully usable standalone.
-
-For the reasoning behind the design — the AIMD rules, the Redis key layout, and why the breaker integration is built in — see [Semaphore Design](./semaphore-design.md).

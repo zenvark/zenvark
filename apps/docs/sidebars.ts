@@ -14,7 +14,6 @@ const sidebars: SidebarsConfig = {
         'guides/healthchecks',
         'guides/metrics',
         'guides/adaptive-semaphore',
-        'guides/semaphore-design',
         'guides/best-practices',
         'guides/development',
       ],
