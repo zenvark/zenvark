@@ -1,5 +1,15 @@
 # zenvark
 
+## 1.3.0
+
+### Minor Changes
+
+- c7bd976: Add `AdaptiveSemaphore` to zenvark core — an adaptive distributed semaphore coordinated via Redis, with AIMD capacity control, priority classes and crash-safe leases — plus optional `CircuitBreaker` integration (`semaphore` constructor option and `execute(fn, { lease })`) that gates protected calls through the semaphore without changing breaker accounting, and `PrometheusSemaphoreMetrics` in `@zenvark/prom` for its observability.
+
+### Patch Changes
+
+- c7bd976: Bump redis-semaphore to ^5.7.0 (adds AbortSignal support on acquire, required by the new `AdaptiveSemaphore`).
+
 ## 1.2.0
 
 ### Minor Changes
