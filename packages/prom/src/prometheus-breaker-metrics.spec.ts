@@ -1,4 +1,4 @@
-import { Registry } from 'prom-client';
+import { Registry } from '@prometheus-io/client';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { CallResult, CircuitState, HealthCheckType } from 'zenvark';
 import { PrometheusBreakerMetrics } from './prometheus-breaker-metrics.ts';

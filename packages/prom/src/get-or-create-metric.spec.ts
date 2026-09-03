@@ -1,4 +1,4 @@
-import { Counter, Gauge, Histogram, Registry } from 'prom-client';
+import { Counter, Gauge, Histogram, Registry } from '@prometheus-io/client';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   getOrCreateCounter,

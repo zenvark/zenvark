@@ -6,7 +6,7 @@ import {
   Histogram,
   type HistogramConfiguration,
   type Registry,
-} from 'prom-client';
+} from '@prometheus-io/client';
 
 const getTypeParam = (obj: unknown): string | undefined => {
   if (
@@ -19,7 +19,7 @@ const getTypeParam = (obj: unknown): string | undefined => {
   }
 };
 
-const isCounter = (metric: unknown): metric is Counter => {
+const isCounter = (metric: unknown): metric is Counter<string> => {
   return metric instanceof Counter || getTypeParam(metric) === 'counter';
 };
 
@@ -32,7 +32,7 @@ export const getOrCreateCounter = <TLabels extends string>(
   return isCounter(existingMetric) ? existingMetric : new Counter(config);
 };
 
-const isHistogram = (metric: unknown): metric is Histogram => {
+const isHistogram = (metric: unknown): metric is Histogram<string> => {
   return metric instanceof Histogram || getTypeParam(metric) === 'histogram';
 };
 
@@ -45,7 +45,7 @@ export const getOrCreateHistogram = <TLabels extends string>(
   return isHistogram(existingMetric) ? existingMetric : new Histogram(config);
 };
 
-const isGauge = (metric: unknown): metric is Gauge => {
+const isGauge = (metric: unknown): metric is Gauge<string> => {
   return metric instanceof Gauge || getTypeParam(metric) === 'gauge';
 };
 
