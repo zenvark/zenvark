@@ -5,7 +5,7 @@ Prometheus metrics integration for the [Zenvark](https://www.npmjs.com/package/z
 ## Installation
 
 ```bash
-npm install @zenvark/prom prom-client
+npm install @zenvark/prom @prometheus-io/client
 ```
 
 ## Usage
@@ -13,7 +13,7 @@ npm install @zenvark/prom prom-client
 ```typescript
 import { CircuitBreaker, ConsecutiveBreaker, ConstantBackoff } from "zenvark";
 import { PrometheusBreakerMetrics } from "@zenvark/prom";
-import { register } from "prom-client";
+import { register } from "@prometheus-io/client";
 import { Redis } from "ioredis";
 
 const redis = new Redis("redis://localhost:6379");
@@ -45,7 +45,7 @@ For the adaptive semaphore, pass `PrometheusSemaphoreMetrics` the same way:
 ```typescript
 import { AdaptiveSemaphore } from "zenvark";
 import { PrometheusSemaphoreMetrics } from "@zenvark/prom";
-import { register } from "prom-client";
+import { register } from "@prometheus-io/client";
 
 const semaphore = new AdaptiveSemaphore({
   id: "my-provider-api",

@@ -1,4 +1,9 @@
-import type { Counter, Gauge, Histogram, Registry } from 'prom-client';
+import type {
+  Counter,
+  Gauge,
+  Histogram,
+  Registry,
+} from '@prometheus-io/client';
 import type {
   RecordAcquireParams,
   RecordLimitChangeParams,

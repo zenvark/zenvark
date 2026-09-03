@@ -23,7 +23,7 @@ npm install zenvark ioredis
 For Prometheus metrics support:
 
 ```bash
-npm install @zenvark/prom prom-client
+npm install @zenvark/prom @prometheus-io/client
 ```
 
 ## Quick Start
@@ -32,7 +32,7 @@ Here's a complete example showing how to set up and use a circuit breaker:
 
 ```typescript
 import { Redis } from "ioredis";
-import { register } from "prom-client";
+import { register } from "@prometheus-io/client";
 import {
   CircuitBreaker,
   ConsecutiveBreaker,

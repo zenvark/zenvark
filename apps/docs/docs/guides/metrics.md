@@ -13,7 +13,7 @@ The easiest way to add Prometheus metrics is using the `@zenvark/prom` package:
 ### Installation
 
 ```bash
-npm install @zenvark/prom prom-client
+npm install @zenvark/prom @prometheus-io/client
 ```
 
 ### Configuration
@@ -21,7 +21,7 @@ npm install @zenvark/prom prom-client
 ```typescript
 import { CircuitBreaker } from "zenvark";
 import { PrometheusBreakerMetrics } from "@zenvark/prom";
-import { register } from "prom-client";
+import { register } from "@prometheus-io/client";
 
 const metrics = new PrometheusBreakerMetrics({
   register,
@@ -39,7 +39,7 @@ const circuitBreaker = new CircuitBreaker({
 
 ```typescript
 import express from "express";
-import { register } from "prom-client";
+import { register } from "@prometheus-io/client";
 
 const app = express();
 
