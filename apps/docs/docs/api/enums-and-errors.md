@@ -93,14 +93,6 @@ try {
 
 Use `ZenvarkError.isZenvarkError(err)` only when you do not care which error it is, for example to log `code` and `details` generically. After that guard `err.code` is a plain `string` and `err.details` is an untyped record.
 
-### Logging
-
-`code` and `details` are plain enumerable fields, so structured loggers pick them up without extra work:
-
-```typescript
-logger.warn({ code: err.code, ...err.details, err }, err.message);
-```
-
 ## Enums
 
 ### CircuitState
