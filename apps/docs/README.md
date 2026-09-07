@@ -7,7 +7,7 @@ This documentation site is built using [Docusaurus](https://docusaurus.io/), a m
 From this directory (`apps/docs`):
 
 ```bash
-npm start
+pnpm start
 ```
 
 This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
@@ -17,7 +17,7 @@ This command starts a local development server and opens up a browser window. Mo
 From this directory:
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 This command generates static content into the `build` directory and can be served using any static contents hosting service.
@@ -27,7 +27,7 @@ This command generates static content into the `build` directory and can be serv
 After building, you can preview the production build:
 
 ```bash
-npm run serve
+pnpm run serve
 ```
 
 ## Deployment

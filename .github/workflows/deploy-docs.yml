@@ -28,16 +28,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 24
+          cache: "pnpm"
 
       - name: Install Dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build Documentation
-        run: npm run build --workspace=@apps/docs
+        run: pnpm --filter @apps/docs run build
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v5

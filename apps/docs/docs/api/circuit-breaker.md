@@ -121,8 +121,12 @@ The result of the executed function.
 
 #### Throws
 
-- `CircuitOpenError` - When the circuit is open
+- `CircuitOpenError` - When the circuit is open, or opens while waiting for a semaphore lease
+- `AcquireTimeoutError` - When a semaphore is configured and no lease is obtained within the timeout
+- `SemaphoreUnavailableError` - When a semaphore is configured, Redis is unreachable, and `onUnavailable` is `'throw'`
 - Any error thrown by the provided function
+
+See [Enums & Errors](./enums-and-errors.md#errors) for the full error reference.
 
 :::warning
 The `execute()` method does **not** perform any retry logic on failure. If retries are needed, you must implement them externally by wrapping your calls to `execute()`. See the [Best Practices](../guides/best-practices.md) guide for retry implementation patterns.

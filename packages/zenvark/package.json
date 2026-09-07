@@ -47,21 +47,21 @@
     "typecheck": "tsc",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
-    "pretest:ci": "npm run docker:start",
-    "test:ci": "npm run test:coverage",
-    "posttest:ci": "npm run docker:stop"
+    "test:ci": "pnpm run docker:start && pnpm run test:coverage && pnpm run docker:stop"
   },
   "devDependencies": {
-    "@lokalise/tsconfig": "^3.0.0",
+    "@lokalise/tsconfig": "^5.0.0",
     "@types/node": "^24.10.1",
-    "@vitest/coverage-v8": "^4.0.15",
+    "@vitest/coverage-v8": "^5.0.0",
+    "ioredis": "^6.0.0",
     "rimraf": "^6.0.1",
-    "typescript": "5.9.3",
-    "vitest": "^4.0.15"
+    "typescript": "7.0.2",
+    "vitest": "^5.0.0"
   },
   "dependencies": {
-    "@lokalise/node-core": "^14.1.0",
-    "ioredis": "^5.8.1",
     "redis-semaphore": "^5.7.0"
+  },
+  "peerDependencies": {
+    "ioredis": "^5.0.0 || ^6.0.0"
   }
 }

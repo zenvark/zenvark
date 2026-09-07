@@ -70,7 +70,7 @@ try {
   });
   console.log("Success:", result);
 } catch (err) {
-  if (err instanceof CircuitOpenError) {
+  if (CircuitOpenError.isInstance(err)) {
     console.log("Circuit is open - request blocked");
   }
 }
@@ -82,10 +82,37 @@ await circuitBreaker.stop();
 
 The breaker can gate every `execute` call through an `AdaptiveSemaphore` — a fleet-wide concurrency limit, coordinated via Redis, that converges to what the dependency can actually handle. It also works standalone. Usage, options, and how adaptation works are covered in the [Adaptive Semaphore guide](https://zenvark.github.io/zenvark/docs/guides/adaptive-semaphore).
 
+## Error Handling
+
+Every error Zenvark throws extends `ZenvarkError` and carries a stable `code` plus a typed `details` object. Use the static `isInstance()` guard on each class; it narrows like `instanceof` and also matches across realms and duplicate package copies.
+
+| Class                       | `code`                      | Thrown when                                              |
+| --------------------------- | --------------------------- | -------------------------------------------------------- |
+| `CircuitOpenError`          | `CIRCUIT_IS_OPEN`           | `execute()` is called while the circuit is open          |
+| `AcquireTimeoutError`       | `SEMAPHORE_ACQUIRE_TIMEOUT` | No semaphore slot became free within `timeoutMs`         |
+| `SemaphoreUnavailableError` | `SEMAPHORE_UNAVAILABLE`     | Redis is unreachable and `onUnavailable` is `'throw'`    |
+| `SemaphoreDisposedError`    | `SEMAPHORE_DISPOSED`        | `acquire()` is called on, or interrupted by, `dispose()` |
+
+Full reference, including `details` shapes and a `switch` over `code`: [Enums & Errors](https://zenvark.github.io/zenvark/docs/api/enums-and-errors#errors).
+
+## Error Handling
+
+Every error Zenvark throws extends `ZenvarkError` and carries a stable `code` plus a typed `details` object. Use the static `isInstance()` guard on each class; it narrows like `instanceof` and also matches across realms and duplicate package copies.
+
+| Class                       | `code`                      | Thrown when                                              |
+| --------------------------- | --------------------------- | -------------------------------------------------------- |
+| `CircuitOpenError`          | `CIRCUIT_IS_OPEN`           | `execute()` is called while the circuit is open          |
+| `AcquireTimeoutError`       | `SEMAPHORE_ACQUIRE_TIMEOUT` | No semaphore slot became free within `timeoutMs`         |
+| `SemaphoreUnavailableError` | `SEMAPHORE_UNAVAILABLE`     | Redis is unreachable and `onUnavailable` is `'throw'`    |
+| `SemaphoreDisposedError`    | `SEMAPHORE_DISPOSED`        | `acquire()` is called on, or interrupted by, `dispose()` |
+
+Full reference, including `details` shapes and a `switch` over `code`: [Enums & Errors](https://zenvark.github.io/zenvark/docs/api/enums-and-errors#errors).
+
 ## Prerequisites
 
 - Node.js 22.x or higher
 - Redis 6.0 or higher (Redis Streams support required)
+- ioredis 5.x or 6.x, installed alongside zenvark as a peer dependency
 
 ## Documentation
 

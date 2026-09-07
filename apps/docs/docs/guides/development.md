@@ -17,7 +17,7 @@ The simulator lets you trigger successes/failures, toggle health check outcomes,
 1. **Start Redis locally:**
 
 ```bash
-cd apps/terminal-ui && npm run docker:start
+cd apps/terminal-ui && pnpm run docker:start
 ```
 
 This starts a Redis container on `localhost:6379` with a development password.
@@ -25,7 +25,7 @@ This starts a Redis container on `localhost:6379` with a development password.
 2. **Run the terminal simulator:**
 
 ```bash
-npm run start
+pnpm run start
 ```
 
 ### Controls
@@ -77,7 +77,7 @@ The simulator displays:
 Stop the Redis container when done:
 
 ```bash
-npm run docker:stop
+pnpm run docker:stop
 ```
 
 ## Development Notes

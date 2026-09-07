@@ -91,8 +91,8 @@ try {
   });
   console.log("Success:", result);
 } catch (err) {
-  // `instanceof` for CircuitOpenError works reliably across realms
-  if (err instanceof CircuitOpenError) {
+  // isInstance() also matches across realms and duplicate package copies
+  if (CircuitOpenError.isInstance(err)) {
     // Circuit is currently open – skipping request
   } else {
     // Underlying operation failed
@@ -141,7 +141,7 @@ try {
     return await callExternalService();
   });
 } catch (err) {
-  if (err instanceof CircuitOpenError) {
+  if (CircuitOpenError.isInstance(err)) {
     // Handle blocked requests
   } else {
     // Handle operation failures

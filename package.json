@@ -4,11 +4,7 @@
   "engines": {
     "node": ">=22"
   },
-  "packageManager": "npm@11.4.2",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@12.3.4",
   "scripts": {
     "build": "turbo run build",
     "lint": "turbo run lint",

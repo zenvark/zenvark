@@ -8,11 +8,38 @@ This page documents the enums and error classes exported by Zenvark.
 
 ## Errors
 
-### CircuitOpenError
+Every error Zenvark throws extends `ZenvarkError`, which itself extends `Error`. Each concrete class carries a stable `code` string and a typed `details` object, so handlers can branch on the code or inspect the context without parsing messages.
 
-Error thrown when attempting to execute a function while the circuit is open.
+### ZenvarkError
 
-#### Usage
+Abstract base class for all Zenvark errors. Not thrown directly.
+
+#### Properties
+
+- **`name`** `string` - The concrete class name, for example `"CircuitOpenError"`
+- **`message`** `string` - Human-readable description
+- **`code`** `string` - Stable, literal-typed identifier. See the table below.
+- **`details`** `object` - Structured context specific to the error class
+- **`cause`** `unknown` - The underlying error, when one exists
+
+#### Static methods
+
+- **`ZenvarkError.isZenvarkError(value)`** - Type guard matching any Zenvark error
+- **`<ErrorClass>.isInstance(value)`** - Type guard on each concrete class, for example `CircuitOpenError.isInstance(err)`
+- **`<ErrorClass>.code`** - The class's code as a static property, for example `CircuitOpenError.code`
+
+### Error classes
+
+| Class                       | `code`                      | `details`                                                    | Thrown by                                                                                                                               |
+| --------------------------- | --------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `CircuitOpenError`          | `CIRCUIT_IS_OPEN`           | `{ circuitId: string }`                                      | `CircuitBreaker.execute()` when the circuit is open. Also aborts a pending semaphore acquire if the circuit opens mid-wait.             |
+| `AcquireTimeoutError`       | `SEMAPHORE_ACQUIRE_TIMEOUT` | `{ semaphoreId: string; timeoutMs: number; class?: string }` | `AdaptiveSemaphore.acquire()` and `withLease()` when no slot becomes free within `timeoutMs`. Also thrown in local-limit fallback mode. |
+| `SemaphoreUnavailableError` | `SEMAPHORE_UNAVAILABLE`     | `{ semaphoreId: string }`, with the Redis error as `cause`   | `AdaptiveSemaphore.acquire()` when Redis is unreachable and `onUnavailable` is `'throw'`.                                               |
+| `SemaphoreDisposedError`    | `SEMAPHORE_DISPOSED`        | `{ semaphoreId: string }`                                    | `AdaptiveSemaphore.acquire()` after `dispose()`. Also aborts acquires that were waiting when `dispose()` was called.                    |
+
+### Checking for an error
+
+Prefer the static `isInstance()` guard over `instanceof`. It narrows the type the same way, and it also matches errors whose prototype chain cannot be trusted: two copies of `zenvark` resolved in `node_modules`, or an error crossing a realm boundary such as a worker thread or VM context. It works by checking a shared `Symbol.for` brand together with the error `code`, so it does not depend on class identity.
 
 ```typescript
 import { CircuitBreaker, CircuitOpenError } from "zenvark";
@@ -22,9 +49,9 @@ try {
     return await fetch("https://api.example.com/data");
   });
 } catch (err) {
-  if (err instanceof CircuitOpenError) {
+  if (CircuitOpenError.isInstance(err)) {
     // Circuit is open - request was blocked
-    console.log("Circuit breaker is open, using fallback");
+    console.log(`Circuit ${err.details.circuitId} is open, using fallback`);
     return getFallbackData();
   }
   // Other error - the operation itself failed
@@ -32,19 +59,47 @@ try {
 }
 ```
 
-#### Properties
+`instanceof` keeps working in the common single-copy case, and existing code that uses it does not need to change.
 
-- **`name`** `string` - Always `"CircuitOpenError"`
-- **`message`** `string` - Error message describing that the circuit is open
+### Branching on `code`
 
-#### Type Checking
-
-The `instanceof` check works reliably across realms and module boundaries:
+When one handler deals with several Zenvark errors, narrow once with `isZenvarkError` and switch on `code`. Each class exposes its code as a static property, so cases can reference `AcquireTimeoutError.code` instead of repeating string literals. Use the per-class `isInstance()` guard when you need `err.details` typed to a specific shape.
 
 ```typescript
-if (err instanceof CircuitOpenError) {
-  // Handle circuit open scenario
+import {
+  AcquireTimeoutError,
+  SemaphoreDisposedError,
+  SemaphoreUnavailableError,
+  ZenvarkError,
+} from "zenvark";
+
+try {
+  await semaphore.withLease({ timeoutMs: 2_000 }, doWork);
+} catch (err) {
+  if (!ZenvarkError.isZenvarkError(err)) throw err;
+
+  switch (err.code) {
+    case AcquireTimeoutError.code:
+      // Saturated - shed load or retry with backoff
+      break;
+    case SemaphoreUnavailableError.code:
+      // Redis is down - err.cause holds the connection error
+      break;
+    case SemaphoreDisposedError.code:
+      // Programming error - the semaphore was disposed while in use
+      break;
+    default:
+      throw err;
+  }
 }
+```
+
+### Logging
+
+`code` and `details` are plain enumerable fields, so structured loggers pick them up without extra work:
+
+```typescript
+logger.warn({ code: err.code, ...err.details, err }, err.message);
 ```
 
 ## Enums
