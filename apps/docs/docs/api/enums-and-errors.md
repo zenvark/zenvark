@@ -61,38 +61,37 @@ try {
 
 `instanceof` keeps working in the common single-copy case, and existing code that uses it does not need to change.
 
-### Branching on `code`
+### Handling several errors
 
-When one handler deals with several Zenvark errors, narrow once with `isZenvarkError` and switch on `code`. Each class exposes its code as a static property, so cases can reference `AcquireTimeoutError.code` instead of repeating string literals. Use the per-class `isInstance()` guard when you need `err.details` typed to a specific shape.
+When one handler deals with several Zenvark errors, check each class with its `isInstance()` guard. Every branch narrows `err` to that class, so `err.details` has the exact shape for that error and `err.code` is its literal type.
 
 ```typescript
 import {
   AcquireTimeoutError,
   SemaphoreDisposedError,
   SemaphoreUnavailableError,
-  ZenvarkError,
 } from "zenvark";
 
 try {
   await semaphore.withLease({ timeoutMs: 2_000 }, doWork);
 } catch (err) {
-  if (!ZenvarkError.isZenvarkError(err)) throw err;
-
-  switch (err.code) {
-    case AcquireTimeoutError.code:
-      // Saturated - shed load or retry with backoff
-      break;
-    case SemaphoreUnavailableError.code:
-      // Redis is down - err.cause holds the connection error
-      break;
-    case SemaphoreDisposedError.code:
-      // Programming error - the semaphore was disposed while in use
-      break;
-    default:
-      throw err;
+  if (AcquireTimeoutError.isInstance(err)) {
+    // Saturated - shed load or retry with backoff
+    metrics.timeout(err.details.class ?? "default", err.details.timeoutMs);
+  } else if (SemaphoreUnavailableError.isInstance(err)) {
+    // Redis is down - err.cause holds the connection error
+    logger.error({ semaphoreId: err.details.semaphoreId, cause: err.cause });
+  } else if (SemaphoreDisposedError.isInstance(err)) {
+    // Programming error - the semaphore was disposed while in use
+    throw err;
+  } else {
+    // Not a Zenvark error - the operation itself failed
+    throw err;
   }
 }
 ```
+
+Use `ZenvarkError.isZenvarkError(err)` only when you do not care which error it is, for example to log `code` and `details` generically. After that guard `err.code` is a plain `string` and `err.details` is an untyped record.
 
 ### Logging
 

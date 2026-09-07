@@ -93,20 +93,7 @@ Every error Zenvark throws extends `ZenvarkError` and carries a stable `code` pl
 | `SemaphoreUnavailableError` | `SEMAPHORE_UNAVAILABLE`     | Redis is unreachable and `onUnavailable` is `'throw'`    |
 | `SemaphoreDisposedError`    | `SEMAPHORE_DISPOSED`        | `acquire()` is called on, or interrupted by, `dispose()` |
 
-Full reference, including `details` shapes and a `switch` over `code`: [Enums & Errors](https://zenvark.github.io/zenvark/docs/api/enums-and-errors#errors).
-
-## Error Handling
-
-Every error Zenvark throws extends `ZenvarkError` and carries a stable `code` plus a typed `details` object. Use the static `isInstance()` guard on each class; it narrows like `instanceof` and also matches across realms and duplicate package copies.
-
-| Class                       | `code`                      | Thrown when                                              |
-| --------------------------- | --------------------------- | -------------------------------------------------------- |
-| `CircuitOpenError`          | `CIRCUIT_IS_OPEN`           | `execute()` is called while the circuit is open          |
-| `AcquireTimeoutError`       | `SEMAPHORE_ACQUIRE_TIMEOUT` | No semaphore slot became free within `timeoutMs`         |
-| `SemaphoreUnavailableError` | `SEMAPHORE_UNAVAILABLE`     | Redis is unreachable and `onUnavailable` is `'throw'`    |
-| `SemaphoreDisposedError`    | `SEMAPHORE_DISPOSED`        | `acquire()` is called on, or interrupted by, `dispose()` |
-
-Full reference, including `details` shapes and a `switch` over `code`: [Enums & Errors](https://zenvark.github.io/zenvark/docs/api/enums-and-errors#errors).
+Full reference, including `details` shapes and handling several errors at once: [Enums & Errors](https://zenvark.github.io/zenvark/docs/api/enums-and-errors#errors).
 
 ## Prerequisites
 
