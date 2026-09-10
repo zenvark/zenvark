@@ -1,5 +1,16 @@
 # @zenvark/prom
 
+## 3.0.0
+
+### Patch Changes
+
+- 164bb7f: Build with TypeScript 7 and test with Vitest 5. The shared `@lokalise/tsconfig` preset is updated to 5.0.0, which sets `rootDir` explicitly for the new TypeScript 7 defaults. Emitted JavaScript and declaration files are unchanged in layout; no runtime behaviour changes.
+- Updated dependencies [164bb7f]
+- Updated dependencies [164bb7f]
+- Updated dependencies [164bb7f]
+- Updated dependencies [164bb7f]
+  - zenvark@3.0.0
+
 ## 2.0.0
 
 ### Major Changes

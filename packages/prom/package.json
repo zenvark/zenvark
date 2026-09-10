@@ -1,6 +1,6 @@
 {
   "name": "@zenvark/prom",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Prometheus metrics for Zenvark Circuit Breaker",
   "keywords": [
     "zenvark",
@@ -58,6 +58,6 @@
   },
   "peerDependencies": {
     "@prometheus-io/client": "^0.16.0",
-    "zenvark": "^2.0.0"
+    "zenvark": "^3.0.0"
   }
 }
