@@ -26,7 +26,9 @@
     "@docusaurus/module-type-aliases": "3.9.2",
     "@docusaurus/tsconfig": "3.9.2",
     "@docusaurus/types": "3.9.2",
-    "typescript": "5.9.3"
+    "@lokalise/tsconfig": "^5.0.0",
+    "@types/react": "^19.2.7",
+    "typescript": "7.0.2"
   },
   "browserslist": {
     "production": [

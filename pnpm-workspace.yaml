@@ -1,0 +1,11 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+allowBuilds:
+  core-js: false
+  core-js-pure: false
+  esbuild: true
+
+minimumReleaseAgeExclude:
+  - redis-semaphore@5.8.0

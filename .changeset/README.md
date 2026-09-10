@@ -7,7 +7,7 @@ This folder contains changeset files that describe changes to the packages in th
 When you make changes to packages, create a changeset to describe them:
 
 ```bash
-npm run changeset
+pnpm changeset
 ```
 
 This will prompt you to:

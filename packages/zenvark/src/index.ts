@@ -41,6 +41,10 @@ export { AcquireTimeoutError } from './errors/acquire-timeout-error.ts';
 export { CircuitOpenError } from './errors/circuit-open-error.ts';
 export { SemaphoreDisposedError } from './errors/semaphore-disposed-error.ts';
 export { SemaphoreUnavailableError } from './errors/semaphore-unavailable-error.ts';
+export {
+  ZenvarkError,
+  type ZenvarkErrorParams,
+} from './errors/zenvark-error.ts';
 export type {
   RecordAcquireParams,
   RecordLimitChangeParams,

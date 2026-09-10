@@ -17,14 +17,15 @@
   },
   "dependencies": {
     "ink": "^6.4.0",
-    "ioredis": "^5.8.1",
+    "ioredis": "^6.0.0",
     "react": "^19.2.0",
-    "zenvark": "*"
+    "zenvark": "workspace:*"
   },
   "devDependencies": {
+    "@lokalise/tsconfig": "^5.0.0",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
     "tsx": "^4.20.6",
-    "typescript": "5.9.3"
+    "typescript": "7.0.2"
   }
 }
