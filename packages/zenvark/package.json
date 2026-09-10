@@ -1,6 +1,6 @@
 {
   "name": "zenvark",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Distributed resilience primitives coordinated via Redis: a circuit breaker and an adaptive semaphore for high-availability applications",
   "keywords": [
     "zenvark",
