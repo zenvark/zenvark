@@ -9,3 +9,5 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - redis-semaphore@5.8.0
+  - "@rolldown/binding-linux-x64-gnu@1.2.8"
+  - "@rolldown/binding-openharmony-arm64@1.2.8"
