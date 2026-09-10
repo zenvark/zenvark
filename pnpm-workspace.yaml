@@ -7,7 +7,5 @@ allowBuilds:
   core-js-pure: false
   esbuild: true
 
-peerDependencyRules:
-  allowedVersions:
-    # redis-semaphore declares ioredis@^4.1.0 || ^5; zenvark is verified against ioredis 6.
-    "redis-semaphore>ioredis": "6"
+minimumReleaseAgeExclude:
+  - redis-semaphore@5.8.0

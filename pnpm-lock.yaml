@@ -226,8 +226,8 @@ importers:
   packages/zenvark:
     dependencies:
       redis-semaphore:
-        specifier: ^5.7.0
-        version: 5.7.0(ioredis@6.0.0(supports-color@8.1.1))(supports-color@8.1.1)
+        specifier: ^5.8.0
+        version: 5.8.0(ioredis@6.0.0(supports-color@8.1.1))(supports-color@8.1.1)
     devDependencies:
       '@lokalise/tsconfig':
         specifier: ^5.0.0
@@ -4899,10 +4899,6 @@ packages:
     resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
     engines: {node: '>=8.6'}
 
-  picomatch@4.0.3:
-    resolution: {integrity: sha512-5gTmgEY/sqK6gFXLIsQNH19lWb4ebPDLA4SdLP7dsWkIXHWlG66oPuVvXSGFPppYZz8ZDZq0dYYrbHfBCVUb1Q==}
-    engines: {node: '>=12'}
-
   picomatch@4.0.7:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
     engines: {node: '>=12'}
@@ -5479,11 +5475,11 @@ packages:
     resolution: {integrity: sha512-1qny3OExCf0UvUV/5wpYKf2YwPcOqXzkwKKSmKHiE6ZMQs5heeE/c8eXK+PNllPvmjgAbfnsbpkGZWy8cBpn9w==}
     engines: {node: '>=4'}
 
-  redis-semaphore@5.7.0:
-    resolution: {integrity: sha512-2xjl8eYVVTKX8O8C/H70iWEGx8BSOOzI5P1tQgXEO8A8dR2/BPgU7QctCfcXOHsQ7/IIkebv1ulEdo2iC2SwvA==}
+  redis-semaphore@5.8.0:
+    resolution: {integrity: sha512-I8Y6MexOHOOO1iHQfAgRELH5RExgRX6igevq0qLtLqKHLhycXwoJCaYZE1unLx4fTJXBACkcDkfNoLCsSB9pqg==}
     engines: {node: '>= 14.17.0'}
     peerDependencies:
-      ioredis: ^4.1.0 || ^5
+      ioredis: ^4.1.0 || ^5 || ^6
     peerDependenciesMeta:
       ioredis:
         optional: true
@@ -6009,10 +6005,6 @@ packages:
   tinyexec@1.3.0:
     resolution: {integrity: sha512-QKAl9m8gWWGHV8jZcPeym6j+XULi6tOf1mT83WYJ4Lk2ytW/uwAWkrP0uFsdoYMdueVJ0qs26wZ+23xeB4ibNQ==}
     engines: {node: '>=18'}
-
-  tinyglobby@0.2.15:
-    resolution: {integrity: sha512-j2Zq4NyQYG5XMST4cbs02Ak8iJUdxRM0XI5QyxXuZOzKOINmWurp3smXu3y5wDcJrptwpSjgXHzIQxR0omXljQ==}
-    engines: {node: '>=12.0.0'}
 
   tinyglobby@0.2.17:
     resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
@@ -9444,7 +9436,7 @@ snapshots:
     dependencies:
       '@vitest/istanbul-lib-coverage': 1.0.1
 
-  '@vitest/mocker@5.0.0(vite@7.2.6(@types/node@24.10.1))':
+  '@vitest/mocker@5.0.0(vite@7.2.6(@types/node@24.10.1)(jiti@1.21.7)(terser@5.44.1)(tsx@4.21.0))':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       '@vitest/spy': 5.0.0
@@ -10646,10 +10638,6 @@ snapshots:
   faye-websocket@0.11.4:
     dependencies:
       websocket-driver: 0.7.4
-
-  fdir@6.5.0(picomatch@4.0.3):
-    optionalDependencies:
-      picomatch: 4.0.3
 
   fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
@@ -12236,8 +12224,6 @@ snapshots:
 
   picomatch@2.3.1: {}
 
-  picomatch@4.0.3: {}
-
   picomatch@4.0.7: {}
 
   pify@4.0.1: {}
@@ -12878,7 +12864,7 @@ snapshots:
 
   redis-errors@1.2.0: {}
 
-  redis-semaphore@5.7.0(ioredis@6.0.0(supports-color@8.1.1))(supports-color@8.1.1):
+  redis-semaphore@5.8.0(ioredis@6.0.0(supports-color@8.1.1))(supports-color@8.1.1):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
     optionalDependencies:
@@ -13514,11 +13500,6 @@ snapshots:
 
   tinyexec@1.3.0: {}
 
-  tinyglobby@0.2.15:
-    dependencies:
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
-
   tinyglobby@0.2.17:
     dependencies:
       fdir: 6.5.0(picomatch@4.0.7)
@@ -13754,11 +13735,11 @@ snapshots:
   vite@7.2.6(@types/node@24.10.1)(jiti@1.21.7)(terser@5.44.1)(tsx@4.21.0):
     dependencies:
       esbuild: 0.25.12
-      fdir: 6.5.0(picomatch@4.0.3)
-      picomatch: 4.0.3
+      fdir: 6.5.0(picomatch@4.0.7)
+      picomatch: 4.0.7
       postcss: 8.5.6
       rollup: 4.53.3
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.17
     optionalDependencies:
       '@types/node': 24.10.1
       fsevents: 2.3.3
@@ -13769,7 +13750,7 @@ snapshots:
   vitest@5.0.0(@opentelemetry/api@1.9.0)(@types/node@24.10.1)(@vitest/coverage-v8@5.0.0)(vite@7.2.6(@types/node@24.10.1)(jiti@1.21.7)(terser@5.44.1)(tsx@4.21.0)):
     dependencies:
       '@types/chai': 5.2.3
-      '@vitest/mocker': 5.0.0(vite@7.2.6(@types/node@24.10.1))
+      '@vitest/mocker': 5.0.0(vite@7.2.6(@types/node@24.10.1)(jiti@1.21.7)(terser@5.44.1)(tsx@4.21.0))
       chai: 6.2.2
       es-module-lexer: 2.3.2
       expect-type: 1.4.0

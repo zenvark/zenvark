@@ -59,7 +59,7 @@
     "vitest": "^5.0.0"
   },
   "dependencies": {
-    "redis-semaphore": "^5.7.0"
+    "redis-semaphore": "^5.8.0"
   },
   "peerDependencies": {
     "ioredis": "^5.0.0 || ^6.0.0"
