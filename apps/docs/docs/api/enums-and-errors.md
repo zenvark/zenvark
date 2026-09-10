@@ -39,7 +39,9 @@ Abstract base class for all Zenvark errors. Not thrown directly.
 
 ### Checking for an error
 
-Prefer the static `isInstance()` guard over `instanceof`. It narrows the type the same way, and it also matches errors whose prototype chain cannot be trusted: two copies of `zenvark` resolved in `node_modules`, or an error crossing a realm boundary such as a worker thread or VM context. It works by checking a shared `Symbol.for` brand together with the error `code`, so it does not depend on class identity.
+Prefer the static `isInstance()` guard over `instanceof`. It narrows the type the same way, and it also matches errors whose prototype chain cannot be trusted: two copies of `zenvark` resolved in `node_modules`, or an error created in another same-process realm such as a `vm` context. It works by checking a shared `Symbol.for` brand together with the error `code`, so it does not depend on class identity.
+
+This does not cover errors sent through `postMessage` or `worker_threads`. Structured clone keeps only `message`, `stack`, and `cause`, so the brand, `code`, and `details` are lost in transit. Serialize the fields you need and rebuild the error on the receiving side before checking it.
 
 ```typescript
 import { CircuitBreaker, CircuitOpenError } from "zenvark";
