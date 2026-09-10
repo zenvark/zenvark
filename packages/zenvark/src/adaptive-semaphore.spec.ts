@@ -766,12 +766,12 @@ describe('AdaptiveSemaphore', () => {
         { onUnavailable: { localLimit: 0 } },
         'onUnavailable.localLimit must be an integer >= 1',
       ],
-    ] satisfies [
-      Partial<AdaptiveSemaphoreOptions>,
-      string,
-    ][])('rejects invalid options %j', (overrides, message) => {
-      expect(() => createSemaphore(overrides)).toThrow(message);
-    });
+    ] satisfies [Partial<AdaptiveSemaphoreOptions>, string][])(
+      'rejects invalid options %j',
+      (overrides, message) => {
+        expect(() => createSemaphore(overrides)).toThrow(message);
+      },
+    );
 
     it('checks initialLimit against the default maxLimit of 1000', () => {
       expect(

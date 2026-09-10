@@ -10,7 +10,7 @@
   },
   "linter": {
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "style": {
         "useFilenamingConvention": {
           "level": "error",
