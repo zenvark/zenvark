@@ -47,7 +47,9 @@
     "typecheck": "tsc",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
-    "test:ci": "pnpm run docker:start && pnpm run test:coverage && pnpm run docker:stop"
+    "pretest:ci": "pnpm run docker:start",
+    "test:ci": "pnpm run test:coverage",
+    "posttest:ci": "pnpm run docker:stop"
   },
   "devDependencies": {
     "@lokalise/tsconfig": "^5.0.0",
