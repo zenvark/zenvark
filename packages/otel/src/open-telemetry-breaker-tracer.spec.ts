@@ -1,0 +1,259 @@
+import { cp, mkdtemp, rm } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { join, relative, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { context, SpanKind, SpanStatusCode, trace } from '@opentelemetry/api';
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
+import {
+  InMemorySpanExporter,
+  SimpleSpanProcessor,
+  TracerProvider,
+} from '@opentelemetry/sdk-trace';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from 'vitest';
+import { CircuitState, HealthCheckType } from 'zenvark';
+import { OpenTelemetryBreakerTracer } from './open-telemetry-breaker-tracer.ts';
+
+describe('OpenTelemetryBreakerTracer', () => {
+  const breakerId = 'testBreaker';
+  const exporter = new InMemorySpanExporter();
+  const provider = new TracerProvider({
+    spanProcessors: [new SimpleSpanProcessor({ exporter })],
+  });
+  const testTracer = provider.getTracer('test');
+
+  const spans = (name: string) =>
+    exporter.getFinishedSpans().filter((s) => s.name === name);
+
+  beforeAll(() => {
+    context.setGlobalContextManager(
+      new AsyncLocalStorageContextManager().enable(),
+    );
+  });
+
+  beforeEach(() => {
+    exporter.reset();
+  });
+
+  afterAll(() => {
+    context.disable();
+  });
+
+  describe('traceCall', () => {
+    const tracer = new OpenTelemetryBreakerTracer({ tracer: testTracer });
+
+    it('nests the call span between the caller and spans the call creates', async () => {
+      const result = await testTracer.startActiveSpan(
+        'request',
+        async (request) => {
+          const value = await tracer.traceCall({
+            breakerId,
+            execute: async () => {
+              testTracer.startSpan('http').end();
+              return 'ok';
+            },
+          });
+          request.end();
+          return value;
+        },
+      );
+
+      expect(result).toBe('ok');
+      const [request] = spans('request');
+      const [call] = spans('zenvark.call');
+      const [http] = spans('http');
+      expect(call?.kind).toBe(SpanKind.CLIENT);
+      expect(call?.attributes).toEqual({
+        'zenvark.breaker.id': breakerId,
+        'zenvark.call.result': 'success',
+      });
+      expect(call?.status.code).toBe(SpanStatusCode.UNSET);
+      expect(call?.parentSpanContext?.spanId).toBe(
+        request?.spanContext().spanId,
+      );
+      expect(http?.parentSpanContext?.spanId).toBe(call?.spanContext().spanId);
+    });
+
+    it('marks a failed call as an error and rethrows', async () => {
+      const error = new Error('boom');
+
+      await expect(
+        tracer.traceCall({ breakerId, execute: () => Promise.reject(error) }),
+      ).rejects.toBe(error);
+
+      const [call] = spans('zenvark.call');
+      expect(call?.attributes['zenvark.call.result']).toBe('failure');
+      expect(call?.status).toEqual({
+        code: SpanStatusCode.ERROR,
+        message: 'boom',
+      });
+      expect(call?.events.map((e) => e.name)).toEqual(['exception']);
+    });
+
+    it('marks a call rejected with a non-error value as an error', async () => {
+      await expect(
+        tracer.traceCall({ breakerId, execute: () => Promise.reject('nope') }),
+      ).rejects.toBe('nope');
+
+      const [call] = spans('zenvark.call');
+      expect(call?.status.code).toBe(SpanStatusCode.ERROR);
+      expect(call?.events).toEqual([]);
+    });
+  });
+
+  describe('traceHealthCheck', () => {
+    const tracer = new OpenTelemetryBreakerTracer({ tracer: testTracer });
+
+    it('starts a new trace even when a span is active', async () => {
+      await testTracer.startActiveSpan('unrelated', async (unrelated) => {
+        await tracer.traceHealthCheck({
+          breakerId,
+          type: HealthCheckType.RECOVERY,
+          signal: new AbortController().signal,
+          execute: async () => {
+            testTracer.startSpan('ping').end();
+          },
+        });
+        unrelated.end();
+      });
+
+      const [check] = spans('zenvark.healthcheck');
+      const [ping] = spans('ping');
+      expect(check?.parentSpanContext).toBeUndefined();
+      expect(check?.attributes).toEqual({
+        'zenvark.breaker.id': breakerId,
+        'zenvark.healthcheck.type': 'recovery',
+        'zenvark.healthcheck.result': 'success',
+      });
+      expect(ping?.parentSpanContext?.spanId).toBe(check?.spanContext().spanId);
+    });
+
+    it('marks a failed check as an error and rethrows', async () => {
+      const error = new Error('down');
+
+      await expect(
+        tracer.traceHealthCheck({
+          breakerId,
+          type: HealthCheckType.IDLE,
+          signal: new AbortController().signal,
+          execute: () => Promise.reject(error),
+        }),
+      ).rejects.toBe(error);
+
+      const [check] = spans('zenvark.healthcheck');
+      expect(check?.attributes['zenvark.healthcheck.result']).toBe('failure');
+      expect(check?.status.code).toBe(SpanStatusCode.ERROR);
+    });
+
+    it('records no result for a cancelled check', async () => {
+      const controller = new AbortController();
+      controller.abort();
+
+      await expect(
+        tracer.traceHealthCheck({
+          breakerId,
+          type: HealthCheckType.IDLE,
+          signal: controller.signal,
+          execute: () => Promise.reject(new Error('aborted')),
+        }),
+      ).rejects.toThrow('aborted');
+
+      const [check] = spans('zenvark.healthcheck');
+      expect(check?.attributes['zenvark.healthcheck.result']).toBeUndefined();
+      expect(check?.status.code).toBe(SpanStatusCode.UNSET);
+    });
+  });
+
+  it('records a blocked request as an error span under the caller', () => {
+    const tracer = new OpenTelemetryBreakerTracer({ tracer: testTracer });
+
+    testTracer.startActiveSpan('request', (request) => {
+      tracer.recordBlockedRequest({ breakerId });
+      request.end();
+    });
+
+    const [request] = spans('request');
+    const [blocked] = spans('zenvark.blocked');
+    expect(blocked?.attributes).toEqual({ 'zenvark.breaker.id': breakerId });
+    expect(blocked?.status.code).toBe(SpanStatusCode.ERROR);
+    expect(blocked?.parentSpanContext?.spanId).toBe(
+      request?.spanContext().spanId,
+    );
+  });
+
+  it('records a state change in a new trace', () => {
+    const tracer = new OpenTelemetryBreakerTracer({ tracer: testTracer });
+
+    testTracer.startActiveSpan('unrelated', (unrelated) => {
+      tracer.recordStateChange({ breakerId, state: CircuitState.OPEN });
+      unrelated.end();
+    });
+
+    const [change] = spans('zenvark.state_change');
+    expect(change?.parentSpanContext).toBeUndefined();
+    expect(change?.attributes).toEqual({
+      'zenvark.breaker.id': breakerId,
+      'zenvark.circuit.state': 'open',
+    });
+  });
+
+  describe('without a tracer option', () => {
+    let restore: (() => Promise<void> | void) | undefined;
+
+    afterEach(async () => {
+      await restore?.();
+      restore = undefined;
+    });
+
+    // A duplicate install of @opentelemetry/api, as when the app and this
+    // package resolve it to different directories. It has no dependencies,
+    // so a copy of the package directory is a complete second instance.
+    const importApiCopy = async () => {
+      const entry = createRequire(import.meta.url).resolve(
+        '@opentelemetry/api',
+      );
+      const packageDir = resolve(entry, '../../..');
+      const copyDir = await mkdtemp(join(tmpdir(), 'zenvark-otel-api-'));
+      await cp(packageDir, copyDir, { recursive: true });
+      const api: typeof import('@opentelemetry/api') = await import(
+        pathToFileURL(join(copyDir, relative(packageDir, entry))).href
+      );
+      return { api, cleanup: () => rm(copyDir, { recursive: true }) };
+    };
+
+    it('exports through a provider registered after construction', () => {
+      const tracer = new OpenTelemetryBreakerTracer();
+      trace.setGlobalTracerProvider(provider);
+      restore = () => trace.disable();
+
+      tracer.recordBlockedRequest({ breakerId });
+
+      expect(spans('zenvark.blocked')).toHaveLength(1);
+    });
+
+    it('exports through a provider registered by another copy of the API', async () => {
+      const tracer = new OpenTelemetryBreakerTracer();
+      tracer.recordBlockedRequest({ breakerId });
+
+      const { api: otherApi, cleanup } = await importApiCopy();
+      expect(otherApi.trace).not.toBe(trace);
+      otherApi.trace.setGlobalTracerProvider(provider);
+      restore = async () => {
+        otherApi.trace.disable();
+        await cleanup();
+      };
+
+      tracer.recordBlockedRequest({ breakerId });
+
+      expect(spans('zenvark.blocked')).toHaveLength(1);
+    });
+  });
+});

@@ -1,0 +1,65 @@
+{
+  "name": "@zenvark/otel",
+  "version": "3.0.0",
+  "description": "OpenTelemetry tracing for Zenvark Circuit Breaker",
+  "keywords": [
+    "zenvark",
+    "circuit",
+    "breaker",
+    "circuit-breaker",
+    "opentelemetry",
+    "otel",
+    "tracing",
+    "observability"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zenvark/zenvark.git",
+    "directory": "packages/otel"
+  },
+  "homepage": "https://zenvark.github.io/zenvark",
+  "bugs": {
+    "url": "https://github.com/zenvark/zenvark/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "typecheck": "tsc",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:ci": "pnpm run test:coverage"
+  },
+  "devDependencies": {
+    "@lokalise/tsconfig": "^5.0.0",
+    "@opentelemetry/api": "^1.9.1",
+    "@opentelemetry/context-async-hooks": "^2.12.0",
+    "@opentelemetry/sdk-trace": "^2.12.0",
+    "@types/node": "^24.10.1",
+    "@vitest/coverage-v8": "^5.0.0",
+    "rimraf": "^6.0.1",
+    "typescript": "7.0.2",
+    "vitest": "^5.0.0",
+    "zenvark": "workspace:^"
+  },
+  "peerDependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "zenvark": "^3.1.0"
+  }
+}

@@ -25,7 +25,7 @@ They work independently or combined, with the breaker gating every call through 
 - 💓 **Crash-Safe Holds** - Leases carry a TTL and auto-renew while held; slots owned by crashed processes return to the pool within one TTL
 - 🧩 **Built-in Breaker Integration** - Pass the semaphore to a `CircuitBreaker` and every `execute` call is gated
 
-Both primitives report through **Prometheus metrics** via [@zenvark/prom](https://www.npmjs.com/package/@zenvark/prom).
+Both primitives report through **Prometheus metrics** via [@zenvark/prom](https://www.npmjs.com/package/@zenvark/prom). The circuit breaker emits **OpenTelemetry spans** via [@zenvark/otel](https://www.npmjs.com/package/@zenvark/otel).
 
 ## Installation
 

@@ -47,6 +47,35 @@ interface BreakerMetricsRecorder {
 
 See [Metrics & Observability](../guides/metrics.md#custom-metrics-implementation) for implementation examples.
 
+### BreakerTracer
+
+Interface for integrating a tracing system. `@zenvark/otel` implements it for OpenTelemetry.
+
+```typescript
+interface BreakerTracer {
+  traceCall<T>(params: TraceCallParams<T>): Promise<T>;
+  traceHealthCheck(params: TraceHealthCheckParams): Promise<void>;
+  recordBlockedRequest?(params: RecordBlockedRequestParams): void;
+  recordStateChange?(params: RecordStateChangeParams): void;
+}
+
+type TraceCallParams<T> = {
+  breakerId: string;
+  execute: () => Promise<T>;
+};
+
+type TraceHealthCheckParams = {
+  breakerId: string;
+  type: HealthCheckType;
+  signal: AbortSignal; // aborted when the check is cancelled
+  execute: () => Promise<void>;
+};
+```
+
+`traceCall` and `traceHealthCheck` must call `execute` exactly once and settle with its result or rethrow its error.
+
+See [Metrics & Observability](../guides/metrics.md#custom-tracing-implementation) for an implementation example.
+
 ## Type Aliases
 
 ### CallResultEvent

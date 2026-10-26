@@ -17,6 +17,11 @@ export type {
   RecordHealthCheckParams,
   RecordStateChangeParams,
 } from './breaker-metrics-recorder.ts';
+export type {
+  BreakerTracer,
+  TraceCallParams,
+  TraceHealthCheckParams,
+} from './breaker-tracer.ts';
 export type { BreakerStrategy } from './breakers/breaker-strategy.ts';
 export { ConsecutiveBreaker } from './breakers/consecutive-breaker.ts';
 export { CountBreaker } from './breakers/count-breaker.ts';

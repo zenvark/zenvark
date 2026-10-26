@@ -160,6 +160,65 @@ const metrics = new PrometheusBreakerMetrics({
 });
 ```
 
+## OpenTelemetry Tracing
+
+The `@zenvark/otel` package creates circuit breaker spans through `@opentelemetry/api`. The core `zenvark` package does not depend on OpenTelemetry.
+
+### Installation
+
+```bash
+npm install @zenvark/otel @opentelemetry/api
+```
+
+### Configuration
+
+```typescript
+import { CircuitBreaker } from "zenvark";
+import { OpenTelemetryBreakerTracer } from "@zenvark/otel";
+
+const circuitBreaker = new CircuitBreaker({
+  id: "my-service-api",
+  // ... other config
+  tracing: new OpenTelemetryBreakerTracer(),
+});
+```
+
+Without a registered OpenTelemetry SDK the spans are no-ops. Once the application registers one (for example with `NodeSDK`), they are exported with no extra configuration. To use a specific tracer instead of the global one, pass it as `new OpenTelemetryBreakerTracer({ tracer })`.
+
+### Spans
+
+| Span                   | Created for                           | Attributes                                                                     | Parent                    |
+| ---------------------- | ------------------------------------- | ------------------------------------------------------------------------------ | ------------------------- |
+| `zenvark.call`         | each `execute` call that runs         | `zenvark.breaker.id`, `zenvark.call.result`                                    | the caller's active span  |
+| `zenvark.blocked`      | each call rejected by an open circuit | `zenvark.breaker.id`                                                           | the caller's active span  |
+| `zenvark.healthcheck`  | each health check attempt             | `zenvark.breaker.id`, `zenvark.healthcheck.type`, `zenvark.healthcheck.result` | none (starts a new trace) |
+| `zenvark.state_change` | each transition, on the leader only   | `zenvark.breaker.id`, `zenvark.circuit.state`                                  | none (starts a new trace) |
+
+`zenvark.call` is the active span while your function runs, so spans it creates, such as outbound HTTP calls and their retries, nest under it. Failed calls, blocked calls and failed health checks have error status; thrown errors are recorded as exception events. Cancelled health checks have no result.
+
+### Custom Tracing Implementation
+
+To use another tracing system, implement the `BreakerTracer` interface:
+
+```typescript
+import type {
+  BreakerTracer,
+  TraceCallParams,
+  TraceHealthCheckParams,
+} from "zenvark";
+
+class CustomTracer implements BreakerTracer {
+  async traceCall<T>({ breakerId, execute }: TraceCallParams<T>): Promise<T> {
+    // Start a span, run `execute` inside it, end the span
+    return await execute();
+  }
+
+  async traceHealthCheck({ execute }: TraceHealthCheckParams): Promise<void> {
+    await execute();
+  }
+}
+```
+
 ## Custom Metrics Implementation
 
 You can implement custom metrics by implementing the `BreakerMetricsRecorder` interface:

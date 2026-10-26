@@ -2,6 +2,7 @@ import type { Redis } from 'ioredis';
 import type { AdaptiveSemaphore, Lease } from './adaptive-semaphore.ts';
 import type { BackoffStrategy } from './backoffs/backoff-strategy.ts';
 import type { BreakerMetricsRecorder } from './breaker-metrics-recorder.ts';
+import type { BreakerTracer } from './breaker-tracer.ts';
 import type { BreakerStrategy } from './breakers/breaker-strategy.ts';
 import {
   CallResult,
@@ -89,6 +90,11 @@ export type CircuitBreakerOptions = {
   onRoleChange?: OnRoleChangeCallback;
   onStateChange?: OnStateChangeCallback;
   metrics?: BreakerMetricsRecorder;
+  /**
+   * Optional tracer wrapping calls and health checks. Use `@zenvark/otel`
+   * for OpenTelemetry spans.
+   */
+  tracing?: BreakerTracer;
 };
 
 export class CircuitBreaker extends AbstractLifecycleManager {
@@ -101,6 +107,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
   private readonly onRoleChange?: OnRoleChangeCallback;
   private readonly onStateChange?: OnStateChangeCallback;
   private readonly metrics?: BreakerMetricsRecorder;
+  private readonly tracing?: BreakerTracer;
   private readonly pendingLeaseAcquires = new Set<AbortController>();
 
   private readonly circuitStateStore: CircuitStateStore;
@@ -119,6 +126,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
     this.onRoleChange = options.onRoleChange;
     this.onStateChange = options.onStateChange;
     this.metrics = options.metrics;
+    this.tracing = options.tracing;
 
     this.metrics?.initialize?.(this.id);
 
@@ -134,6 +142,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       onStateChange: (state) => {
         if (this.elector.isLeader) {
           this.metrics?.recordStateChange?.({ breakerId: this.id, state });
+          this.tracing?.recordStateChange?.({ breakerId: this.id, state });
         }
         if (state === CircuitState.OPEN) {
           this.abortPendingLeaseAcquires();
@@ -189,7 +198,15 @@ export class CircuitBreaker extends AbstractLifecycleManager {
         const startedAt = performance.now();
 
         try {
-          await this.health.check(type, signal);
+          const check = () => this.health.check(type, signal);
+          await (this.tracing
+            ? this.tracing.traceHealthCheck({
+                breakerId: this.id,
+                type,
+                signal,
+                execute: check,
+              })
+            : check());
 
           if (this.metrics) {
             const durationMs = performance.now() - startedAt;
@@ -402,7 +419,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
     } catch (err) {
       if (err instanceof CircuitOpenError) {
         // The wait was aborted because the circuit opened
-        this.metrics?.recordBlockedRequest({ breakerId: this.id });
+        this.recordBlockedRequest();
       }
       throw err;
     } finally {
@@ -419,17 +436,24 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 
   private throwIfCircuitOpen(): void {
     if (this.state === CircuitState.OPEN) {
-      this.metrics?.recordBlockedRequest({ breakerId: this.id });
+      this.recordBlockedRequest();
 
       throw new CircuitOpenError(this.id);
     }
+  }
+
+  private recordBlockedRequest(): void {
+    this.metrics?.recordBlockedRequest({ breakerId: this.id });
+    this.tracing?.recordBlockedRequest?.({ breakerId: this.id });
   }
 
   private async runCall<T>(fn: () => Promise<T>): Promise<T> {
     const startedAt = performance.now();
 
     try {
-      const result = await fn();
+      const result = await (this.tracing
+        ? this.tracing.traceCall({ breakerId: this.id, execute: fn })
+        : fn());
 
       void this.recordCallResult(CallResult.SUCCESS, startedAt);
 

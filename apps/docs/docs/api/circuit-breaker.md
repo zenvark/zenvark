@@ -66,6 +66,10 @@ Configuration object for the circuit breaker.
 
   Prometheus metrics configuration for built-in observability. See [Metrics & Observability](../guides/metrics.md).
 
+- **`tracing`** `BreakerTracer`
+
+  Wraps calls and health checks for tracing. Use `OpenTelemetryBreakerTracer` from `@zenvark/otel`. See [OpenTelemetry Tracing](../guides/metrics.md#opentelemetry-tracing).
+
 ## Methods
 
 ### start()
