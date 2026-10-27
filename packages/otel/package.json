@@ -23,7 +23,7 @@
     "url": "https://github.com/zenvark/zenvark/issues"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "files": [
     "dist"

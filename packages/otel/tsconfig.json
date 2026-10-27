@@ -1,4 +1,7 @@
 {
   "extends": "@lokalise/tsconfig/tsc",
+  "compilerOptions": {
+    "lib": ["ES2023", "ESNext.Error"]
+  },
   "include": ["src/**/*", "test/**/*", "vitest.config.mts"]
 }

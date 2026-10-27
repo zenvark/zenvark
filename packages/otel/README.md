@@ -8,6 +8,8 @@ OpenTelemetry tracing for the [Zenvark](https://www.npmjs.com/package/zenvark) c
 npm install @zenvark/otel @opentelemetry/api
 ```
 
+Requires Node.js 24 or later.
+
 ## Usage
 
 Register the integration once at startup, before or after creating breakers:

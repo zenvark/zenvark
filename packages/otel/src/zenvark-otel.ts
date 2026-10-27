@@ -25,6 +25,15 @@ export type ZenvarkOtelOptions = {
 
 const TRACER_NAME = 'zenvark';
 
+const markFailed = (span: Span, err: unknown): void => {
+  if (Error.isError(err)) {
+    span.recordException(err);
+    span.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
+  } else {
+    span.setStatus({ code: SpanStatusCode.ERROR });
+  }
+};
+
 export class ZenvarkOtel implements Telemetry {
   private readonly tracer?: Tracer;
 
@@ -130,12 +139,3 @@ export class ZenvarkOtel implements Telemetry {
       .end();
   }
 }
-
-const markFailed = (span: Span, err: unknown): void => {
-  if (err instanceof Error) {
-    span.recordException(err);
-    span.setStatus({ code: SpanStatusCode.ERROR, message: err.message });
-  } else {
-    span.setStatus({ code: SpanStatusCode.ERROR });
-  }
-};
