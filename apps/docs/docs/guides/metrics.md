@@ -167,10 +167,10 @@ Telemetry integrations receive circuit breaker lifecycle events: they wrap each 
 Register integrations once at startup. Every circuit breaker in the process uses them, including breakers created before the registration:
 
 ```typescript
-import { registerTelemetry } from "zenvark";
+import { registerZenvarkTelemetry } from "zenvark";
 import { ZenvarkOtel } from "@zenvark/otel";
 
-registerTelemetry(new ZenvarkOtel());
+registerZenvarkTelemetry(new ZenvarkOtel());
 ```
 
 Override the integrations for a single breaker with the `telemetry` option:
@@ -215,7 +215,7 @@ Without a registered OpenTelemetry SDK the spans are no-ops. Once the applicatio
 To integrate another telemetry system, implement the `Telemetry` interface. All methods are optional:
 
 ```typescript
-import { registerTelemetry, type Telemetry } from "zenvark";
+import { registerZenvarkTelemetry, type Telemetry } from "zenvark";
 
 const logging: Telemetry = {
   async executeCall({ breakerId, execute }) {
@@ -231,7 +231,7 @@ const logging: Telemetry = {
   },
 };
 
-registerTelemetry(logging);
+registerZenvarkTelemetry(logging);
 ```
 
 `executeCall` and `executeHealthCheck` must call `execute` exactly once and settle with its result or rethrow its error.

@@ -56,7 +56,7 @@ export {
   type BlockedRequestEvent,
   type ExecuteCallParams,
   type ExecuteHealthCheckParams,
-  registerTelemetry,
+  registerZenvarkTelemetry,
   type StateChangeEvent,
   type Telemetry,
   type TelemetryOptions,

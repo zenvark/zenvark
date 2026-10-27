@@ -8,7 +8,7 @@ import { CircuitState, HealthCheckType } from './constants.ts';
 import { CircuitOpenError } from './errors/circuit-open-error.ts';
 import {
   clearRegisteredTelemetry,
-  registerTelemetry,
+  registerZenvarkTelemetry,
   type Telemetry,
 } from './telemetry.ts';
 
@@ -74,7 +74,7 @@ describe('CircuitBreaker telemetry', () => {
 
   it('runs the protected call inside the integration and returns its result', async () => {
     const { integration, events, activeScope } = createIntegration();
-    registerTelemetry(integration);
+    registerZenvarkTelemetry(integration);
     const circuit = await createCircuit();
 
     const result = await circuit.execute(async () => activeScope());
@@ -87,7 +87,7 @@ describe('CircuitBreaker telemetry', () => {
 
   it('lets the integration see a failed call and still rethrows the original error', async () => {
     const { integration, events } = createIntegration();
-    registerTelemetry(integration);
+    registerZenvarkTelemetry(integration);
     const circuit = await createCircuit(() =>
       Promise.reject(new Error('down')),
     );
@@ -103,7 +103,7 @@ describe('CircuitBreaker telemetry', () => {
 
   it('reports blocked calls, health checks and state transitions', async () => {
     const { integration, events, activeScope } = createIntegration();
-    registerTelemetry(integration);
+    registerZenvarkTelemetry(integration);
     let healthy = false;
     const checkScopes: (string | undefined)[] = [];
     const circuit = await createCircuit(async () => {

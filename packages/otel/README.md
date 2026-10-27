@@ -13,10 +13,10 @@ npm install @zenvark/otel @opentelemetry/api
 Register the integration once at startup, before or after creating breakers:
 
 ```typescript
-import { registerTelemetry } from "zenvark";
+import { registerZenvarkTelemetry } from "zenvark";
 import { ZenvarkOtel } from "@zenvark/otel";
 
-registerTelemetry(new ZenvarkOtel());
+registerZenvarkTelemetry(new ZenvarkOtel());
 ```
 
 Every circuit breaker in the process now emits spans. To override this for one breaker, use its `telemetry` option:

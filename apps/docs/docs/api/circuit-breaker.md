@@ -68,7 +68,7 @@ Configuration object for the circuit breaker.
 
 - **`telemetry`** `TelemetryOptions`
 
-  Per-breaker telemetry settings. By default the breaker uses the integrations registered with `registerTelemetry()`; `integrations` replaces them for this breaker and `isEnabled: false` disables telemetry. See [Telemetry](../guides/metrics.md#telemetry).
+  Per-breaker telemetry settings. By default the breaker uses the integrations registered with `registerZenvarkTelemetry()`; `integrations` replaces them for this breaker and `isEnabled: false` disables telemetry. See [Telemetry](../guides/metrics.md#telemetry).
 
 ## Methods
 

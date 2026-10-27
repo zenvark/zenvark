@@ -92,7 +92,7 @@ export type CircuitBreakerOptions = {
   metrics?: BreakerMetricsRecorder;
   /**
    * Telemetry settings for this breaker. Globally registered integrations
-   * (see `registerTelemetry`) are used unless `integrations` overrides them
+   * (see `registerZenvarkTelemetry`) are used unless `integrations` overrides them
    * or `isEnabled` is `false`.
    */
   telemetry?: TelemetryOptions;

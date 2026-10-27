@@ -92,7 +92,7 @@ type TelemetryGlobal = typeof globalThis & {
  * Breakers resolve integrations per event, so breakers created before the
  * registration use them too.
  */
-export function registerTelemetry(...integrations: Telemetry[]): void {
+export function registerZenvarkTelemetry(...integrations: Telemetry[]): void {
   const global = globalThis as TelemetryGlobal;
   global[REGISTRY_KEY] = [...(global[REGISTRY_KEY] ?? []), ...integrations];
 }

@@ -49,7 +49,7 @@ See [Metrics & Observability](../guides/metrics.md#custom-metrics-implementation
 
 ### Telemetry
 
-Interface for telemetry integrations, registered globally with `registerTelemetry()` or per breaker with the `telemetry` option. All methods are optional. `@zenvark/otel` implements it for OpenTelemetry.
+Interface for telemetry integrations, registered globally with `registerZenvarkTelemetry()` or per breaker with the `telemetry` option. All methods are optional. `@zenvark/otel` implements it for OpenTelemetry.
 
 ```typescript
 interface Telemetry {

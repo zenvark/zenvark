@@ -3,7 +3,7 @@ import { CircuitState, HealthCheckType } from './constants.ts';
 import {
   BreakerTelemetry,
   clearRegisteredTelemetry,
-  registerTelemetry,
+  registerZenvarkTelemetry,
   type Telemetry,
   type TelemetryOptions,
 } from './telemetry.ts';
@@ -51,7 +51,7 @@ describe('BreakerTelemetry', () => {
     const log: string[] = [];
     const telemetry = createTelemetry();
 
-    registerTelemetry(createIntegration('global', log));
+    registerZenvarkTelemetry(createIntegration('global', log));
     const result = await telemetry.executeCall(async () => {
       log.push('call');
       return 'ok';
@@ -63,8 +63,8 @@ describe('BreakerTelemetry', () => {
 
   it('nests wrappers with the first integration outermost', async () => {
     const log: string[] = [];
-    registerTelemetry(createIntegration('a', log));
-    registerTelemetry(createIntegration('b', log));
+    registerZenvarkTelemetry(createIntegration('a', log));
+    registerZenvarkTelemetry(createIntegration('b', log));
     const telemetry = createTelemetry();
 
     await telemetry.executeCall(async () => {
@@ -76,7 +76,7 @@ describe('BreakerTelemetry', () => {
 
   it('skips integrations that do not implement a hook', async () => {
     const log: string[] = [];
-    registerTelemetry({}, createIntegration('b', log));
+    registerZenvarkTelemetry({}, createIntegration('b', log));
     const telemetry = createTelemetry();
 
     await telemetry.executeCall(async () => {
@@ -100,7 +100,7 @@ describe('BreakerTelemetry', () => {
 
   it('replaces global integrations with per-breaker ones', async () => {
     const log: string[] = [];
-    registerTelemetry(createIntegration('global', log));
+    registerZenvarkTelemetry(createIntegration('global', log));
     const telemetry = createTelemetry({
       integrations: createIntegration('local', log),
     });
@@ -113,7 +113,7 @@ describe('BreakerTelemetry', () => {
 
   it('disables all integrations when isEnabled is false', async () => {
     const log: string[] = [];
-    registerTelemetry(createIntegration('global', log));
+    registerZenvarkTelemetry(createIntegration('global', log));
     const telemetry = createTelemetry({
       isEnabled: false,
       integrations: [createIntegration('local', log)],
@@ -135,7 +135,7 @@ describe('BreakerTelemetry', () => {
     const log: string[] = [];
     const onError = vi.fn();
     const hookError = new Error('hook failed');
-    registerTelemetry(
+    registerZenvarkTelemetry(
       {
         onBlockedRequest: () => {
           throw hookError;
