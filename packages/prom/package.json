@@ -1,6 +1,6 @@
 {
   "name": "@zenvark/prom",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Prometheus metrics for Zenvark Circuit Breaker",
   "keywords": [
     "zenvark",
