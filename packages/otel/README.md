@@ -14,9 +14,9 @@ Register the integration once at startup, before or after creating breakers:
 
 ```typescript
 import { registerTelemetry } from "zenvark";
-import { OpenTelemetry } from "@zenvark/otel";
+import { ZenvarkOtel } from "@zenvark/otel";
 
-registerTelemetry(new OpenTelemetry());
+registerTelemetry(new ZenvarkOtel());
 ```
 
 Every circuit breaker in the process now emits spans. To override this for one breaker, use its `telemetry` option:
@@ -24,7 +24,7 @@ Every circuit breaker in the process now emits spans. To override this for one b
 ```typescript
 new CircuitBreaker({
   // ...
-  telemetry: { integrations: [new OpenTelemetry({ tracer })] }, // or { isEnabled: false }
+  telemetry: { integrations: [new ZenvarkOtel({ tracer })] }, // or { isEnabled: false }
 });
 ```
 

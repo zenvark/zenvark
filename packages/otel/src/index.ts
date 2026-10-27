@@ -1,1 +1,1 @@
-export { OpenTelemetry, type OpenTelemetryOptions } from './open-telemetry.ts';
+export { ZenvarkOtel, type ZenvarkOtelOptions } from './zenvark-otel.ts';

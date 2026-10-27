@@ -20,9 +20,9 @@ import {
   it,
 } from 'vitest';
 import { CircuitState, HealthCheckType } from 'zenvark';
-import { OpenTelemetry } from './open-telemetry.ts';
+import { ZenvarkOtel } from './zenvark-otel.ts';
 
-describe('OpenTelemetry', () => {
+describe('ZenvarkOtel', () => {
   const breakerId = 'testBreaker';
   const exporter = new InMemorySpanExporter();
   const provider = new TracerProvider({
@@ -48,7 +48,7 @@ describe('OpenTelemetry', () => {
   });
 
   describe('executeCall', () => {
-    const telemetry = new OpenTelemetry({ tracer: testTracer });
+    const telemetry = new ZenvarkOtel({ tracer: testTracer });
 
     it('nests the call span between the caller and spans the call creates', async () => {
       const result = await testTracer.startActiveSpan(
@@ -116,7 +116,7 @@ describe('OpenTelemetry', () => {
   });
 
   describe('executeHealthCheck', () => {
-    const telemetry = new OpenTelemetry({ tracer: testTracer });
+    const telemetry = new ZenvarkOtel({ tracer: testTracer });
 
     it('starts a new trace even when a span is active', async () => {
       await testTracer.startActiveSpan('unrelated', async (unrelated) => {
@@ -179,7 +179,7 @@ describe('OpenTelemetry', () => {
   });
 
   it('records a blocked request as an error span under the caller', () => {
-    const telemetry = new OpenTelemetry({ tracer: testTracer });
+    const telemetry = new ZenvarkOtel({ tracer: testTracer });
 
     testTracer.startActiveSpan('request', (request) => {
       telemetry.onBlockedRequest({ breakerId });
@@ -196,7 +196,7 @@ describe('OpenTelemetry', () => {
   });
 
   it('records a state change in a new trace', () => {
-    const telemetry = new OpenTelemetry({ tracer: testTracer });
+    const telemetry = new ZenvarkOtel({ tracer: testTracer });
 
     testTracer.startActiveSpan('unrelated', (unrelated) => {
       telemetry.onStateChange({ breakerId, state: CircuitState.OPEN });
@@ -236,7 +236,7 @@ describe('OpenTelemetry', () => {
     };
 
     it('exports through a provider registered after construction', () => {
-      const telemetry = new OpenTelemetry();
+      const telemetry = new ZenvarkOtel();
       trace.setGlobalTracerProvider(provider);
       restore = () => trace.disable();
 
@@ -246,7 +246,7 @@ describe('OpenTelemetry', () => {
     });
 
     it('exports through a provider registered by another copy of the API', async () => {
-      const telemetry = new OpenTelemetry();
+      const telemetry = new ZenvarkOtel();
       telemetry.onBlockedRequest({ breakerId });
 
       const { api: otherApi, cleanup } = await importApiCopy();

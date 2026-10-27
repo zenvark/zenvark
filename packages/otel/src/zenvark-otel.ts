@@ -15,7 +15,7 @@ import type {
 } from 'zenvark';
 import { CallResult } from 'zenvark';
 
-export type OpenTelemetryOptions = {
+export type ZenvarkOtelOptions = {
   /**
    * Tracer to create spans with. Defaults to the `zenvark` tracer of the
    * globally registered tracer provider.
@@ -25,10 +25,10 @@ export type OpenTelemetryOptions = {
 
 const TRACER_NAME = 'zenvark';
 
-export class OpenTelemetry implements Telemetry {
+export class ZenvarkOtel implements Telemetry {
   private readonly tracer?: Tracer;
 
-  constructor(options: OpenTelemetryOptions = {}) {
+  constructor(options: ZenvarkOtelOptions = {}) {
     this.tracer = options.tracer;
   }
 

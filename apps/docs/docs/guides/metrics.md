@@ -168,9 +168,9 @@ Register integrations once at startup. Every circuit breaker in the process uses
 
 ```typescript
 import { registerTelemetry } from "zenvark";
-import { OpenTelemetry } from "@zenvark/otel";
+import { ZenvarkOtel } from "@zenvark/otel";
 
-registerTelemetry(new OpenTelemetry());
+registerTelemetry(new ZenvarkOtel());
 ```
 
 Override the integrations for a single breaker with the `telemetry` option:
@@ -179,7 +179,7 @@ Override the integrations for a single breaker with the `telemetry` option:
 // Replace the global integrations for this breaker
 new CircuitBreaker({
   // ...
-  telemetry: { integrations: [new OpenTelemetry({ tracer })] },
+  telemetry: { integrations: [new ZenvarkOtel({ tracer })] },
 });
 
 // Disable telemetry for this breaker
@@ -199,7 +199,7 @@ The `@zenvark/otel` package creates spans through `@opentelemetry/api`.
 npm install @zenvark/otel @opentelemetry/api
 ```
 
-Without a registered OpenTelemetry SDK the spans are no-ops. Once the application registers one (for example with `NodeSDK`), they are exported with no extra configuration. To use a specific tracer instead of the global one, pass it as `new OpenTelemetry({ tracer })`.
+Without a registered OpenTelemetry SDK the spans are no-ops. Once the application registers one (for example with `NodeSDK`), they are exported with no extra configuration. To use a specific tracer instead of the global one, pass it as `new ZenvarkOtel({ tracer })`.
 
 | Span                   | Created for                           | Attributes                                                                     | Parent                    |
 | ---------------------- | ------------------------------------- | ------------------------------------------------------------------------------ | ------------------------- |
