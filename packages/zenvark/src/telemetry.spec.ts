@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CircuitState, HealthCheckType } from './constants.ts';
+import { CallResult, CircuitState, HealthCheckType } from './constants.ts';
 import {
-  BreakerTelemetry,
   clearRegisteredTelemetry,
   registerZenvarkTelemetry,
   type Telemetry,
+  TelemetryDispatcher,
   type TelemetryOptions,
 } from './telemetry.ts';
 
@@ -35,11 +35,13 @@ const createIntegration = (name: string, log: string[]): Telemetry => ({
 // wrappers to finish; a macrotask lets them run to completion
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-describe('BreakerTelemetry', () => {
+describe('TelemetryDispatcher', () => {
+  const call = { breakerId: 'test' };
+
   const createTelemetry = (
     options?: TelemetryOptions,
     onError: (message: string, cause: unknown) => void = vi.fn(),
-  ) => new BreakerTelemetry({ breakerId: 'test', options, onError });
+  ) => new TelemetryDispatcher({ options, onError });
 
   afterEach(() => {
     clearRegisteredTelemetry();
@@ -48,7 +50,9 @@ describe('BreakerTelemetry', () => {
   it('runs the call directly when no integrations are registered', async () => {
     const telemetry = createTelemetry();
 
-    await expect(telemetry.executeCall(async () => 'ok')).resolves.toBe('ok');
+    await expect(telemetry.executeCall(call, async () => 'ok')).resolves.toBe(
+      'ok',
+    );
   });
 
   it('uses integrations registered after the breaker was created', async () => {
@@ -56,7 +60,7 @@ describe('BreakerTelemetry', () => {
     const telemetry = createTelemetry();
 
     registerZenvarkTelemetry(createIntegration('global', log));
-    const result = await telemetry.executeCall(async () => {
+    const result = await telemetry.executeCall(call, async () => {
       log.push('call');
       return 'ok';
     });
@@ -72,7 +76,7 @@ describe('BreakerTelemetry', () => {
     registerZenvarkTelemetry(createIntegration('b', log));
     const telemetry = createTelemetry();
 
-    await telemetry.executeCall(async () => {
+    await telemetry.executeCall(call, async () => {
       log.push('call');
     });
     await settle();
@@ -85,16 +89,19 @@ describe('BreakerTelemetry', () => {
     registerZenvarkTelemetry({}, createIntegration('b', log));
     const telemetry = createTelemetry();
 
-    await telemetry.executeCall(async () => {
+    await telemetry.executeCall(call, async () => {
       log.push('call');
     });
     await settle();
     await telemetry.executeHealthCheck(
-      HealthCheckType.IDLE,
-      new AbortController().signal,
+      {
+        breakerId: 'test',
+        type: HealthCheckType.IDLE,
+        signal: new AbortController().signal,
+      },
       async () => {},
     );
-    telemetry.blockedRequest();
+    telemetry.emit('onBlockedRequest', { breakerId: 'test' });
 
     expect(log).toEqual([
       'b:enter',
@@ -112,9 +119,12 @@ describe('BreakerTelemetry', () => {
       integrations: createIntegration('local', log),
     });
 
-    await telemetry.executeCall(async () => {});
+    await telemetry.executeCall(call, async () => {});
     await settle();
-    telemetry.stateChange(CircuitState.OPEN);
+    telemetry.emit('onStateChange', {
+      breakerId: 'test',
+      state: CircuitState.OPEN,
+    });
 
     expect(log).toEqual(['local:enter', 'local:exit', 'local:state:open']);
   });
@@ -127,14 +137,20 @@ describe('BreakerTelemetry', () => {
       integrations: [createIntegration('local', log)],
     });
 
-    await telemetry.executeCall(async () => {});
+    await telemetry.executeCall(call, async () => {});
     await telemetry.executeHealthCheck(
-      HealthCheckType.RECOVERY,
-      new AbortController().signal,
+      {
+        breakerId: 'test',
+        type: HealthCheckType.RECOVERY,
+        signal: new AbortController().signal,
+      },
       async () => {},
     );
-    telemetry.blockedRequest();
-    telemetry.stateChange(CircuitState.OPEN);
+    telemetry.emit('onBlockedRequest', { breakerId: 'test' });
+    telemetry.emit('onStateChange', {
+      breakerId: 'test',
+      state: CircuitState.OPEN,
+    });
 
     expect(log).toEqual([]);
   });
@@ -153,13 +169,37 @@ describe('BreakerTelemetry', () => {
     );
     const telemetry = createTelemetry(undefined, onError);
 
-    expect(() => telemetry.blockedRequest()).not.toThrow();
+    expect(() =>
+      telemetry.emit('onBlockedRequest', { breakerId: 'test' }),
+    ).not.toThrow();
 
     expect(log).toEqual(['b:blocked:test']);
     expect(onError).toHaveBeenCalledWith(
       'Telemetry integration onBlockedRequest threw',
       hookError,
     );
+  });
+
+  it('calls event hooks with the integration as this', () => {
+    class Recorder implements Telemetry {
+      readonly calls: string[] = [];
+      onCallEnd({ result }: { result: string }) {
+        this.calls.push(result);
+      }
+    }
+    const recorder = new Recorder();
+    registerZenvarkTelemetry(recorder);
+    const onError = vi.fn();
+    const telemetry = createTelemetry(undefined, onError);
+
+    telemetry.emit('onCallEnd', {
+      breakerId: 'test',
+      result: CallResult.SUCCESS,
+      durationMs: 1,
+    });
+
+    expect(onError).not.toHaveBeenCalled();
+    expect(recorder.calls).toEqual(['success']);
   });
 
   describe('guards the work against misbehaving integrations', () => {
@@ -171,7 +211,7 @@ describe('BreakerTelemetry', () => {
         integrations: { executeCall: async <T>() => 'not called' as T },
       });
 
-      await expect(telemetry.executeCall(fn)).resolves.toBe('ok');
+      await expect(telemetry.executeCall(call, fn)).resolves.toBe('ok');
       expect(fn).toHaveBeenCalledTimes(1);
     });
 
@@ -186,7 +226,7 @@ describe('BreakerTelemetry', () => {
         },
       });
 
-      await telemetry.executeCall(fn);
+      await telemetry.executeCall(call, fn);
       await settle();
 
       expect(fn).toHaveBeenCalledTimes(1);
@@ -206,7 +246,7 @@ describe('BreakerTelemetry', () => {
         },
       });
 
-      await expect(telemetry.executeCall(work())).resolves.toBe('ok');
+      await expect(telemetry.executeCall(call, work())).resolves.toBe('ok');
     });
 
     it('rejects with the work error even if an integration swallows it', async () => {
@@ -219,7 +259,7 @@ describe('BreakerTelemetry', () => {
       });
 
       await expect(
-        telemetry.executeCall(() => Promise.reject(error)),
+        telemetry.executeCall(call, () => Promise.reject(error)),
       ).rejects.toBe(error);
     });
 
@@ -233,7 +273,7 @@ describe('BreakerTelemetry', () => {
         },
       });
 
-      await expect(telemetry.executeCall(work())).resolves.toBe('ok');
+      await expect(telemetry.executeCall(call, work())).resolves.toBe('ok');
     });
 
     it('runs the work and reports an integration that throws before execute', async () => {
@@ -251,7 +291,7 @@ describe('BreakerTelemetry', () => {
         onError,
       );
 
-      await expect(telemetry.executeCall(fn)).resolves.toBe('ok');
+      await expect(telemetry.executeCall(call, fn)).resolves.toBe('ok');
       await settle();
 
       expect(fn).toHaveBeenCalledTimes(1);
@@ -278,8 +318,11 @@ describe('BreakerTelemetry', () => {
 
       await expect(
         telemetry.executeHealthCheck(
-          HealthCheckType.IDLE,
-          new AbortController().signal,
+          {
+            breakerId: 'test',
+            type: HealthCheckType.IDLE,
+            signal: new AbortController().signal,
+          },
           async () => {},
         ),
       ).resolves.toBeUndefined();
@@ -298,7 +341,7 @@ describe('BreakerTelemetry', () => {
       const telemetry = createTelemetry(undefined, onError);
 
       await expect(
-        telemetry.executeCall(() => Promise.reject(error)),
+        telemetry.executeCall(call, () => Promise.reject(error)),
       ).rejects.toBe(error);
       await settle();
 
@@ -313,7 +356,7 @@ describe('BreakerTelemetry', () => {
       registerZenvarkTelemetry(createIntegration('a', []));
       const telemetry = createTelemetry();
 
-      await expect(telemetry.executeCall(fn)).rejects.toBe(error);
+      await expect(telemetry.executeCall(call, fn)).rejects.toBe(error);
       expect(fn).toHaveBeenCalledTimes(1);
     });
   });

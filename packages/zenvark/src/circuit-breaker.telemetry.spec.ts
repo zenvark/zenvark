@@ -4,13 +4,14 @@ import { redis } from '../test/setup-redis.ts';
 import { ConstantBackoff } from './backoffs/constant-backoff.ts';
 import { ConsecutiveBreaker } from './breakers/consecutive-breaker.ts';
 import { CircuitBreaker } from './circuit-breaker.ts';
-import { CircuitState, HealthCheckType } from './constants.ts';
+import { CircuitRole, CircuitState, HealthCheckType } from './constants.ts';
 import { CircuitOpenError } from './errors/circuit-open-error.ts';
 import {
   clearRegisteredTelemetry,
   registerZenvarkTelemetry,
   type Telemetry,
 } from './telemetry.ts';
+import { delay } from './utils/delay.ts';
 
 // Records events the way a telemetry library would see them, and runs every
 // wrapped function inside a scope so tests can tell what ran inside it
@@ -134,5 +135,69 @@ describe('CircuitBreaker telemetry', () => {
     expect(events).toContain('blocked:test');
     expect(events).toContain(`healthcheck:${HealthCheckType.RECOVERY}:success`);
     expect(checkScopes.every((s) => s === 'healthcheck:recovery')).toBe(true);
+  });
+
+  it('reports creation, measured calls and health checks, and leadership', async () => {
+    const events: { hook: string; event: object }[] = [];
+    const record =
+      (hook: string) =>
+      (event: object): void => {
+        events.push({ hook, event });
+      };
+    registerZenvarkTelemetry({
+      onBreakerInit: record('onBreakerInit'),
+      onCallEnd: record('onCallEnd'),
+      onHealthCheckEnd: record('onHealthCheckEnd'),
+      onRoleChange: record('onRoleChange'),
+    });
+    const circuit = await createCircuit(() => delay(30));
+    await vi.waitUntil(() => circuit.role === CircuitRole.LEADER);
+
+    await circuit.execute(() => delay(30));
+    await expect(
+      circuit.execute(() => Promise.reject(new Error('boom'))),
+    ).rejects.toThrow('boom');
+    await vi.waitUntil(() =>
+      events.some(({ hook }) => hook === 'onHealthCheckEnd'),
+    );
+    await circuit.stop();
+
+    expect(events[0]).toEqual({
+      hook: 'onBreakerInit',
+      event: { breakerId: 'test' },
+    });
+    const of = (hook: string) =>
+      events.filter((e) => e.hook === hook).map((e) => e.event);
+    expect(of('onRoleChange')).toEqual([
+      {
+        breakerId: 'test',
+        role: CircuitRole.LEADER,
+        state: CircuitState.CLOSED,
+      },
+      {
+        breakerId: 'test',
+        role: CircuitRole.FOLLOWER,
+        state: expect.any(String),
+      },
+    ]);
+    const [success, failure] = of('onCallEnd');
+    expect(success).toEqual({
+      breakerId: 'test',
+      result: 'success',
+      durationMs: expect.any(Number),
+    });
+    expect(
+      (success as { durationMs: number }).durationMs,
+    ).toBeGreaterThanOrEqual(25);
+    expect(failure).toMatchObject({ breakerId: 'test', result: 'failure' });
+    const [check] = of('onHealthCheckEnd');
+    expect(check).toMatchObject({
+      breakerId: 'test',
+      type: HealthCheckType.RECOVERY,
+      result: 'success',
+    });
+    expect((check as { durationMs: number }).durationMs).toBeGreaterThanOrEqual(
+      25,
+    );
   });
 });

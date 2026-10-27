@@ -28,6 +28,13 @@ export type RecordThrottleParams = {
   id: string;
 };
 
+/**
+ * Metrics interface for recording semaphore events.
+ *
+ * @deprecated Implement a `Telemetry` integration instead and register it
+ * with `registerZenvarkTelemetry`; `onAcquire`, `onRelease`,
+ * `onLimitChange`, `onThrottle` and `onSemaphoreInit` carry the same data.
+ */
 export type SemaphoreMetricsRecorder = {
   /**
    * Called once from the constructor so metrics appear in scrapes immediately.

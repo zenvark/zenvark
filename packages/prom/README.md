@@ -10,54 +10,35 @@ npm install @zenvark/prom @prometheus-io/client
 
 ## Usage
 
-```typescript
-import { CircuitBreaker, ConsecutiveBreaker, ConstantBackoff } from "zenvark";
-import { PrometheusBreakerMetrics } from "@zenvark/prom";
-import { register } from "@prometheus-io/client";
-import { Redis } from "ioredis";
-
-const redis = new Redis("redis://localhost:6379");
-
-const circuitBreaker = new CircuitBreaker({
-  id: "my-service-api",
-  redis,
-  breaker: new ConsecutiveBreaker({ threshold: 5 }),
-  health: {
-    backoff: new ConstantBackoff({ delayMs: 5000 }),
-    async check(type, signal) {
-      const response = await fetch("https://api.example.com/health", {
-        signal,
-      });
-      if (!response.ok) throw new Error("Health check failed");
-    },
-  },
-  metrics: new PrometheusBreakerMetrics({
-    register,
-    customLabels: { service: "my-api", environment: "production" },
-  }),
-});
-
-await circuitBreaker.start();
-```
-
-For the adaptive semaphore, pass `PrometheusSemaphoreMetrics` the same way:
+Register `ZenvarkProm` once at startup. It records metrics for every circuit breaker and adaptive semaphore in the process:
 
 ```typescript
-import { AdaptiveSemaphore } from "zenvark";
-import { PrometheusSemaphoreMetrics } from "@zenvark/prom";
 import { register } from "@prometheus-io/client";
+import { registerZenvarkTelemetry } from "zenvark";
+import { ZenvarkProm } from "@zenvark/prom";
 
-const semaphore = new AdaptiveSemaphore({
-  id: "my-provider-api",
-  redis,
-  initialLimit: 10,
-  maxLimit: 1000,
-  metrics: new PrometheusSemaphoreMetrics({
+registerZenvarkTelemetry(
+  new ZenvarkProm({
     registry: register,
     customLabels: { service: "my-api", environment: "production" },
   }),
+);
+```
+
+Register it before creating breakers and semaphores, so their counters appear in scrapes at 0 before the first event.
+
+To use it for a single breaker or semaphore only, pass it in the `telemetry` option instead:
+
+```typescript
+new CircuitBreaker({
+  // ...
+  telemetry: { integrations: [new ZenvarkProm({ registry: register })] },
 });
 ```
+
+### Migrating from `PrometheusBreakerMetrics` and `PrometheusSemaphoreMetrics`
+
+Both classes, and the `metrics` option they are passed to, are deprecated. Replace them with one registered `ZenvarkProm`; it reports the same metrics under the same names and labels. Do not use both for the same instance, or every metric is recorded twice.
 
 ## Available Metrics
 
@@ -97,8 +78,8 @@ The limit gauge is set on every process whose cached view changes, so a scrape o
 Add custom labels to all metrics:
 
 ```typescript
-const metrics = new PrometheusBreakerMetrics({
-  register,
+new ZenvarkProm({
+  registry: register,
   customLabels: {
     service: "payment-service",
     environment: "production",

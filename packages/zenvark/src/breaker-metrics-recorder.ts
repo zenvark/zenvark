@@ -24,7 +24,11 @@ export type RecordStateChangeParams = {
 
 /**
  * Metrics interface for recording circuit breaker events.
- * Implement this interface to integrate with your metrics system.
+ *
+ * @deprecated Implement a `Telemetry` integration instead and register it
+ * with `registerZenvarkTelemetry`; `onCallEnd`, `onBlockedRequest`,
+ * `onHealthCheckEnd`, `onStateChange`, `onRoleChange` and `onBreakerInit`
+ * carry the same data.
  */
 export type BreakerMetricsRecorder = {
   /**

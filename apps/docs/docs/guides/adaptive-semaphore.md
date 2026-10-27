@@ -73,20 +73,21 @@ The steady state is a sawtooth just under the real ceiling. The library never in
 
 ### Constructor
 
-| Option          | Type                                   | Default         | Description                                                                                                                                                 |
-| --------------- | -------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`            | `string`                               | (required)      | Names one independently limited resource. All Redis keys live under `zenvark:${id}:*`. Granularity is your choice (per provider, per API key, per tenant…). |
-| `redis`         | `Redis`                                | (required)      | An `ioredis` instance, used as-is (no `duplicate()`; the semaphore only issues request/response commands). Safe to share with a `CircuitBreaker`.           |
-| `initialLimit`  | `number`                               | (required)      | Starting capacity. Pick a conservative value; AIMD converges from there.                                                                                    |
-| `minLimit`      | `number`                               | `1`             | Floor for multiplicative decreases.                                                                                                                         |
-| `maxLimit`      | `number`                               | `1000`          | Hard ceiling for additive increases. A runaway guard, not a tuning knob.                                                                                    |
-| `leaseTtlMs`    | `number`                               | `30_000`        | Lease TTL. Held leases auto-renew at 80% of the TTL; a crashed holder's slot returns within one TTL.                                                        |
-| `aimd`          | `AimdOptions`                          | see below       | Adaptation constants. Consumers normally omit the whole block.                                                                                              |
-| `classes`       | `Record<string, SemaphoreClassConfig>` | `{}`            | Named priority classes, each with an optional `reservedShare` (0–1). See [Priority classes](#priority-classes).                                             |
-| `onUnavailable` | `'throw'` \| `{ localLimit }`          | `'throw'`       | Behavior when Redis is unreachable: fail closed (rejects with `SemaphoreUnavailableError`), or fall back to a fixed per-process concurrency cap.            |
-| `metrics`       | `SemaphoreMetricsRecorder`             | –               | Metrics hook; use `PrometheusSemaphoreMetrics` from `@zenvark/prom`.                                                                                        |
-| `onError`       | `(err: Error) => void`                 | `console.error` | All internal errors surface here, wrapped with context and `cause`.                                                                                         |
-| `onLimitChange` | `(limit: number) => void`              | –               | Plain callback for logging limit changes, mirroring the breaker's `onStateChange`.                                                                          |
+| Option          | Type                                   | Default         | Description                                                                                                                                                       |
+| --------------- | -------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`            | `string`                               | (required)      | Names one independently limited resource. All Redis keys live under `zenvark:${id}:*`. Granularity is your choice (per provider, per API key, per tenant…).       |
+| `redis`         | `Redis`                                | (required)      | An `ioredis` instance, used as-is (no `duplicate()`; the semaphore only issues request/response commands). Safe to share with a `CircuitBreaker`.                 |
+| `initialLimit`  | `number`                               | (required)      | Starting capacity. Pick a conservative value; AIMD converges from there.                                                                                          |
+| `minLimit`      | `number`                               | `1`             | Floor for multiplicative decreases.                                                                                                                               |
+| `maxLimit`      | `number`                               | `1000`          | Hard ceiling for additive increases. A runaway guard, not a tuning knob.                                                                                          |
+| `leaseTtlMs`    | `number`                               | `30_000`        | Lease TTL. Held leases auto-renew at 80% of the TTL; a crashed holder's slot returns within one TTL.                                                              |
+| `aimd`          | `AimdOptions`                          | see below       | Adaptation constants. Consumers normally omit the whole block.                                                                                                    |
+| `classes`       | `Record<string, SemaphoreClassConfig>` | `{}`            | Named priority classes, each with an optional `reservedShare` (0–1). See [Priority classes](#priority-classes).                                                   |
+| `onUnavailable` | `'throw'` \| `{ localLimit }`          | `'throw'`       | Behavior when Redis is unreachable: fail closed (rejects with `SemaphoreUnavailableError`), or fall back to a fixed per-process concurrency cap.                  |
+| `telemetry`     | `TelemetryOptions`                     | global          | Overrides (`integrations`) or disables (`isEnabled: false`) the integrations registered with `registerZenvarkTelemetry`. See [Telemetry](./metrics.md#telemetry). |
+| `metrics`       | `SemaphoreMetricsRecorder`             | –               | **Deprecated.** Register `ZenvarkProm` from `@zenvark/prom` as telemetry instead. See [Migrating from `metrics`](./metrics.md#migrating-from-metrics).            |
+| `onError`       | `(err: Error) => void`                 | `console.error` | All internal errors surface here, wrapped with context and `cause`.                                                                                               |
+| `onLimitChange` | `(limit: number) => void`              | –               | Plain callback for logging limit changes, mirroring the breaker's `onStateChange`.                                                                                |
 
 ### `aimd` block
 

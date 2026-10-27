@@ -1,6 +1,12 @@
 ---
 "zenvark": minor
 "@zenvark/otel": minor
+"@zenvark/prom": minor
 ---
 
-Add telemetry integrations. `registerZenvarkTelemetry()` registers integrations for every circuit breaker, and the new `telemetry` option overrides them per breaker (`integrations`) or turns them off (`isEnabled: false`). The new `@zenvark/otel` package provides a `ZenvarkOtel` integration that emits spans for breaker calls, blocked calls, health checks and state changes. It requires Node.js 24 or later. `zenvark` itself does not depend on OpenTelemetry.
+Add telemetry integrations for circuit breakers and adaptive semaphores. `registerZenvarkTelemetry()` registers integrations for every instance, and the new `telemetry` option of `CircuitBreaker` and `AdaptiveSemaphore` overrides them per instance (`integrations`) or turns them off (`isEnabled: false`). `zenvark` itself does not depend on any telemetry library.
+
+- `@zenvark/prom` adds `ZenvarkProm`, an integration that reports the same Prometheus metrics as `PrometheusBreakerMetrics` and `PrometheusSemaphoreMetrics`.
+- The new `@zenvark/otel` package provides `ZenvarkOtel`, an integration that emits OpenTelemetry spans for breaker calls, blocked calls, health checks, state changes and semaphore acquires. It requires Node.js 24 or later.
+
+Deprecated: the `metrics` option of `CircuitBreaker` and `AdaptiveSemaphore`, `BreakerMetricsRecorder`, `SemaphoreMetricsRecorder`, `PrometheusBreakerMetrics` and `PrometheusSemaphoreMetrics`. They keep working until the next major version; register `ZenvarkProm` instead.

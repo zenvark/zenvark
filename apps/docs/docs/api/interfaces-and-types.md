@@ -32,31 +32,28 @@ interface BackoffStrategy {
 
 See [Backoff Strategies](../strategies/backoff-strategies.md#custom-strategies) for implementation examples.
 
-### BreakerMetricsRecorder
-
-Interface for implementing custom metrics collection.
-
-```typescript
-interface BreakerMetricsRecorder {
-  initialize?(breakerId: string): void;
-  recordCall(params: RecordCallParams): void;
-  recordBlockedRequest(params: RecordBlockedRequestParams): void;
-  recordHealthCheck(params: RecordHealthCheckParams): void;
-}
-```
-
-See [Metrics & Observability](../guides/metrics.md#custom-metrics-implementation) for implementation examples.
-
 ### Telemetry
 
-Interface for telemetry integrations, registered globally with `registerZenvarkTelemetry()` or per breaker with the `telemetry` option. All methods are optional. `@zenvark/otel` implements it for OpenTelemetry.
+Interface for telemetry integrations, registered globally with `registerZenvarkTelemetry()` or per instance with the `telemetry` option of `CircuitBreaker` and `AdaptiveSemaphore`. All methods are optional. `@zenvark/prom` and `@zenvark/otel` implement it for Prometheus and OpenTelemetry.
 
 ```typescript
 interface Telemetry {
+  // Circuit breaker
   executeCall?<T>(params: ExecuteCallParams<T>): Promise<T>;
   executeHealthCheck?(params: ExecuteHealthCheckParams): Promise<void>;
-  onBlockedRequest?(event: BlockedRequestEvent): void;
-  onStateChange?(event: StateChangeEvent): void; // leader only
+  onBreakerInit?(event: { breakerId: string }): void;
+  onCallEnd?(event: CallEndEvent): void;
+  onBlockedRequest?(event: { breakerId: string }): void;
+  onHealthCheckEnd?(event: HealthCheckEndEvent): void; // not for cancelled checks
+  onStateChange?(event: { breakerId: string; state: CircuitState }): void; // leader only
+  onRoleChange?(event: RoleChangeEvent): void;
+
+  // Adaptive semaphore
+  onSemaphoreInit?(event: { semaphoreId: string }): void;
+  onAcquire?(event: AcquireEvent): void;
+  onRelease?(event: ReleaseEvent): void;
+  onLimitChange?(event: LimitChangeEvent): void;
+  onThrottle?(event: { semaphoreId: string }): void;
 }
 
 type ExecuteCallParams<T> = {
@@ -71,24 +68,73 @@ type ExecuteHealthCheckParams = {
   execute: () => Promise<void>;
 };
 
-type BlockedRequestEvent = { breakerId: string };
-type StateChangeEvent = { breakerId: string; state: CircuitState };
+type CallEndEvent = {
+  breakerId: string;
+  result: CallResult;
+  durationMs: number;
+};
+type HealthCheckEndEvent = {
+  breakerId: string;
+  type: HealthCheckType;
+  result: CallResult;
+  durationMs: number;
+};
+type RoleChangeEvent = {
+  breakerId: string;
+  role: CircuitRole;
+  state: CircuitState;
+};
+
+type AcquireEvent = {
+  semaphoreId: string;
+  class?: string;
+  result: AcquireResult;
+  waitMs: number;
+};
+type ReleaseEvent = {
+  semaphoreId: string;
+  class?: string;
+  outcome: LeaseOutcome;
+  heldMs: number;
+};
+type LimitChangeEvent = {
+  semaphoreId: string;
+  limit: number;
+  direction: LimitChangeDirection;
+};
 ```
 
-`executeCall` and `executeHealthCheck` should call `execute` synchronously (before any `await`), so the work starts inside the integration's context. The breaker settles with the work's own result as soon as it is known, without waiting for the integration: the work runs exactly once even if `execute` is not called or called twice, and a rejection other than the work's own error is reported through `onError`.
+`executeCall` and `executeHealthCheck` should call `execute` synchronously (before any `await`), so the work starts inside the integration's context. The breaker settles with the work's own result as soon as it is known, without waiting for the integration: the work runs exactly once even if `execute` is not called or called twice, and a rejection other than the work's own error is reported through `onError`. Errors thrown by `on*` methods are reported through `onError` too.
+
+See [Custom Telemetry Integration](../guides/metrics.md#custom-telemetry-integration) for an example.
 
 ### TelemetryOptions
 
-Per-breaker telemetry settings, passed as the `telemetry` option.
+Per-instance telemetry settings, passed as the `telemetry` option of `CircuitBreaker` or `AdaptiveSemaphore`.
 
 ```typescript
 type TelemetryOptions = {
-  isEnabled?: boolean; // false disables all integrations for this breaker
+  isEnabled?: boolean; // false disables all integrations for this instance
   integrations?: Telemetry | Telemetry[]; // replaces the global integrations
 };
 ```
 
 See [Telemetry](../guides/metrics.md#telemetry) for usage.
+
+### BreakerMetricsRecorder (deprecated)
+
+Interface behind the deprecated `metrics` option. Implement `Telemetry` instead; see [Migrating from `metrics`](../guides/metrics.md#migrating-from-metrics).
+
+```typescript
+interface BreakerMetricsRecorder {
+  initialize?(breakerId: string): void;
+  recordCall(params: RecordCallParams): void;
+  recordBlockedRequest(params: RecordBlockedRequestParams): void;
+  recordHealthCheck(params: RecordHealthCheckParams): void;
+  recordStateChange?(params: RecordStateChangeParams): void;
+  clearState?(breakerId: string): void;
+}
+```
 
 ## Type Aliases
 

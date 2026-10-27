@@ -35,6 +35,10 @@ export type PrometheusBreakerMetricsOptions = {
   customLabels?: Record<string, string>;
 };
 
+/**
+ * @deprecated Use `ZenvarkProm` with `registerZenvarkTelemetry` instead.
+ * It reports the same metrics.
+ */
 export class PrometheusBreakerMetrics implements BreakerMetricsRecorder {
   private readonly customLabels: Record<string, string>;
 

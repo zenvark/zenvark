@@ -41,8 +41,17 @@ import {
   HealthCheckType,
   CircuitRole,
   CircuitState,
+  registerZenvarkTelemetry,
 } from "zenvark";
-import { PrometheusBreakerMetrics } from "@zenvark/prom";
+import { ZenvarkProm } from "@zenvark/prom";
+
+// Report Prometheus metrics for every breaker and semaphore in the process
+registerZenvarkTelemetry(
+  new ZenvarkProm({
+    registry: register, // Prometheus registry instance
+    customLabels: { service: "my-api" }, // Add custom labels to your metrics
+  }),
+);
 
 const redis = new Redis("redis://localhost:6379");
 
@@ -74,10 +83,6 @@ const circuitBreaker = new CircuitBreaker({
     // Observe state transitions across the cluster
     console.log("Circuit state changed to", state);
   },
-  metrics: new PrometheusBreakerMetrics({
-    register, // Prometheus registry instance
-    customLabels: { service: "my-api" }, // Add custom labels to your metrics
-  }),
 });
 
 // Start the circuit breaker and its internal coordination mechanisms

@@ -62,13 +62,13 @@ Configuration object for the circuit breaker.
   - Only called when role actually changes
   - Useful for logging
 
-- **`metrics`** `BreakerMetricsRecorder`
+- **`metrics`** `BreakerMetricsRecorder` (deprecated)
 
-  Prometheus metrics configuration for built-in observability. See [Metrics & Observability](../guides/metrics.md).
+  Register `ZenvarkProm` from `@zenvark/prom` as telemetry instead; it reports the same metrics. See [Migrating from `metrics`](../guides/metrics.md#migrating-from-metrics).
 
 - **`telemetry`** `TelemetryOptions`
 
-  Per-breaker telemetry settings. By default the breaker uses the integrations registered with `registerZenvarkTelemetry()`; `integrations` replaces them for this breaker and `isEnabled: false` disables telemetry. See [Telemetry](../guides/metrics.md#telemetry).
+  Per-breaker telemetry settings. By default the breaker uses the integrations registered with `registerZenvarkTelemetry()`, such as `ZenvarkProm` for Prometheus metrics or `ZenvarkOtel` for OpenTelemetry spans; `integrations` replaces them for this breaker and `isEnabled: false` disables telemetry. See [Telemetry](../guides/metrics.md#telemetry).
 
 ## Methods
 

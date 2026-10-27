@@ -14,7 +14,7 @@ import { CircuitOpenError } from './errors/circuit-open-error.ts';
 import { LeaderElector } from './leader-elector.ts';
 import { CallResultStore } from './stores/call-result-store.ts';
 import { CircuitStateStore } from './stores/circuit-state-store.ts';
-import { BreakerTelemetry, type TelemetryOptions } from './telemetry.ts';
+import { TelemetryDispatcher, type TelemetryOptions } from './telemetry.ts';
 import type { CallResultEvent } from './types.ts';
 import { AbstractLifecycleManager } from './utils/abstract-lifecycle-manager.ts';
 import { HealthCheckManager } from './utils/health-check-manager.ts';
@@ -89,11 +89,16 @@ export type CircuitBreakerOptions = {
   onError?: OnErrorCallback;
   onRoleChange?: OnRoleChangeCallback;
   onStateChange?: OnStateChangeCallback;
+  /**
+   * @deprecated Use telemetry instead: register `ZenvarkProm` from
+   * `@zenvark/prom` with `registerZenvarkTelemetry`, or pass it in
+   * `telemetry.integrations`. Using both reports every metric twice.
+   */
   metrics?: BreakerMetricsRecorder;
   /**
    * Telemetry settings for this breaker. Globally registered integrations
-   * (see `registerZenvarkTelemetry`) are used unless `integrations` overrides them
-   * or `isEnabled` is `false`.
+   * (see `registerZenvarkTelemetry`) are used unless `integrations`
+   * overrides them or `isEnabled` is `false`.
    */
   telemetry?: TelemetryOptions;
 };
@@ -108,7 +113,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
   private readonly onRoleChange?: OnRoleChangeCallback;
   private readonly onStateChange?: OnStateChangeCallback;
   private readonly metrics?: BreakerMetricsRecorder;
-  private readonly telemetry: BreakerTelemetry;
+  private readonly telemetry: TelemetryDispatcher;
   private readonly pendingLeaseAcquires = new Set<AbortController>();
 
   private readonly circuitStateStore: CircuitStateStore;
@@ -127,13 +132,13 @@ export class CircuitBreaker extends AbstractLifecycleManager {
     this.onRoleChange = options.onRoleChange;
     this.onStateChange = options.onStateChange;
     this.metrics = options.metrics;
-    this.telemetry = new BreakerTelemetry({
-      breakerId: this.id,
+    this.telemetry = new TelemetryDispatcher({
       options: options.telemetry,
       onError: (message, cause) => this.handleError(message, cause),
     });
 
     this.metrics?.initialize?.(this.id);
+    this.telemetry.emit('onBreakerInit', { breakerId: this.id });
 
     this.circuitStateStore = new CircuitStateStore({
       redis: this.redis,
@@ -147,7 +152,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       onStateChange: (state) => {
         if (this.elector.isLeader) {
           this.metrics?.recordStateChange?.({ breakerId: this.id, state });
-          this.telemetry.stateChange(state);
+          this.telemetry.emit('onStateChange', { breakerId: this.id, state });
         }
         if (state === CircuitState.OPEN) {
           this.abortPendingLeaseAcquires();
@@ -194,6 +199,11 @@ export class CircuitBreaker extends AbstractLifecycleManager {
           void this.stopHealthChecks();
         }
 
+        this.telemetry.emit('onRoleChange', {
+          breakerId: this.id,
+          role,
+          state: this.state,
+        });
         this.onRoleChange?.(role);
       },
     });
@@ -203,19 +213,12 @@ export class CircuitBreaker extends AbstractLifecycleManager {
         const startedAt = performance.now();
 
         try {
-          await this.telemetry.executeHealthCheck(type, signal, () =>
-            this.health.check(type, signal),
+          await this.telemetry.executeHealthCheck(
+            { breakerId: this.id, type, signal },
+            () => this.health.check(type, signal),
           );
 
-          if (this.metrics) {
-            const durationMs = performance.now() - startedAt;
-            this.metrics.recordHealthCheck({
-              breakerId: this.id,
-              type,
-              result: CallResult.SUCCESS,
-              durationMs,
-            });
-          }
+          this.recordHealthCheck(type, CallResult.SUCCESS, startedAt);
 
           void this.onHealthCheckSuccess(type);
         } catch (err) {
@@ -223,15 +226,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
             return;
           }
 
-          if (this.metrics) {
-            const durationMs = performance.now() - startedAt;
-            this.metrics.recordHealthCheck({
-              breakerId: this.id,
-              type,
-              result: CallResult.FAILURE,
-              durationMs,
-            });
-          }
+          this.recordHealthCheck(type, CallResult.FAILURE, startedAt);
 
           this.handleError(`Failed to perform ${type} health check`, err);
 
@@ -352,17 +347,32 @@ export class CircuitBreaker extends AbstractLifecycleManager {
     }
   };
 
+  private recordHealthCheck(
+    type: HealthCheckType,
+    result: CallResult,
+    startedAt: number,
+  ): void {
+    const event = {
+      breakerId: this.id,
+      type,
+      result,
+      durationMs: performance.now() - startedAt,
+    };
+    this.metrics?.recordHealthCheck(event);
+    this.telemetry.emit('onHealthCheckEnd', event);
+  }
+
   private async recordCallResult(
     callResult: CallResult,
     callStartedAtMs: number,
   ) {
-    const durationMs = performance.now() - callStartedAtMs;
-
-    this.metrics?.recordCall({
+    const event = {
       breakerId: this.id,
       result: callResult,
-      durationMs,
-    });
+      durationMs: performance.now() - callStartedAtMs,
+    };
+    this.metrics?.recordCall(event);
+    this.telemetry.emit('onCallEnd', event);
 
     await this.callResultStore.storeCallResult(callResult);
   }
@@ -443,14 +453,17 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 
   private recordBlockedRequest(): void {
     this.metrics?.recordBlockedRequest({ breakerId: this.id });
-    this.telemetry.blockedRequest();
+    this.telemetry.emit('onBlockedRequest', { breakerId: this.id });
   }
 
   private async runCall<T>(fn: () => Promise<T>): Promise<T> {
     const startedAt = performance.now();
 
     try {
-      const result = await this.telemetry.executeCall(fn);
+      const result = await this.telemetry.executeCall(
+        { breakerId: this.id },
+        fn,
+      );
 
       void this.recordCallResult(CallResult.SUCCESS, startedAt);
 

@@ -10,3 +10,4 @@ export {
   PrometheusSemaphoreMetrics,
   type PrometheusSemaphoreMetricsOptions,
 } from './prometheus-semaphore-metrics.ts';
+export { ZenvarkProm, type ZenvarkPromOptions } from './zenvark-prom.ts';

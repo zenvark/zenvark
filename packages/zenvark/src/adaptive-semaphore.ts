@@ -9,6 +9,7 @@ import { AcquireTimeoutError } from './errors/acquire-timeout-error.ts';
 import { SemaphoreDisposedError } from './errors/semaphore-disposed-error.ts';
 import { SemaphoreUnavailableError } from './errors/semaphore-unavailable-error.ts';
 import type { SemaphoreMetricsRecorder } from './semaphore-metrics-recorder.ts';
+import { TelemetryDispatcher, type TelemetryOptions } from './telemetry.ts';
 import type { SemaphoreClassConfig, SemaphoreState } from './types.ts';
 import { delay } from './utils/delay.ts';
 
@@ -126,9 +127,18 @@ export type AdaptiveSemaphoreOptions = {
   onUnavailable?: 'throw' | FallbackGate;
 
   /**
-   * Metrics hook; use PrometheusSemaphoreMetrics from @zenvark/prom.
+   * @deprecated Use telemetry instead: register `ZenvarkProm` from
+   * `@zenvark/prom` with `registerZenvarkTelemetry`, or pass it in
+   * `telemetry.integrations`. Using both reports every metric twice.
    */
   metrics?: SemaphoreMetricsRecorder;
+
+  /**
+   * Telemetry settings for this semaphore. Globally registered integrations
+   * (see `registerZenvarkTelemetry`) are used unless `integrations`
+   * overrides them or `isEnabled` is `false`.
+   */
+  telemetry?: TelemetryOptions;
 
   /**
    * All internal errors surface here, wrapped with context and `cause`.
@@ -206,6 +216,7 @@ export class AdaptiveSemaphore {
   private readonly classes: Record<string, SemaphoreClassConfig>;
   private readonly onUnavailable: 'throw' | FallbackGate;
   private readonly metrics?: SemaphoreMetricsRecorder;
+  private readonly telemetry: TelemetryDispatcher;
   private readonly onError?: (err: Error) => void;
   private readonly onLimitChange?: (limit: number) => void;
 
@@ -242,6 +253,10 @@ export class AdaptiveSemaphore {
     this.classes = options.classes ?? {};
     this.onUnavailable = options.onUnavailable ?? 'throw';
     this.metrics = options.metrics;
+    this.telemetry = new TelemetryDispatcher({
+      options: options.telemetry,
+      onError: (message, cause) => this.handleError(message, cause),
+    });
     this.onError = options.onError;
     this.onLimitChange = options.onLimitChange;
 
@@ -254,6 +269,7 @@ export class AdaptiveSemaphore {
     this.increaseKey = `zenvark:${this.id}:increase`;
 
     this.metrics?.initialize?.(this.id);
+    this.telemetry.emit('onSemaphoreInit', { semaphoreId: this.id });
   }
 
   /**
@@ -448,12 +464,7 @@ export class AdaptiveSemaphore {
           err,
         );
       }
-      this.metrics?.recordRelease({
-        id: this.id,
-        class: className,
-        outcome,
-        heldMs: performance.now() - heldSince,
-      });
+      this.recordRelease(className, outcome, heldSince);
       try {
         if (outcome === LeaseOutcome.THROTTLED) {
           await this.adaptDown();
@@ -475,12 +486,7 @@ export class AdaptiveSemaphore {
     return new Lease(async (outcome) => {
       this.trackReleased(className);
       this.fallbackInflight -= 1;
-      this.metrics?.recordRelease({
-        id: this.id,
-        class: className,
-        outcome,
-        heldMs: performance.now() - heldSince,
-      });
+      this.recordRelease(className, outcome, heldSince);
     });
   }
 
@@ -491,6 +497,7 @@ export class AdaptiveSemaphore {
    */
   private async adaptDown(): Promise<void> {
     this.metrics?.recordThrottle?.({ id: this.id });
+    this.telemetry.emit('onThrottle', { semaphoreId: this.id });
     await this.redis.set(this.throttledKey, '1', 'PX', this.windowMs);
     const claimed = await this.redis.set(
       this.cooldownKey,
@@ -600,6 +607,11 @@ export class AdaptiveSemaphore {
     }
     this.cachedLimit = limit;
     this.metrics?.recordLimitChange?.({ id: this.id, limit, direction });
+    this.telemetry.emit('onLimitChange', {
+      semaphoreId: this.id,
+      limit,
+      direction,
+    });
     this.onLimitChange?.(limit);
   }
 
@@ -649,23 +661,53 @@ export class AdaptiveSemaphore {
     className: string | undefined,
     startedAt: number,
   ): void {
-    this.metrics?.recordAcquire({
-      id: this.id,
-      class: className,
-      result: AcquireResult.ACQUIRED,
-      waitMs: performance.now() - startedAt,
-    });
+    this.recordAcquire(className, AcquireResult.ACQUIRED, startedAt);
   }
 
   private recordTimedOut(
     className: string | undefined,
     startedAt: number,
   ): void {
+    this.recordAcquire(className, AcquireResult.TIMEOUT, startedAt);
+  }
+
+  private recordAcquire(
+    className: string | undefined,
+    result: AcquireResult,
+    startedAt: number,
+  ): void {
+    const waitMs = performance.now() - startedAt;
     this.metrics?.recordAcquire({
       id: this.id,
       class: className,
-      result: AcquireResult.TIMEOUT,
-      waitMs: performance.now() - startedAt,
+      result,
+      waitMs,
+    });
+    this.telemetry.emit('onAcquire', {
+      semaphoreId: this.id,
+      class: className,
+      result,
+      waitMs,
+    });
+  }
+
+  private recordRelease(
+    className: string | undefined,
+    outcome: LeaseOutcome,
+    heldSince: number,
+  ): void {
+    const heldMs = performance.now() - heldSince;
+    this.metrics?.recordRelease({
+      id: this.id,
+      class: className,
+      outcome,
+      heldMs,
+    });
+    this.telemetry.emit('onRelease', {
+      semaphoreId: this.id,
+      class: className,
+      outcome,
+      heldMs,
     });
   }
 

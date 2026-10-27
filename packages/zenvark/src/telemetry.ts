@@ -1,4 +1,12 @@
-import type { CircuitState, HealthCheckType } from './constants.ts';
+import type {
+  AcquireResult,
+  CallResult,
+  CircuitRole,
+  CircuitState,
+  HealthCheckType,
+  LeaseOutcome,
+  LimitChangeDirection,
+} from './constants.ts';
 
 export type ExecuteCallParams<T> = {
   breakerId: string;
@@ -24,6 +32,23 @@ export type ExecuteHealthCheckParams = {
   execute: () => Promise<void>;
 };
 
+export type BreakerInitEvent = {
+  breakerId: string;
+};
+
+export type CallEndEvent = {
+  breakerId: string;
+  result: CallResult;
+  durationMs: number;
+};
+
+export type HealthCheckEndEvent = {
+  breakerId: string;
+  type: HealthCheckType;
+  result: CallResult;
+  durationMs: number;
+};
+
 export type BlockedRequestEvent = {
   breakerId: string;
 };
@@ -33,11 +58,48 @@ export type StateChangeEvent = {
   state: CircuitState;
 };
 
+export type RoleChangeEvent = {
+  breakerId: string;
+  role: CircuitRole;
+  /**
+   * The circuit state when the role changed
+   */
+  state: CircuitState;
+};
+
+export type SemaphoreInitEvent = {
+  semaphoreId: string;
+};
+
+export type AcquireEvent = {
+  semaphoreId: string;
+  class?: string;
+  result: AcquireResult;
+  waitMs: number;
+};
+
+export type ReleaseEvent = {
+  semaphoreId: string;
+  class?: string;
+  outcome: LeaseOutcome;
+  heldMs: number;
+};
+
+export type LimitChangeEvent = {
+  semaphoreId: string;
+  limit: number;
+  direction: LimitChangeDirection;
+};
+
+export type ThrottleEvent = {
+  semaphoreId: string;
+};
+
 /**
- * Telemetry integration receiving circuit breaker lifecycle events,
- * independent of any telemetry library. All methods are optional;
- * implement only the ones you need. `@zenvark/otel` implements it for
- * OpenTelemetry.
+ * Telemetry integration receiving circuit breaker and semaphore lifecycle
+ * events, independent of any telemetry library. All methods are optional;
+ * implement only the ones you need. `@zenvark/otel` and `@zenvark/prom`
+ * implement it for OpenTelemetry and Prometheus.
  */
 export type Telemetry = {
   /**
@@ -58,6 +120,23 @@ export type Telemetry = {
   executeHealthCheck?(params: ExecuteHealthCheckParams): Promise<void>;
 
   /**
+   * Called when a circuit breaker is created. Integrations registered
+   * later do not receive it for breakers that already exist.
+   */
+  onBreakerInit?(event: BreakerInitEvent): void;
+
+  /**
+   * Called when a protected call completes, with its result and duration
+   */
+  onCallEnd?(event: CallEndEvent): void;
+
+  /**
+   * Called when a health check attempt completes. Not called for cancelled
+   * checks.
+   */
+  onHealthCheckEnd?(event: HealthCheckEndEvent): void;
+
+  /**
    * Called when a request is blocked by an open circuit
    */
   onBlockedRequest?(event: BlockedRequestEvent): void;
@@ -66,18 +145,56 @@ export type Telemetry = {
    * Called on a circuit state transition, on the leader only
    */
   onStateChange?(event: StateChangeEvent): void;
+
+  /**
+   * Called when this instance becomes the leader or stops being it
+   */
+  onRoleChange?(event: RoleChangeEvent): void;
+
+  /**
+   * Called when a semaphore is created. Integrations registered later do
+   * not receive it for semaphores that already exist.
+   */
+  onSemaphoreInit?(event: SemaphoreInitEvent): void;
+
+  /**
+   * Called when an acquire attempt is granted or times out, with the time
+   * spent waiting
+   */
+  onAcquire?(event: AcquireEvent): void;
+
+  /**
+   * Called when a lease is released, with its outcome and hold duration
+   */
+  onRelease?(event: ReleaseEvent): void;
+
+  /**
+   * Called when this process's view of the fleet-wide limit changes
+   */
+  onLimitChange?(event: LimitChangeEvent): void;
+
+  /**
+   * Called when a lease is released as `THROTTLED`
+   */
+  onThrottle?(event: ThrottleEvent): void;
 };
+
+type EventHook = {
+  [K in keyof Telemetry]-?: K extends `on${string}` ? K : never;
+}[keyof Telemetry];
+
+type EventOf<K extends EventHook> = Parameters<NonNullable<Telemetry[K]>>[0];
 
 export type TelemetryOptions = {
   /**
-   * Set to `false` to disable telemetry for this breaker, including
+   * Set to `false` to disable telemetry for this instance, including
    * globally registered integrations. Defaults to `true`.
    */
   isEnabled?: boolean;
 
   /**
-   * Integrations for this breaker. When provided, they replace the
-   * globally registered integrations for this breaker.
+   * Integrations for this instance. When provided, they replace the
+   * globally registered integrations for it.
    */
   integrations?: Telemetry | Telemetry[];
 };
@@ -91,9 +208,9 @@ type TelemetryGlobal = typeof globalThis & {
 };
 
 /**
- * Register telemetry integrations for every circuit breaker in the process.
- * Breakers resolve integrations per event, so breakers created before the
- * registration use them too.
+ * Register telemetry integrations for every circuit breaker and semaphore
+ * in the process. Integrations are resolved per event, so instances created
+ * before the registration use them too.
  */
 export function registerZenvarkTelemetry(...integrations: Telemetry[]): void {
   const global = globalThis as TelemetryGlobal;
@@ -109,19 +226,17 @@ export function clearRegisteredTelemetry(): void {
 }
 
 /**
- * Dispatches one breaker's events to its resolved integrations
+ * Dispatches one breaker's or semaphore's events to its resolved
+ * integrations
  */
-export class BreakerTelemetry {
-  private readonly breakerId: string;
+export class TelemetryDispatcher {
   private readonly options?: TelemetryOptions;
   private readonly onError: (message: string, cause: unknown) => void;
 
   constructor(params: {
-    breakerId: string;
     options?: TelemetryOptions;
     onError: (message: string, cause: unknown) => void;
   }) {
-    this.breakerId = params.breakerId;
     this.options = params.options;
     this.onError = params.onError;
   }
@@ -137,31 +252,46 @@ export class BreakerTelemetry {
     return (globalThis as TelemetryGlobal)[REGISTRY_KEY] ?? [];
   }
 
-  executeCall<T>(work: () => Promise<T>): Promise<T> {
+  executeCall<T>(
+    params: Omit<ExecuteCallParams<T>, 'execute'>,
+    work: () => Promise<T>,
+  ): Promise<T> {
     return this.runGuarded(
       'executeCall',
       (integration, execute) =>
-        integration.executeCall?.({ breakerId: this.breakerId, execute }),
+        integration.executeCall?.({ ...params, execute }),
       work,
     );
   }
 
   executeHealthCheck(
-    type: HealthCheckType,
-    signal: AbortSignal,
+    params: Omit<ExecuteHealthCheckParams, 'execute'>,
     work: () => Promise<void>,
   ): Promise<void> {
     return this.runGuarded(
       'executeHealthCheck',
       (integration, execute) =>
-        integration.executeHealthCheck?.({
-          breakerId: this.breakerId,
-          type,
-          signal,
-          execute,
-        }),
+        integration.executeHealthCheck?.({ ...params, execute }),
       work,
     );
+  }
+
+  /**
+   * Send an event to every integration implementing its hook. A failing
+   * hook must not affect the caller or other integrations, so its error is
+   * reported through `onError`.
+   */
+  emit<K extends EventHook>(hook: K, event: EventOf<K>): void {
+    for (const integration of this.getIntegrations()) {
+      try {
+        (integration[hook] as ((event: EventOf<K>) => void) | undefined)?.call(
+          integration,
+          event,
+        );
+      } catch (err) {
+        this.onError(`Telemetry integration ${hook} threw`, err);
+      }
+    }
   }
 
   /**
@@ -218,30 +348,5 @@ export class BreakerTelemetry {
     });
 
     return result;
-  }
-
-  blockedRequest(): void {
-    for (const integration of this.getIntegrations()) {
-      this.notify('onBlockedRequest', () =>
-        integration.onBlockedRequest?.({ breakerId: this.breakerId }),
-      );
-    }
-  }
-
-  stateChange(state: CircuitState): void {
-    for (const integration of this.getIntegrations()) {
-      this.notify('onStateChange', () =>
-        integration.onStateChange?.({ breakerId: this.breakerId, state }),
-      );
-    }
-  }
-
-  // A failing event hook must not affect the breaker or other integrations
-  private notify(hook: string, fn: () => void): void {
-    try {
-      fn();
-    } catch (err) {
-      this.onError(`Telemetry integration ${hook} threw`, err);
-    }
   }
 }

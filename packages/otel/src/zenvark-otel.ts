@@ -7,13 +7,14 @@ import {
   trace,
 } from '@opentelemetry/api';
 import type {
+  AcquireEvent,
   BlockedRequestEvent,
   ExecuteCallParams,
   ExecuteHealthCheckParams,
   StateChangeEvent,
   Telemetry,
 } from 'zenvark';
-import { CallResult } from 'zenvark';
+import { AcquireResult, CallResult } from 'zenvark';
 
 export type ZenvarkOtelOptions = {
   /**
@@ -137,5 +138,36 @@ export class ZenvarkOtel implements Telemetry {
         },
       })
       .end();
+  }
+
+  /**
+   * Record a `zenvark.semaphore.acquire` span under the caller's active
+   * span. The event fires once the wait is over, so the span is started
+   * back at the moment the wait began.
+   */
+  onAcquire({
+    semaphoreId,
+    class: className,
+    result,
+    waitMs,
+  }: AcquireEvent): void {
+    const endTime = Date.now();
+    const span = this.getTracer().startSpan('zenvark.semaphore.acquire', {
+      startTime: endTime - waitMs,
+      attributes: {
+        'zenvark.semaphore.id': semaphoreId,
+        'zenvark.semaphore.acquire.result': result,
+        ...(className === undefined
+          ? {}
+          : { 'zenvark.semaphore.class': className }),
+      },
+    });
+    if (result === AcquireResult.TIMEOUT) {
+      span.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: 'Timed out waiting for a lease',
+      });
+    }
+    span.end(endTime);
   }
 }

@@ -34,6 +34,10 @@ export type PrometheusSemaphoreMetricsOptions = {
   customLabels?: Record<string, string>;
 };
 
+/**
+ * @deprecated Use `ZenvarkProm` with `registerZenvarkTelemetry` instead.
+ * It reports the same metrics.
+ */
 export class PrometheusSemaphoreMetrics implements SemaphoreMetricsRecorder {
   private readonly customLabels: Record<string, string>;
 

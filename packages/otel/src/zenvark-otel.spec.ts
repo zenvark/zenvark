@@ -19,7 +19,7 @@ import {
   expect,
   it,
 } from 'vitest';
-import { CircuitState, HealthCheckType } from 'zenvark';
+import { AcquireResult, CircuitState, HealthCheckType } from 'zenvark';
 import { ZenvarkOtel } from './zenvark-otel.ts';
 
 describe('ZenvarkOtel', () => {
@@ -208,6 +208,48 @@ describe('ZenvarkOtel', () => {
     expect(change?.attributes).toEqual({
       'zenvark.breaker.id': breakerId,
       'zenvark.circuit.state': 'open',
+    });
+  });
+
+  describe('onAcquire', () => {
+    const telemetry = new ZenvarkOtel({ tracer: testTracer });
+    const durationMs = ([s, ns]: [number, number]) => s * 1000 + ns / 1e6;
+
+    it('records the wait as a span under the caller', () => {
+      testTracer.startActiveSpan('request', (request) => {
+        telemetry.onAcquire({
+          semaphoreId: 'testSemaphore',
+          class: 'bulk',
+          result: AcquireResult.ACQUIRED,
+          waitMs: 250,
+        });
+        request.end();
+      });
+
+      const [request] = spans('request');
+      const [acquire] = spans('zenvark.semaphore.acquire');
+      expect(acquire?.parentSpanContext?.spanId).toBe(
+        request?.spanContext().spanId,
+      );
+      expect(acquire?.attributes).toEqual({
+        'zenvark.semaphore.id': 'testSemaphore',
+        'zenvark.semaphore.class': 'bulk',
+        'zenvark.semaphore.acquire.result': 'acquired',
+      });
+      expect(acquire?.status.code).toBe(SpanStatusCode.UNSET);
+      expect(durationMs(acquire?.duration ?? [0, 0])).toBeCloseTo(250, -1);
+    });
+
+    it('marks a timed out acquire as an error', () => {
+      telemetry.onAcquire({
+        semaphoreId: 'testSemaphore',
+        result: AcquireResult.TIMEOUT,
+        waitMs: 100,
+      });
+
+      const [acquire] = spans('zenvark.semaphore.acquire');
+      expect(acquire?.attributes).not.toHaveProperty('zenvark.semaphore.class');
+      expect(acquire?.status.code).toBe(SpanStatusCode.ERROR);
     });
   });
 

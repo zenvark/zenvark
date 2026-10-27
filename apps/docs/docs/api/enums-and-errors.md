@@ -214,15 +214,15 @@ Represents the outcome of a protected call execution.
 #### Usage
 
 ```typescript
-import { BreakerMetricsRecorder, CallResult, RecordCallParams } from "zenvark";
+import { CallResult, registerZenvarkTelemetry } from "zenvark";
 
-class CustomMetrics implements BreakerMetricsRecorder {
-  recordCall(params: RecordCallParams): void {
-    if (params.result === CallResult.SUCCESS) {
-      console.log(`Success in ${params.durationMs}ms`);
-    } else if (params.result === CallResult.FAILURE) {
-      console.log(`Failure in ${params.durationMs}ms`);
+registerZenvarkTelemetry({
+  onCallEnd({ result, durationMs }) {
+    if (result === CallResult.SUCCESS) {
+      console.log(`Success in ${durationMs}ms`);
+    } else if (result === CallResult.FAILURE) {
+      console.log(`Failure in ${durationMs}ms`);
     }
-  }
-}
+  },
+});
 ```

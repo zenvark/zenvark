@@ -53,12 +53,21 @@ export type {
   SemaphoreMetricsRecorder,
 } from './semaphore-metrics-recorder.ts';
 export {
+  type AcquireEvent,
   type BlockedRequestEvent,
+  type BreakerInitEvent,
+  type CallEndEvent,
   type ExecuteCallParams,
   type ExecuteHealthCheckParams,
+  type HealthCheckEndEvent,
+  type LimitChangeEvent,
+  type ReleaseEvent,
+  type RoleChangeEvent,
   registerZenvarkTelemetry,
+  type SemaphoreInitEvent,
   type StateChangeEvent,
   type Telemetry,
   type TelemetryOptions,
+  type ThrottleEvent,
 } from './telemetry.ts';
 export type { SemaphoreClassConfig, SemaphoreState } from './types.ts';
