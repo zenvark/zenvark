@@ -41,16 +41,19 @@ export type StateChangeEvent = {
  */
 export type Telemetry = {
   /**
-   * Wrap a protected call. Must invoke `execute` exactly once and settle
-   * with its result or rethrow its error. Running `execute` inside the
-   * integration's context (such as an active span) lets work done by the
-   * call nest under it.
+   * Wrap a protected call. Call `execute` synchronously (before any
+   * `await`) inside the integration's context, such as an active span, so
+   * work done by the call nests under it.
+   *
+   * The breaker settles with the call's own outcome as soon as it is
+   * known, without waiting for the returned promise. The call runs exactly
+   * once even if `execute` is not called or called twice, and a rejection
+   * other than the call's own error is reported through `onError`.
    */
   executeCall?<T>(params: ExecuteCallParams<T>): Promise<T>;
 
   /**
-   * Wrap a health check attempt. Must invoke `execute` exactly once and
-   * settle with its result or rethrow its error.
+   * Wrap a health check attempt, with the same guarantees as `executeCall`
    */
   executeHealthCheck?(params: ExecuteHealthCheckParams): Promise<void>;
 
@@ -134,37 +137,87 @@ export class BreakerTelemetry {
     return (globalThis as TelemetryGlobal)[REGISTRY_KEY] ?? [];
   }
 
-  executeCall<T>(execute: () => Promise<T>): Promise<T> {
-    let next = execute;
-    // The first integration is the outermost wrapper
-    for (const integration of this.getIntegrations().toReversed()) {
-      const inner = next;
-      next = () =>
-        integration.executeCall?.({
-          breakerId: this.breakerId,
-          execute: inner,
-        }) ?? inner();
-    }
-    return next();
+  executeCall<T>(work: () => Promise<T>): Promise<T> {
+    return this.runGuarded(
+      'executeCall',
+      (integration, execute) =>
+        integration.executeCall?.({ breakerId: this.breakerId, execute }),
+      work,
+    );
   }
 
   executeHealthCheck(
     type: HealthCheckType,
     signal: AbortSignal,
-    execute: () => Promise<void>,
+    work: () => Promise<void>,
   ): Promise<void> {
-    let next = execute;
-    for (const integration of this.getIntegrations().toReversed()) {
-      const inner = next;
-      next = () =>
+    return this.runGuarded(
+      'executeHealthCheck',
+      (integration, execute) =>
         integration.executeHealthCheck?.({
           breakerId: this.breakerId,
           type,
           signal,
-          execute: inner,
-        }) ?? inner();
+          execute,
+        }),
+      work,
+    );
+  }
+
+  /**
+   * Runs `work` through the integrations' wrappers, so it starts inside
+   * their context, but settles with the outcome of `work` itself: an
+   * integration cannot change the result, delay it, or run `work` twice.
+   * Its own failures are reported through `onError`.
+   */
+  private runGuarded<T>(
+    method: string,
+    wrap: (
+      integration: Telemetry,
+      execute: () => Promise<T>,
+    ) => Promise<T> | undefined,
+    work: () => Promise<T>,
+  ): Promise<T> {
+    let started: Promise<T> | undefined;
+    const run = (): Promise<T> => {
+      if (!started) {
+        try {
+          started = work();
+        } catch (err) {
+          started = Promise.reject(err);
+        }
+      }
+      return started;
+    };
+
+    // The first integration is the outermost wrapper
+    let next = run;
+    for (const integration of this.getIntegrations().toReversed()) {
+      const inner = next;
+      next = () => wrap(integration, inner) ?? inner();
     }
-    return next();
+
+    let chain: Promise<T>;
+    try {
+      chain = next();
+    } catch (err) {
+      chain = Promise.reject(err);
+    }
+    // Integrations start the work synchronously; if none did, start it now
+    const result = run();
+
+    void Promise.allSettled([result, chain]).then(([own, wrapped]) => {
+      // Rethrowing the work's own error is expected; anything else is a
+      // failure of an integration
+      if (
+        wrapped.status === 'rejected' &&
+        (own.status === 'fulfilled' || wrapped.reason !== own.reason)
+      ) {
+        this.onError(`Telemetry integration ${method} failed`, wrapped.reason);
+      }
+    });
+
+    return result;
   }
 
   blockedRequest(): void {

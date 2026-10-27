@@ -80,7 +80,7 @@ describe('CircuitBreaker telemetry', () => {
     const result = await circuit.execute(async () => activeScope());
 
     expect(result).toBe('call:test');
-    expect(events).toEqual(['call:success']);
+    await vi.waitFor(() => expect(events).toEqual(['call:success']));
 
     await circuit.stop();
   });
@@ -96,7 +96,7 @@ describe('CircuitBreaker telemetry', () => {
     await expect(circuit.execute(() => Promise.reject(error))).rejects.toBe(
       error,
     );
-    expect(events[0]).toBe('call:failure');
+    await vi.waitFor(() => expect(events[0]).toBe('call:failure'));
 
     await circuit.stop();
   });

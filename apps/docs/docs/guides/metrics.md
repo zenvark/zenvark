@@ -234,7 +234,7 @@ const logging: Telemetry = {
 registerZenvarkTelemetry(logging);
 ```
 
-`executeCall` and `executeHealthCheck` must call `execute` exactly once and settle with its result or rethrow its error.
+`executeCall` and `executeHealthCheck` should call `execute` synchronously (before any `await`), so the work starts inside the integration's context. The breaker settles with the work's own result as soon as it is known, without waiting for the integration: the work runs exactly once even if `execute` is not called or called twice, and a rejection other than the work's own error is reported through `onError`.
 
 ## Custom Metrics Implementation
 

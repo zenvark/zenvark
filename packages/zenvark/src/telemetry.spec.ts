@@ -31,6 +31,10 @@ const createIntegration = (name: string, log: string[]): Telemetry => ({
   },
 });
 
+// The breaker settles with the work's outcome without waiting for the
+// wrappers to finish; a macrotask lets them run to completion
+const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
 describe('BreakerTelemetry', () => {
   const createTelemetry = (
     options?: TelemetryOptions,
@@ -56,6 +60,7 @@ describe('BreakerTelemetry', () => {
       log.push('call');
       return 'ok';
     });
+    await settle();
 
     expect(result).toBe('ok');
     expect(log).toEqual(['global:enter', 'call', 'global:exit']);
@@ -70,6 +75,7 @@ describe('BreakerTelemetry', () => {
     await telemetry.executeCall(async () => {
       log.push('call');
     });
+    await settle();
 
     expect(log).toEqual(['a:enter', 'b:enter', 'call', 'b:exit', 'a:exit']);
   });
@@ -82,6 +88,7 @@ describe('BreakerTelemetry', () => {
     await telemetry.executeCall(async () => {
       log.push('call');
     });
+    await settle();
     await telemetry.executeHealthCheck(
       HealthCheckType.IDLE,
       new AbortController().signal,
@@ -106,6 +113,7 @@ describe('BreakerTelemetry', () => {
     });
 
     await telemetry.executeCall(async () => {});
+    await settle();
     telemetry.stateChange(CircuitState.OPEN);
 
     expect(log).toEqual(['local:enter', 'local:exit', 'local:state:open']);
@@ -152,5 +160,161 @@ describe('BreakerTelemetry', () => {
       'Telemetry integration onBlockedRequest threw',
       hookError,
     );
+  });
+
+  describe('guards the work against misbehaving integrations', () => {
+    const work = () => vi.fn(async () => 'ok');
+
+    it('runs the work when an integration never calls execute', async () => {
+      const fn = work();
+      const telemetry = createTelemetry({
+        integrations: { executeCall: async <T>() => 'not called' as T },
+      });
+
+      await expect(telemetry.executeCall(fn)).resolves.toBe('ok');
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('runs the work once when an integration calls execute twice', async () => {
+      const fn = work();
+      const telemetry = createTelemetry({
+        integrations: {
+          executeCall: async ({ execute }) => {
+            await execute();
+            return execute();
+          },
+        },
+      });
+
+      await telemetry.executeCall(fn);
+      await settle();
+
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    it('settles with the work result, not the integration result', async () => {
+      const telemetry = createTelemetry({
+        integrations: {
+          executeCall: async <T>({
+            execute,
+          }: {
+            execute: () => Promise<T>;
+          }) => {
+            await execute();
+            return 'replaced' as T;
+          },
+        },
+      });
+
+      await expect(telemetry.executeCall(work())).resolves.toBe('ok');
+    });
+
+    it('rejects with the work error even if an integration swallows it', async () => {
+      const error = new Error('boom');
+      const telemetry = createTelemetry({
+        integrations: {
+          executeCall: async ({ execute }) =>
+            execute().catch(() => undefined as never),
+        },
+      });
+
+      await expect(
+        telemetry.executeCall(() => Promise.reject(error)),
+      ).rejects.toBe(error);
+    });
+
+    it('does not wait for an integration that never settles', async () => {
+      const telemetry = createTelemetry({
+        integrations: {
+          executeCall: async ({ execute }) => {
+            await execute();
+            return new Promise<never>(() => {});
+          },
+        },
+      });
+
+      await expect(telemetry.executeCall(work())).resolves.toBe('ok');
+    });
+
+    it('runs the work and reports an integration that throws before execute', async () => {
+      const fn = work();
+      const onError = vi.fn();
+      const integrationError = new Error('integration failed');
+      const telemetry = createTelemetry(
+        {
+          integrations: {
+            executeCall: () => {
+              throw integrationError;
+            },
+          },
+        },
+        onError,
+      );
+
+      await expect(telemetry.executeCall(fn)).resolves.toBe('ok');
+      await settle();
+
+      expect(fn).toHaveBeenCalledTimes(1);
+      expect(onError).toHaveBeenCalledWith(
+        'Telemetry integration executeCall failed',
+        integrationError,
+      );
+    });
+
+    it('reports an integration that fails after the work succeeded', async () => {
+      const onError = vi.fn();
+      const integrationError = new Error('span export failed');
+      const telemetry = createTelemetry(
+        {
+          integrations: {
+            executeHealthCheck: async ({ execute }) => {
+              await execute();
+              throw integrationError;
+            },
+          },
+        },
+        onError,
+      );
+
+      await expect(
+        telemetry.executeHealthCheck(
+          HealthCheckType.IDLE,
+          new AbortController().signal,
+          async () => {},
+        ),
+      ).resolves.toBeUndefined();
+      await settle();
+
+      expect(onError).toHaveBeenCalledWith(
+        'Telemetry integration executeHealthCheck failed',
+        integrationError,
+      );
+    });
+
+    it('does not report an integration that rethrows the work error', async () => {
+      const onError = vi.fn();
+      const error = new Error('boom');
+      registerZenvarkTelemetry(createIntegration('a', []));
+      const telemetry = createTelemetry(undefined, onError);
+
+      await expect(
+        telemetry.executeCall(() => Promise.reject(error)),
+      ).rejects.toBe(error);
+      await settle();
+
+      expect(onError).not.toHaveBeenCalled();
+    });
+
+    it('runs work that throws synchronously once and rejects with its error', async () => {
+      const error = new Error('sync');
+      const fn = vi.fn((): Promise<never> => {
+        throw error;
+      });
+      registerZenvarkTelemetry(createIntegration('a', []));
+      const telemetry = createTelemetry();
+
+      await expect(telemetry.executeCall(fn)).rejects.toBe(error);
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
   });
 });
