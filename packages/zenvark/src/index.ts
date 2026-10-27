@@ -17,11 +17,6 @@ export type {
   RecordHealthCheckParams,
   RecordStateChangeParams,
 } from './breaker-metrics-recorder.ts';
-export type {
-  BreakerTracer,
-  TraceCallParams,
-  TraceHealthCheckParams,
-} from './breaker-tracer.ts';
 export type { BreakerStrategy } from './breakers/breaker-strategy.ts';
 export { ConsecutiveBreaker } from './breakers/consecutive-breaker.ts';
 export { CountBreaker } from './breakers/count-breaker.ts';
@@ -57,4 +52,13 @@ export type {
   RecordThrottleParams,
   SemaphoreMetricsRecorder,
 } from './semaphore-metrics-recorder.ts';
+export {
+  type BlockedRequestEvent,
+  type ExecuteCallParams,
+  type ExecuteHealthCheckParams,
+  registerTelemetry,
+  type StateChangeEvent,
+  type Telemetry,
+  type TelemetryOptions,
+} from './telemetry.ts';
 export type { SemaphoreClassConfig, SemaphoreState } from './types.ts';

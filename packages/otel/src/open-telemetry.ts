@@ -7,15 +7,15 @@ import {
   trace,
 } from '@opentelemetry/api';
 import type {
-  BreakerTracer,
-  RecordBlockedRequestParams,
-  RecordStateChangeParams,
-  TraceCallParams,
-  TraceHealthCheckParams,
+  BlockedRequestEvent,
+  ExecuteCallParams,
+  ExecuteHealthCheckParams,
+  StateChangeEvent,
+  Telemetry,
 } from 'zenvark';
 import { CallResult } from 'zenvark';
 
-export type OpenTelemetryBreakerTracerOptions = {
+export type OpenTelemetryOptions = {
   /**
    * Tracer to create spans with. Defaults to the `zenvark` tracer of the
    * globally registered tracer provider.
@@ -25,10 +25,10 @@ export type OpenTelemetryBreakerTracerOptions = {
 
 const TRACER_NAME = 'zenvark';
 
-export class OpenTelemetryBreakerTracer implements BreakerTracer {
+export class OpenTelemetry implements Telemetry {
   private readonly tracer?: Tracer;
 
-  constructor(options: OpenTelemetryBreakerTracerOptions = {}) {
+  constructor(options: OpenTelemetryOptions = {}) {
     this.tracer = options.tracer;
   }
 
@@ -43,7 +43,10 @@ export class OpenTelemetryBreakerTracer implements BreakerTracer {
    * Wrap a protected call in a `zenvark.call` span, active while the call
    * runs so spans it creates nest under it
    */
-  async traceCall<T>({ breakerId, execute }: TraceCallParams<T>): Promise<T> {
+  async executeCall<T>({
+    breakerId,
+    execute,
+  }: ExecuteCallParams<T>): Promise<T> {
     const span = this.getTracer().startSpan('zenvark.call', {
       kind: SpanKind.CLIENT,
       attributes: { 'zenvark.breaker.id': breakerId },
@@ -69,12 +72,12 @@ export class OpenTelemetryBreakerTracer implements BreakerTracer {
    * Wrap a health check attempt in a `zenvark.healthcheck` span. Checks run
    * in the background, so each one starts a new trace.
    */
-  async traceHealthCheck({
+  async executeHealthCheck({
     breakerId,
     type,
     signal,
     execute,
-  }: TraceHealthCheckParams): Promise<void> {
+  }: ExecuteHealthCheckParams): Promise<void> {
     const span = this.getTracer().startSpan('zenvark.healthcheck', {
       root: true,
       kind: SpanKind.CLIENT,
@@ -102,7 +105,7 @@ export class OpenTelemetryBreakerTracer implements BreakerTracer {
   /**
    * Record a `zenvark.blocked` span under the caller's active span
    */
-  recordBlockedRequest({ breakerId }: RecordBlockedRequestParams): void {
+  onBlockedRequest({ breakerId }: BlockedRequestEvent): void {
     this.getTracer()
       .startSpan('zenvark.blocked', {
         kind: SpanKind.CLIENT,
@@ -115,7 +118,7 @@ export class OpenTelemetryBreakerTracer implements BreakerTracer {
   /**
    * Record a `zenvark.state_change` span in a new trace
    */
-  recordStateChange({ breakerId, state }: RecordStateChangeParams): void {
+  onStateChange({ breakerId, state }: StateChangeEvent): void {
     this.getTracer()
       .startSpan('zenvark.state_change', {
         root: true,

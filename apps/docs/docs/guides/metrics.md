@@ -160,32 +160,46 @@ const metrics = new PrometheusBreakerMetrics({
 });
 ```
 
-## OpenTelemetry Tracing
+## Telemetry
 
-The `@zenvark/otel` package creates circuit breaker spans through `@opentelemetry/api`. The core `zenvark` package does not depend on OpenTelemetry.
+Telemetry integrations receive circuit breaker lifecycle events: they wrap each call and health check, and are notified of blocked requests and state changes. The core `zenvark` package does not depend on any telemetry library.
 
-### Installation
+Register integrations once at startup. Every circuit breaker in the process uses them, including breakers created before the registration:
+
+```typescript
+import { registerTelemetry } from "zenvark";
+import { OpenTelemetry } from "@zenvark/otel";
+
+registerTelemetry(new OpenTelemetry());
+```
+
+Override the integrations for a single breaker with the `telemetry` option:
+
+```typescript
+// Replace the global integrations for this breaker
+new CircuitBreaker({
+  // ...
+  telemetry: { integrations: [new OpenTelemetry({ tracer })] },
+});
+
+// Disable telemetry for this breaker
+new CircuitBreaker({
+  // ...
+  telemetry: { isEnabled: false },
+});
+```
+
+When several integrations are registered, the first one's wrapper is the outermost. Errors thrown by `onBlockedRequest` and `onStateChange` are reported through the breaker's `onError` callback and do not affect the breaker.
+
+### OpenTelemetry
+
+The `@zenvark/otel` package creates spans through `@opentelemetry/api`.
 
 ```bash
 npm install @zenvark/otel @opentelemetry/api
 ```
 
-### Configuration
-
-```typescript
-import { CircuitBreaker } from "zenvark";
-import { OpenTelemetryBreakerTracer } from "@zenvark/otel";
-
-const circuitBreaker = new CircuitBreaker({
-  id: "my-service-api",
-  // ... other config
-  tracing: new OpenTelemetryBreakerTracer(),
-});
-```
-
-Without a registered OpenTelemetry SDK the spans are no-ops. Once the application registers one (for example with `NodeSDK`), they are exported with no extra configuration. To use a specific tracer instead of the global one, pass it as `new OpenTelemetryBreakerTracer({ tracer })`.
-
-### Spans
+Without a registered OpenTelemetry SDK the spans are no-ops. Once the application registers one (for example with `NodeSDK`), they are exported with no extra configuration. To use a specific tracer instead of the global one, pass it as `new OpenTelemetry({ tracer })`.
 
 | Span                   | Created for                           | Attributes                                                                     | Parent                    |
 | ---------------------- | ------------------------------------- | ------------------------------------------------------------------------------ | ------------------------- |
@@ -196,28 +210,31 @@ Without a registered OpenTelemetry SDK the spans are no-ops. Once the applicatio
 
 `zenvark.call` is the active span while your function runs, so spans it creates, such as outbound HTTP calls and their retries, nest under it. Failed calls, blocked calls and failed health checks have error status; thrown errors are recorded as exception events. Cancelled health checks have no result.
 
-### Custom Tracing Implementation
+### Custom Telemetry Integration
 
-To use another tracing system, implement the `BreakerTracer` interface:
+To integrate another telemetry system, implement the `Telemetry` interface. All methods are optional:
 
 ```typescript
-import type {
-  BreakerTracer,
-  TraceCallParams,
-  TraceHealthCheckParams,
-} from "zenvark";
+import { registerTelemetry, type Telemetry } from "zenvark";
 
-class CustomTracer implements BreakerTracer {
-  async traceCall<T>({ breakerId, execute }: TraceCallParams<T>): Promise<T> {
-    // Start a span, run `execute` inside it, end the span
-    return await execute();
-  }
+const logging: Telemetry = {
+  async executeCall({ breakerId, execute }) {
+    const startedAt = performance.now();
+    try {
+      return await execute();
+    } finally {
+      console.log(breakerId, "call took", performance.now() - startedAt);
+    }
+  },
+  onStateChange({ breakerId, state }) {
+    console.log(breakerId, "is now", state);
+  },
+};
 
-  async traceHealthCheck({ execute }: TraceHealthCheckParams): Promise<void> {
-    await execute();
-  }
-}
+registerTelemetry(logging);
 ```
+
+`executeCall` and `executeHealthCheck` must call `execute` exactly once and settle with its result or rethrow its error.
 
 ## Custom Metrics Implementation
 

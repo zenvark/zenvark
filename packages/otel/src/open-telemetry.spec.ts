@@ -20,9 +20,9 @@ import {
   it,
 } from 'vitest';
 import { CircuitState, HealthCheckType } from 'zenvark';
-import { OpenTelemetryBreakerTracer } from './open-telemetry-breaker-tracer.ts';
+import { OpenTelemetry } from './open-telemetry.ts';
 
-describe('OpenTelemetryBreakerTracer', () => {
+describe('OpenTelemetry', () => {
   const breakerId = 'testBreaker';
   const exporter = new InMemorySpanExporter();
   const provider = new TracerProvider({
@@ -47,14 +47,14 @@ describe('OpenTelemetryBreakerTracer', () => {
     context.disable();
   });
 
-  describe('traceCall', () => {
-    const tracer = new OpenTelemetryBreakerTracer({ tracer: testTracer });
+  describe('executeCall', () => {
+    const telemetry = new OpenTelemetry({ tracer: testTracer });
 
     it('nests the call span between the caller and spans the call creates', async () => {
       const result = await testTracer.startActiveSpan(
         'request',
         async (request) => {
-          const value = await tracer.traceCall({
+          const value = await telemetry.executeCall({
             breakerId,
             execute: async () => {
               testTracer.startSpan('http').end();
@@ -86,7 +86,10 @@ describe('OpenTelemetryBreakerTracer', () => {
       const error = new Error('boom');
 
       await expect(
-        tracer.traceCall({ breakerId, execute: () => Promise.reject(error) }),
+        telemetry.executeCall({
+          breakerId,
+          execute: () => Promise.reject(error),
+        }),
       ).rejects.toBe(error);
 
       const [call] = spans('zenvark.call');
@@ -100,7 +103,10 @@ describe('OpenTelemetryBreakerTracer', () => {
 
     it('marks a call rejected with a non-error value as an error', async () => {
       await expect(
-        tracer.traceCall({ breakerId, execute: () => Promise.reject('nope') }),
+        telemetry.executeCall({
+          breakerId,
+          execute: () => Promise.reject('nope'),
+        }),
       ).rejects.toBe('nope');
 
       const [call] = spans('zenvark.call');
@@ -109,12 +115,12 @@ describe('OpenTelemetryBreakerTracer', () => {
     });
   });
 
-  describe('traceHealthCheck', () => {
-    const tracer = new OpenTelemetryBreakerTracer({ tracer: testTracer });
+  describe('executeHealthCheck', () => {
+    const telemetry = new OpenTelemetry({ tracer: testTracer });
 
     it('starts a new trace even when a span is active', async () => {
       await testTracer.startActiveSpan('unrelated', async (unrelated) => {
-        await tracer.traceHealthCheck({
+        await telemetry.executeHealthCheck({
           breakerId,
           type: HealthCheckType.RECOVERY,
           signal: new AbortController().signal,
@@ -140,7 +146,7 @@ describe('OpenTelemetryBreakerTracer', () => {
       const error = new Error('down');
 
       await expect(
-        tracer.traceHealthCheck({
+        telemetry.executeHealthCheck({
           breakerId,
           type: HealthCheckType.IDLE,
           signal: new AbortController().signal,
@@ -158,7 +164,7 @@ describe('OpenTelemetryBreakerTracer', () => {
       controller.abort();
 
       await expect(
-        tracer.traceHealthCheck({
+        telemetry.executeHealthCheck({
           breakerId,
           type: HealthCheckType.IDLE,
           signal: controller.signal,
@@ -173,10 +179,10 @@ describe('OpenTelemetryBreakerTracer', () => {
   });
 
   it('records a blocked request as an error span under the caller', () => {
-    const tracer = new OpenTelemetryBreakerTracer({ tracer: testTracer });
+    const telemetry = new OpenTelemetry({ tracer: testTracer });
 
     testTracer.startActiveSpan('request', (request) => {
-      tracer.recordBlockedRequest({ breakerId });
+      telemetry.onBlockedRequest({ breakerId });
       request.end();
     });
 
@@ -190,10 +196,10 @@ describe('OpenTelemetryBreakerTracer', () => {
   });
 
   it('records a state change in a new trace', () => {
-    const tracer = new OpenTelemetryBreakerTracer({ tracer: testTracer });
+    const telemetry = new OpenTelemetry({ tracer: testTracer });
 
     testTracer.startActiveSpan('unrelated', (unrelated) => {
-      tracer.recordStateChange({ breakerId, state: CircuitState.OPEN });
+      telemetry.onStateChange({ breakerId, state: CircuitState.OPEN });
       unrelated.end();
     });
 
@@ -230,18 +236,18 @@ describe('OpenTelemetryBreakerTracer', () => {
     };
 
     it('exports through a provider registered after construction', () => {
-      const tracer = new OpenTelemetryBreakerTracer();
+      const telemetry = new OpenTelemetry();
       trace.setGlobalTracerProvider(provider);
       restore = () => trace.disable();
 
-      tracer.recordBlockedRequest({ breakerId });
+      telemetry.onBlockedRequest({ breakerId });
 
       expect(spans('zenvark.blocked')).toHaveLength(1);
     });
 
     it('exports through a provider registered by another copy of the API', async () => {
-      const tracer = new OpenTelemetryBreakerTracer();
-      tracer.recordBlockedRequest({ breakerId });
+      const telemetry = new OpenTelemetry();
+      telemetry.onBlockedRequest({ breakerId });
 
       const { api: otherApi, cleanup } = await importApiCopy();
       expect(otherApi.trace).not.toBe(trace);
@@ -251,7 +257,7 @@ describe('OpenTelemetryBreakerTracer', () => {
         await cleanup();
       };
 
-      tracer.recordBlockedRequest({ breakerId });
+      telemetry.onBlockedRequest({ breakerId });
 
       expect(spans('zenvark.blocked')).toHaveLength(1);
     });

@@ -47,34 +47,48 @@ interface BreakerMetricsRecorder {
 
 See [Metrics & Observability](../guides/metrics.md#custom-metrics-implementation) for implementation examples.
 
-### BreakerTracer
+### Telemetry
 
-Interface for integrating a tracing system. `@zenvark/otel` implements it for OpenTelemetry.
+Interface for telemetry integrations, registered globally with `registerTelemetry()` or per breaker with the `telemetry` option. All methods are optional. `@zenvark/otel` implements it for OpenTelemetry.
 
 ```typescript
-interface BreakerTracer {
-  traceCall<T>(params: TraceCallParams<T>): Promise<T>;
-  traceHealthCheck(params: TraceHealthCheckParams): Promise<void>;
-  recordBlockedRequest?(params: RecordBlockedRequestParams): void;
-  recordStateChange?(params: RecordStateChangeParams): void;
+interface Telemetry {
+  executeCall?<T>(params: ExecuteCallParams<T>): Promise<T>;
+  executeHealthCheck?(params: ExecuteHealthCheckParams): Promise<void>;
+  onBlockedRequest?(event: BlockedRequestEvent): void;
+  onStateChange?(event: StateChangeEvent): void; // leader only
 }
 
-type TraceCallParams<T> = {
+type ExecuteCallParams<T> = {
   breakerId: string;
   execute: () => Promise<T>;
 };
 
-type TraceHealthCheckParams = {
+type ExecuteHealthCheckParams = {
   breakerId: string;
   type: HealthCheckType;
   signal: AbortSignal; // aborted when the check is cancelled
   execute: () => Promise<void>;
 };
+
+type BlockedRequestEvent = { breakerId: string };
+type StateChangeEvent = { breakerId: string; state: CircuitState };
 ```
 
-`traceCall` and `traceHealthCheck` must call `execute` exactly once and settle with its result or rethrow its error.
+`executeCall` and `executeHealthCheck` must call `execute` exactly once and settle with its result or rethrow its error.
 
-See [Metrics & Observability](../guides/metrics.md#custom-tracing-implementation) for an implementation example.
+### TelemetryOptions
+
+Per-breaker telemetry settings, passed as the `telemetry` option.
+
+```typescript
+type TelemetryOptions = {
+  isEnabled?: boolean; // false disables all integrations for this breaker
+  integrations?: Telemetry | Telemetry[]; // replaces the global integrations
+};
+```
+
+See [Telemetry](../guides/metrics.md#telemetry) for usage.
 
 ## Type Aliases
 

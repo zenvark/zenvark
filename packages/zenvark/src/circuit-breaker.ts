@@ -2,7 +2,6 @@ import type { Redis } from 'ioredis';
 import type { AdaptiveSemaphore, Lease } from './adaptive-semaphore.ts';
 import type { BackoffStrategy } from './backoffs/backoff-strategy.ts';
 import type { BreakerMetricsRecorder } from './breaker-metrics-recorder.ts';
-import type { BreakerTracer } from './breaker-tracer.ts';
 import type { BreakerStrategy } from './breakers/breaker-strategy.ts';
 import {
   CallResult,
@@ -15,6 +14,7 @@ import { CircuitOpenError } from './errors/circuit-open-error.ts';
 import { LeaderElector } from './leader-elector.ts';
 import { CallResultStore } from './stores/call-result-store.ts';
 import { CircuitStateStore } from './stores/circuit-state-store.ts';
+import { BreakerTelemetry, type TelemetryOptions } from './telemetry.ts';
 import type { CallResultEvent } from './types.ts';
 import { AbstractLifecycleManager } from './utils/abstract-lifecycle-manager.ts';
 import { HealthCheckManager } from './utils/health-check-manager.ts';
@@ -91,10 +91,11 @@ export type CircuitBreakerOptions = {
   onStateChange?: OnStateChangeCallback;
   metrics?: BreakerMetricsRecorder;
   /**
-   * Optional tracer wrapping calls and health checks. Use `@zenvark/otel`
-   * for OpenTelemetry spans.
+   * Telemetry settings for this breaker. Globally registered integrations
+   * (see `registerTelemetry`) are used unless `integrations` overrides them
+   * or `isEnabled` is `false`.
    */
-  tracing?: BreakerTracer;
+  telemetry?: TelemetryOptions;
 };
 
 export class CircuitBreaker extends AbstractLifecycleManager {
@@ -107,7 +108,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
   private readonly onRoleChange?: OnRoleChangeCallback;
   private readonly onStateChange?: OnStateChangeCallback;
   private readonly metrics?: BreakerMetricsRecorder;
-  private readonly tracing?: BreakerTracer;
+  private readonly telemetry: BreakerTelemetry;
   private readonly pendingLeaseAcquires = new Set<AbortController>();
 
   private readonly circuitStateStore: CircuitStateStore;
@@ -126,7 +127,11 @@ export class CircuitBreaker extends AbstractLifecycleManager {
     this.onRoleChange = options.onRoleChange;
     this.onStateChange = options.onStateChange;
     this.metrics = options.metrics;
-    this.tracing = options.tracing;
+    this.telemetry = new BreakerTelemetry({
+      breakerId: this.id,
+      options: options.telemetry,
+      onError: (message, cause) => this.handleError(message, cause),
+    });
 
     this.metrics?.initialize?.(this.id);
 
@@ -142,7 +147,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       onStateChange: (state) => {
         if (this.elector.isLeader) {
           this.metrics?.recordStateChange?.({ breakerId: this.id, state });
-          this.tracing?.recordStateChange?.({ breakerId: this.id, state });
+          this.telemetry.stateChange(state);
         }
         if (state === CircuitState.OPEN) {
           this.abortPendingLeaseAcquires();
@@ -198,15 +203,9 @@ export class CircuitBreaker extends AbstractLifecycleManager {
         const startedAt = performance.now();
 
         try {
-          const check = () => this.health.check(type, signal);
-          await (this.tracing
-            ? this.tracing.traceHealthCheck({
-                breakerId: this.id,
-                type,
-                signal,
-                execute: check,
-              })
-            : check());
+          await this.telemetry.executeHealthCheck(type, signal, () =>
+            this.health.check(type, signal),
+          );
 
           if (this.metrics) {
             const durationMs = performance.now() - startedAt;
@@ -444,16 +443,14 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 
   private recordBlockedRequest(): void {
     this.metrics?.recordBlockedRequest({ breakerId: this.id });
-    this.tracing?.recordBlockedRequest?.({ breakerId: this.id });
+    this.telemetry.blockedRequest();
   }
 
   private async runCall<T>(fn: () => Promise<T>): Promise<T> {
     const startedAt = performance.now();
 
     try {
-      const result = await (this.tracing
-        ? this.tracing.traceCall({ breakerId: this.id, execute: fn })
-        : fn());
+      const result = await this.telemetry.executeCall(fn);
 
       void this.recordCallResult(CallResult.SUCCESS, startedAt);
 

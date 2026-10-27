@@ -1,4 +1,1 @@
-export {
-  OpenTelemetryBreakerTracer,
-  type OpenTelemetryBreakerTracerOptions,
-} from './open-telemetry-breaker-tracer.ts';
+export { OpenTelemetry, type OpenTelemetryOptions } from './open-telemetry.ts';

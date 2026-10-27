@@ -10,37 +10,25 @@ npm install @zenvark/otel @opentelemetry/api
 
 ## Usage
 
+Register the integration once at startup, before or after creating breakers:
+
 ```typescript
-import { CircuitBreaker, ConsecutiveBreaker, ConstantBackoff } from "zenvark";
-import { OpenTelemetryBreakerTracer } from "@zenvark/otel";
-import { Redis } from "ioredis";
+import { registerTelemetry } from "zenvark";
+import { OpenTelemetry } from "@zenvark/otel";
 
-const redis = new Redis("redis://localhost:6379");
+registerTelemetry(new OpenTelemetry());
+```
 
-const circuitBreaker = new CircuitBreaker({
-  id: "my-service-api",
-  redis,
-  breaker: new ConsecutiveBreaker({ threshold: 5 }),
-  health: {
-    backoff: new ConstantBackoff({ delayMs: 5000 }),
-    async check(type, signal) {
-      const response = await fetch("https://api.example.com/health", {
-        signal,
-      });
-      if (!response.ok) throw new Error("Health check failed");
-    },
-  },
-  tracing: new OpenTelemetryBreakerTracer(),
+Every circuit breaker in the process now emits spans. To override this for one breaker, use its `telemetry` option:
+
+```typescript
+new CircuitBreaker({
+  // ...
+  telemetry: { integrations: [new OpenTelemetry({ tracer })] }, // or { isEnabled: false }
 });
-
-await circuitBreaker.start();
 ```
 
-Spans are no-ops until the application registers an OpenTelemetry SDK (for example with `NodeSDK`). By default spans are created with the `zenvark` tracer of the global tracer provider; pass `{ tracer }` to use a specific one:
-
-```typescript
-new OpenTelemetryBreakerTracer({ tracer: provider.getTracer("my-app") });
-```
+Spans are no-ops until the application registers an OpenTelemetry SDK (for example with `NodeSDK`). By default spans are created with the `zenvark` tracer of the global tracer provider; pass `{ tracer }` to use a specific one.
 
 ## Spans
 
@@ -55,7 +43,7 @@ new OpenTelemetryBreakerTracer({ tracer: provider.getTracer("my-app") });
 
 ## Documentation
 
-**Full documentation:** [https://zenvark.github.io/zenvark/docs/guides/metrics#opentelemetry-tracing](https://zenvark.github.io/zenvark/docs/guides/metrics#opentelemetry-tracing)
+**Full documentation:** [https://zenvark.github.io/zenvark/docs/guides/metrics#opentelemetry](https://zenvark.github.io/zenvark/docs/guides/metrics#opentelemetry)
 
 ## License
 

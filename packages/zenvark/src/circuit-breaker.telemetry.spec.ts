@@ -1,21 +1,25 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { redis } from '../test/setup-redis.ts';
 import { ConstantBackoff } from './backoffs/constant-backoff.ts';
-import type { BreakerTracer } from './breaker-tracer.ts';
 import { ConsecutiveBreaker } from './breakers/consecutive-breaker.ts';
 import { CircuitBreaker } from './circuit-breaker.ts';
 import { CircuitState, HealthCheckType } from './constants.ts';
 import { CircuitOpenError } from './errors/circuit-open-error.ts';
+import {
+  clearRegisteredTelemetry,
+  registerTelemetry,
+  type Telemetry,
+} from './telemetry.ts';
 
-// Records events the way a tracing library would see them, and runs every
+// Records events the way a telemetry library would see them, and runs every
 // wrapped function inside a scope so tests can tell what ran inside it
-const createTracer = () => {
+const createIntegration = () => {
   const scope = new AsyncLocalStorage<string>();
   const events: string[] = [];
 
-  const tracing: BreakerTracer = {
-    traceCall: ({ breakerId, execute }) =>
+  const integration: Telemetry = {
+    executeCall: ({ breakerId, execute }) =>
       scope.run(`call:${breakerId}`, async () => {
         try {
           const result = await execute();
@@ -26,7 +30,7 @@ const createTracer = () => {
           throw err;
         }
       }),
-    traceHealthCheck: ({ type, signal, execute }) =>
+    executeHealthCheck: ({ type, signal, execute }) =>
       scope.run(`healthcheck:${type}`, async () => {
         try {
           await execute();
@@ -38,20 +42,19 @@ const createTracer = () => {
           throw err;
         }
       }),
-    recordBlockedRequest: ({ breakerId }) => {
+    onBlockedRequest: ({ breakerId }) => {
       events.push(`blocked:${breakerId}`);
     },
-    recordStateChange: ({ state }) => {
+    onStateChange: ({ state }) => {
       events.push(`state:${state}`);
     },
   };
 
-  return { tracing, events, activeScope: () => scope.getStore() };
+  return { integration, events, activeScope: () => scope.getStore() };
 };
 
-describe('CircuitBreaker tracing', () => {
+describe('CircuitBreaker telemetry', () => {
   const createCircuit = async (
-    tracing: BreakerTracer,
     check: (type: HealthCheckType) => Promise<void> = () => Promise.resolve(),
   ) => {
     const circuit = new CircuitBreaker({
@@ -60,15 +63,19 @@ describe('CircuitBreaker tracing', () => {
       breaker: new ConsecutiveBreaker({ threshold: 1 }),
       health: { backoff: new ConstantBackoff({ delayMs: 20 }), check },
       onError: vi.fn(),
-      tracing,
     });
     await circuit.start();
     return circuit;
   };
 
-  it('runs the protected call inside the tracer and returns its result', async () => {
-    const { tracing, events, activeScope } = createTracer();
-    const circuit = await createCircuit(tracing);
+  afterEach(() => {
+    clearRegisteredTelemetry();
+  });
+
+  it('runs the protected call inside the integration and returns its result', async () => {
+    const { integration, events, activeScope } = createIntegration();
+    registerTelemetry(integration);
+    const circuit = await createCircuit();
 
     const result = await circuit.execute(async () => activeScope());
 
@@ -78,9 +85,10 @@ describe('CircuitBreaker tracing', () => {
     await circuit.stop();
   });
 
-  it('lets the tracer see a failed call and still rethrows the original error', async () => {
-    const { tracing, events } = createTracer();
-    const circuit = await createCircuit(tracing, () =>
+  it('lets the integration see a failed call and still rethrows the original error', async () => {
+    const { integration, events } = createIntegration();
+    registerTelemetry(integration);
+    const circuit = await createCircuit(() =>
       Promise.reject(new Error('down')),
     );
     const error = new Error('boom');
@@ -94,10 +102,11 @@ describe('CircuitBreaker tracing', () => {
   });
 
   it('reports blocked calls, health checks and state transitions', async () => {
-    const { tracing, events, activeScope } = createTracer();
+    const { integration, events, activeScope } = createIntegration();
+    registerTelemetry(integration);
     let healthy = false;
     const checkScopes: (string | undefined)[] = [];
-    const circuit = await createCircuit(tracing, async () => {
+    const circuit = await createCircuit(async () => {
       checkScopes.push(activeScope());
       if (!healthy) {
         throw new Error('down');
