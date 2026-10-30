@@ -1,4 +1,5 @@
 import {
+  type Attributes,
   context,
   type Span,
   SpanKind,
@@ -22,6 +23,27 @@ export type ZenvarkOtelOptions = {
    * globally registered tracer provider.
    */
   tracer?: Tracer;
+
+  /**
+   * Extra attributes for every span, either fixed or resolved from the id
+   * of the breaker or semaphore the span belongs to.
+   *
+   * Zenvark knows what a breaker is called, not what it protects, so a
+   * `zenvark.call` span carries no peer of its own. Use this to describe
+   * the dependency, such as the `server.address` that OpenTelemetry's
+   * semantic conventions expect on a client span:
+   *
+   * ```typescript
+   * new ZenvarkOtel({
+   *   attributes: (id) => ({ 'server.address': HOSTS[id] }),
+   * });
+   * ```
+   *
+   * Zenvark's own attributes take precedence over these, and are set
+   * first, so a low `attributeCountLimit` drops these rather than the
+   * breaker id and the call result.
+   */
+  attributes?: Attributes | ((id: string) => Attributes | undefined);
 };
 
 const TRACER_NAME = 'zenvark';
@@ -37,9 +59,11 @@ const markFailed = (span: Span, err: unknown): void => {
 
 export class ZenvarkOtel implements Telemetry {
   private readonly tracer?: Tracer;
+  private readonly attributes?: ZenvarkOtelOptions['attributes'];
 
   constructor(options: ZenvarkOtelOptions = {}) {
     this.tracer = options.tracer;
+    this.attributes = options.attributes;
   }
 
   // The global tracer is looked up per span: one taken at construction stays
@@ -47,6 +71,26 @@ export class ZenvarkOtel implements Telemetry {
   // @opentelemetry/api
   private getTracer(): Tracer {
     return this.tracer ?? trace.getTracer(TRACER_NAME);
+  }
+
+  // Zenvark's own attributes are set first, so a low `attributeCountLimit`
+  // drops the configured extras rather than the breaker id and result
+  private withExtras(id: string, own: Attributes): Attributes {
+    const extra =
+      typeof this.attributes === 'function'
+        ? this.attributes(id)
+        : this.attributes;
+    if (extra === undefined) {
+      return own;
+    }
+
+    const merged: Attributes = { ...own };
+    for (const [key, value] of Object.entries(extra)) {
+      if (!(key in own)) {
+        merged[key] = value;
+      }
+    }
+    return merged;
   }
 
   /**
@@ -59,7 +103,9 @@ export class ZenvarkOtel implements Telemetry {
   }: ExecuteCallParams<T>): Promise<T> {
     const span = this.getTracer().startSpan('zenvark.call', {
       kind: SpanKind.CLIENT,
-      attributes: { 'zenvark.breaker.id': breakerId },
+      attributes: this.withExtras(breakerId, {
+        'zenvark.breaker.id': breakerId,
+      }),
     });
 
     try {
@@ -91,10 +137,10 @@ export class ZenvarkOtel implements Telemetry {
     const span = this.getTracer().startSpan('zenvark.healthcheck', {
       root: true,
       kind: SpanKind.CLIENT,
-      attributes: {
+      attributes: this.withExtras(breakerId, {
         'zenvark.breaker.id': breakerId,
         'zenvark.healthcheck.type': type,
-      },
+      }),
     });
 
     try {
@@ -119,7 +165,9 @@ export class ZenvarkOtel implements Telemetry {
     this.getTracer()
       .startSpan('zenvark.blocked', {
         kind: SpanKind.CLIENT,
-        attributes: { 'zenvark.breaker.id': breakerId },
+        attributes: this.withExtras(breakerId, {
+          'zenvark.breaker.id': breakerId,
+        }),
       })
       .setStatus({ code: SpanStatusCode.ERROR, message: 'Circuit is open' })
       .end();
@@ -132,10 +180,10 @@ export class ZenvarkOtel implements Telemetry {
     this.getTracer()
       .startSpan('zenvark.state_change', {
         root: true,
-        attributes: {
+        attributes: this.withExtras(breakerId, {
           'zenvark.breaker.id': breakerId,
           'zenvark.circuit.state': state,
-        },
+        }),
       })
       .end();
   }
@@ -154,13 +202,13 @@ export class ZenvarkOtel implements Telemetry {
     const endTime = Date.now();
     const span = this.getTracer().startSpan('zenvark.semaphore.acquire', {
       startTime: endTime - waitMs,
-      attributes: {
+      attributes: this.withExtras(semaphoreId, {
         'zenvark.semaphore.id': semaphoreId,
         'zenvark.semaphore.acquire.result': result,
         ...(className === undefined
           ? {}
           : { 'zenvark.semaphore.class': className }),
-      },
+      }),
     });
     if (result === AcquireResult.TIMEOUT) {
       span.setStatus({
