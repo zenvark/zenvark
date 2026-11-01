@@ -13,14 +13,14 @@ npm install @zenvark/prom @prometheus-io/client
 Register `ZenvarkProm` once at startup. It records metrics for every circuit breaker and adaptive semaphore in the process:
 
 ```typescript
-import { register } from "@prometheus-io/client";
-import { registerZenvarkTelemetry } from "zenvark";
-import { ZenvarkProm } from "@zenvark/prom";
+import { register } from '@prometheus-io/client';
+import { ZenvarkProm } from '@zenvark/prom';
+import { registerZenvarkTelemetry } from 'zenvark';
 
 registerZenvarkTelemetry(
   new ZenvarkProm({
     registry: register,
-    customLabels: { service: "my-api", environment: "production" },
+    customLabels: { service: 'my-api', environment: 'production' },
   }),
 );
 ```
@@ -81,9 +81,9 @@ Add custom labels to all metrics:
 new ZenvarkProm({
   registry: register,
   customLabels: {
-    service: "payment-service",
-    environment: "production",
-    region: "us-east-1",
+    service: 'payment-service',
+    environment: 'production',
+    region: 'us-east-1',
   },
 });
 ```

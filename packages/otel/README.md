@@ -15,8 +15,8 @@ Requires Node.js 24 or later.
 Register the integration once at startup, before or after creating breakers:
 
 ```typescript
-import { registerZenvarkTelemetry } from "zenvark";
-import { ZenvarkOtel } from "@zenvark/otel";
+import { ZenvarkOtel } from '@zenvark/otel';
+import { registerZenvarkTelemetry } from 'zenvark';
 
 registerZenvarkTelemetry(new ZenvarkOtel());
 ```
@@ -38,13 +38,13 @@ Zenvark knows what a breaker is called, not what it protects, so its spans carry
 
 ```typescript
 const HOSTS: Record<string, string | undefined> = {
-  translations: "api.example.com",
-  payments: "payments.example.net",
+  translations: 'api.example.com',
+  payments: 'payments.example.net',
 };
 
 registerZenvarkTelemetry(
   new ZenvarkOtel({
-    attributes: (id) => ({ "server.address": HOSTS[id] }),
+    attributes: (id) => ({ 'server.address': HOSTS[id] }),
   }),
 );
 ```

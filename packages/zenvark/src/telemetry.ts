@@ -258,8 +258,7 @@ export class TelemetryDispatcher {
   ): Promise<T> {
     return this.runGuarded(
       'executeCall',
-      (integration, execute) =>
-        integration.executeCall?.({ ...params, execute }),
+      (integration, execute) => integration.executeCall?.({ ...params, execute }),
       work,
     );
   }
@@ -270,8 +269,7 @@ export class TelemetryDispatcher {
   ): Promise<void> {
     return this.runGuarded(
       'executeHealthCheck',
-      (integration, execute) =>
-        integration.executeHealthCheck?.({ ...params, execute }),
+      (integration, execute) => integration.executeHealthCheck?.({ ...params, execute }),
       work,
     );
   }
@@ -284,10 +282,7 @@ export class TelemetryDispatcher {
   emit<K extends EventHook>(hook: K, event: EventOf<K>): void {
     for (const integration of this.getIntegrations()) {
       try {
-        (integration[hook] as ((event: EventOf<K>) => void) | undefined)?.call(
-          integration,
-          event,
-        );
+        (integration[hook] as ((event: EventOf<K>) => void) | undefined)?.call(integration, event);
       } catch (err) {
         this.onError(`Telemetry integration ${hook} threw`, err);
       }
@@ -302,10 +297,7 @@ export class TelemetryDispatcher {
    */
   private runGuarded<T>(
     method: string,
-    wrap: (
-      integration: Telemetry,
-      execute: () => Promise<T>,
-    ) => Promise<T> | undefined,
+    wrap: (integration: Telemetry, execute: () => Promise<T>) => Promise<T> | undefined,
     work: () => Promise<T>,
   ): Promise<T> {
     let started: Promise<T> | undefined;

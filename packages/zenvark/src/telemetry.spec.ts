@@ -50,9 +50,7 @@ describe('TelemetryDispatcher', () => {
   it('runs the call directly when no integrations are registered', async () => {
     const telemetry = createTelemetry();
 
-    await expect(telemetry.executeCall(call, async () => 'ok')).resolves.toBe(
-      'ok',
-    );
+    await expect(telemetry.executeCall(call, async () => 'ok')).resolves.toBe('ok');
   });
 
   it('uses integrations registered after the breaker was created', async () => {
@@ -103,13 +101,7 @@ describe('TelemetryDispatcher', () => {
     );
     telemetry.emit('onBlockedRequest', { breakerId: 'test' });
 
-    expect(log).toEqual([
-      'b:enter',
-      'call',
-      'b:exit',
-      'b:healthcheck:idle',
-      'b:blocked:test',
-    ]);
+    expect(log).toEqual(['b:enter', 'call', 'b:exit', 'b:healthcheck:idle', 'b:blocked:test']);
   });
 
   it('replaces global integrations with per-breaker ones', async () => {
@@ -169,15 +161,10 @@ describe('TelemetryDispatcher', () => {
     );
     const telemetry = createTelemetry(undefined, onError);
 
-    expect(() =>
-      telemetry.emit('onBlockedRequest', { breakerId: 'test' }),
-    ).not.toThrow();
+    expect(() => telemetry.emit('onBlockedRequest', { breakerId: 'test' })).not.toThrow();
 
     expect(log).toEqual(['b:blocked:test']);
-    expect(onError).toHaveBeenCalledWith(
-      'Telemetry integration onBlockedRequest threw',
-      hookError,
-    );
+    expect(onError).toHaveBeenCalledWith('Telemetry integration onBlockedRequest threw', hookError);
   });
 
   it('calls event hooks with the integration as this', () => {
@@ -235,11 +222,7 @@ describe('TelemetryDispatcher', () => {
     it('settles with the work result, not the integration result', async () => {
       const telemetry = createTelemetry({
         integrations: {
-          executeCall: async <T>({
-            execute,
-          }: {
-            execute: () => Promise<T>;
-          }) => {
+          executeCall: async <T>({ execute }: { execute: () => Promise<T> }) => {
             await execute();
             return 'replaced' as T;
           },
@@ -253,14 +236,11 @@ describe('TelemetryDispatcher', () => {
       const error = new Error('boom');
       const telemetry = createTelemetry({
         integrations: {
-          executeCall: async ({ execute }) =>
-            execute().catch(() => undefined as never),
+          executeCall: async ({ execute }) => execute().catch(() => undefined as never),
         },
       });
 
-      await expect(
-        telemetry.executeCall(call, () => Promise.reject(error)),
-      ).rejects.toBe(error);
+      await expect(telemetry.executeCall(call, () => Promise.reject(error))).rejects.toBe(error);
     });
 
     it('does not wait for an integration that never settles', async () => {
@@ -340,9 +320,7 @@ describe('TelemetryDispatcher', () => {
       registerZenvarkTelemetry(createIntegration('a', []));
       const telemetry = createTelemetry(undefined, onError);
 
-      await expect(
-        telemetry.executeCall(call, () => Promise.reject(error)),
-      ).rejects.toBe(error);
+      await expect(telemetry.executeCall(call, () => Promise.reject(error))).rejects.toBe(error);
       await settle();
 
       expect(onError).not.toHaveBeenCalled();

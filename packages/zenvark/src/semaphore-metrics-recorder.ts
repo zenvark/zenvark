@@ -1,8 +1,4 @@
-import type {
-  AcquireResult,
-  LeaseOutcome,
-  LimitChangeDirection,
-} from './constants.ts';
+import type { AcquireResult, LeaseOutcome, LimitChangeDirection } from './constants.ts';
 
 export type RecordAcquireParams = {
   id: string;

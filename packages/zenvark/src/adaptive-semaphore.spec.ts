@@ -1,10 +1,7 @@
 import { Redis } from 'ioredis';
 import { describe, expect, it, vi } from 'vitest';
 import { redis } from '../test/setup-redis.ts';
-import {
-  AdaptiveSemaphore,
-  type AdaptiveSemaphoreOptions,
-} from './adaptive-semaphore.ts';
+import { AdaptiveSemaphore, type AdaptiveSemaphoreOptions } from './adaptive-semaphore.ts';
 import { LeaseOutcome } from './constants.ts';
 import { AcquireTimeoutError } from './errors/acquire-timeout-error.ts';
 import { SemaphoreDisposedError } from './errors/semaphore-disposed-error.ts';
@@ -94,9 +91,9 @@ describe('AdaptiveSemaphore', () => {
 
       const lease = await semaphoreA.acquire({ timeoutMs: 1_000 });
 
-      await expect(
-        semaphoreB.acquire({ timeoutMs: 250 }),
-      ).rejects.toBeInstanceOf(AcquireTimeoutError);
+      await expect(semaphoreB.acquire({ timeoutMs: 250 })).rejects.toBeInstanceOf(
+        AcquireTimeoutError,
+      );
       expect(await redis.exists(DEMAND_KEY)).toBe(1);
 
       await lease.release(LeaseOutcome.SUCCESS);
@@ -167,9 +164,7 @@ describe('AdaptiveSemaphore', () => {
 
       // a full gate is rejected without waiting out a retry interval
       const start = performance.now();
-      await expect(semaphore.acquire({ timeoutMs: 0 })).rejects.toBeInstanceOf(
-        AcquireTimeoutError,
-      );
+      await expect(semaphore.acquire({ timeoutMs: 0 })).rejects.toBeInstanceOf(AcquireTimeoutError);
       expect(performance.now() - start).toBeLessThan(100);
 
       await lease.release(LeaseOutcome.SUCCESS);
@@ -183,9 +178,9 @@ describe('AdaptiveSemaphore', () => {
       await delay(700);
 
       // the slot was not reclaimed: the holder's heartbeat kept refreshing it
-      await expect(
-        contender.acquire({ timeoutMs: 250 }),
-      ).rejects.toBeInstanceOf(AcquireTimeoutError);
+      await expect(contender.acquire({ timeoutMs: 250 })).rejects.toBeInstanceOf(
+        AcquireTimeoutError,
+      );
 
       await lease.release(LeaseOutcome.FAILURE);
       const nextLease = await contender.acquire({ timeoutMs: 1_000 });
@@ -251,9 +246,9 @@ describe('AdaptiveSemaphore', () => {
       const onLimitChange = vi.fn();
       const semaphore = createSemaphore({ onLimitChange });
       const lease = await semaphore.acquire({ timeoutMs: 1_000 });
-      await expect(
-        semaphore.acquire({ timeoutMs: 250 }),
-      ).rejects.toBeInstanceOf(AcquireTimeoutError);
+      await expect(semaphore.acquire({ timeoutMs: 250 })).rejects.toBeInstanceOf(
+        AcquireTimeoutError,
+      );
 
       await lease.release(LeaseOutcome.SUCCESS);
       expect(await redis.get(LIMIT_KEY)).toBe('2');
@@ -278,9 +273,9 @@ describe('AdaptiveSemaphore', () => {
       const semaphore = createSemaphore({ initialLimit: 2 });
       const leaseA = await semaphore.acquire({ timeoutMs: 1_000 });
       const leaseB = await semaphore.acquire({ timeoutMs: 1_000 });
-      await expect(
-        semaphore.acquire({ timeoutMs: 250 }),
-      ).rejects.toBeInstanceOf(AcquireTimeoutError);
+      await expect(semaphore.acquire({ timeoutMs: 250 })).rejects.toBeInstanceOf(
+        AcquireTimeoutError,
+      );
 
       await leaseA.release(LeaseOutcome.THROTTLED);
       await leaseB.release(LeaseOutcome.SUCCESS);
@@ -291,9 +286,9 @@ describe('AdaptiveSemaphore', () => {
     it('never increases above maxLimit', async () => {
       const semaphore = createSemaphore({ maxLimit: 1 });
       const lease = await semaphore.acquire({ timeoutMs: 1_000 });
-      await expect(
-        semaphore.acquire({ timeoutMs: 250 }),
-      ).rejects.toBeInstanceOf(AcquireTimeoutError);
+      await expect(semaphore.acquire({ timeoutMs: 250 })).rejects.toBeInstanceOf(
+        AcquireTimeoutError,
+      );
 
       await lease.release(LeaseOutcome.SUCCESS);
 
@@ -303,9 +298,9 @@ describe('AdaptiveSemaphore', () => {
     it('FAILURE releases are adaptation-neutral', async () => {
       const semaphore = createSemaphore();
       const lease = await semaphore.acquire({ timeoutMs: 1_000 });
-      await expect(
-        semaphore.acquire({ timeoutMs: 250 }),
-      ).rejects.toBeInstanceOf(AcquireTimeoutError);
+      await expect(semaphore.acquire({ timeoutMs: 250 })).rejects.toBeInstanceOf(
+        AcquireTimeoutError,
+      );
 
       await lease.release(LeaseOutcome.FAILURE);
 
@@ -333,18 +328,18 @@ describe('AdaptiveSemaphore', () => {
         aimd: { windowMs: 200, cooldownMs: 200 },
       });
       const leaseA = await semaphore.acquire({ timeoutMs: 1_000 });
-      await expect(
-        semaphore.acquire({ timeoutMs: 250 }),
-      ).rejects.toBeInstanceOf(AcquireTimeoutError);
+      await expect(semaphore.acquire({ timeoutMs: 250 })).rejects.toBeInstanceOf(
+        AcquireTimeoutError,
+      );
       await leaseA.release(LeaseOutcome.SUCCESS);
       expect(await redis.get(LIMIT_KEY)).toBe('2');
 
       const leaseB = await semaphore.acquire({ timeoutMs: 1_000 });
       const leaseC = await semaphore.acquire({ timeoutMs: 1_000 });
       // this denial re-marks demand and outlasts the previous increase claim
-      await expect(
-        semaphore.acquire({ timeoutMs: 250 }),
-      ).rejects.toBeInstanceOf(AcquireTimeoutError);
+      await expect(semaphore.acquire({ timeoutMs: 250 })).rejects.toBeInstanceOf(
+        AcquireTimeoutError,
+      );
       await leaseB.release(LeaseOutcome.SUCCESS);
       expect(await redis.get(LIMIT_KEY)).toBe('3');
 
@@ -427,9 +422,9 @@ describe('AdaptiveSemaphore', () => {
         classes: { interactive: { reservedShare: 0.25 } },
       });
 
-      await expect(
-        semaphore.acquire({ class: 'bulk', timeoutMs: 100 }),
-      ).rejects.toThrow('Unknown semaphore class "bulk"');
+      await expect(semaphore.acquire({ class: 'bulk', timeoutMs: 100 })).rejects.toThrow(
+        'Unknown semaphore class "bulk"',
+      );
     });
   });
 
@@ -437,9 +432,7 @@ describe('AdaptiveSemaphore', () => {
     it('releases with SUCCESS when the callback resolves', async () => {
       const semaphore = createSemaphore({ initialLimit: 2 });
 
-      const result = await semaphore.withLease({ timeoutMs: 1_000 }, () =>
-        Promise.resolve('done'),
-      );
+      const result = await semaphore.withLease({ timeoutMs: 1_000 }, () => Promise.resolve('done'));
 
       expect(result).toBe('done');
       expect(semaphore.getState().inflight).toBe(0);
@@ -469,9 +462,7 @@ describe('AdaptiveSemaphore', () => {
       const semaphore = createSemaphore({ initialLimit: 10 });
 
       await expect(
-        semaphore.withLease({ timeoutMs: 1_000 }, () =>
-          Promise.reject(new Error('boom')),
-        ),
+        semaphore.withLease({ timeoutMs: 1_000 }, () => Promise.reject(new Error('boom'))),
       ).rejects.toThrow('boom');
 
       expect(await redis.get(LIMIT_KEY)).toBe('10');
@@ -509,9 +500,9 @@ describe('AdaptiveSemaphore', () => {
       semaphore.dispose();
 
       await expect(pending).rejects.toBeInstanceOf(SemaphoreDisposedError);
-      await expect(
-        semaphore.acquire({ timeoutMs: 100 }),
-      ).rejects.toBeInstanceOf(SemaphoreDisposedError);
+      await expect(semaphore.acquire({ timeoutMs: 100 })).rejects.toBeInstanceOf(
+        SemaphoreDisposedError,
+      );
 
       // held leases are unaffected and can still be released
       await lease.release(LeaseOutcome.SUCCESS);
@@ -524,9 +515,9 @@ describe('AdaptiveSemaphore', () => {
       const brokenRedis = createBrokenRedis();
       const semaphore = createSemaphore({ redis: brokenRedis });
 
-      await expect(
-        semaphore.acquire({ timeoutMs: 1_000 }),
-      ).rejects.toBeInstanceOf(SemaphoreUnavailableError);
+      await expect(semaphore.acquire({ timeoutMs: 1_000 })).rejects.toBeInstanceOf(
+        SemaphoreUnavailableError,
+      );
 
       brokenRedis.disconnect();
     });
@@ -544,9 +535,9 @@ describe('AdaptiveSemaphore', () => {
       expect(semaphore.getState().inflight).toBe(1);
       expect(onError).toHaveBeenCalled();
 
-      await expect(
-        semaphore.acquire({ timeoutMs: 250 }),
-      ).rejects.toBeInstanceOf(AcquireTimeoutError);
+      await expect(semaphore.acquire({ timeoutMs: 250 })).rejects.toBeInstanceOf(
+        AcquireTimeoutError,
+      );
 
       await lease.release(LeaseOutcome.SUCCESS);
       expect(semaphore.getState().inflight).toBe(0);
@@ -564,9 +555,7 @@ describe('AdaptiveSemaphore', () => {
         onError,
       });
       // the very first Redis command in the acquire path is the seeding SET
-      vi.spyOn(redis, 'set').mockRejectedValueOnce(
-        new Error('transient outage'),
-      );
+      vi.spyOn(redis, 'set').mockRejectedValueOnce(new Error('transient outage'));
 
       const fallbackLease = await semaphore.acquire({ timeoutMs: 1_000 });
       expect(onError).toHaveBeenCalled();
@@ -634,9 +623,9 @@ describe('AdaptiveSemaphore', () => {
       const semaphore = createSemaphore({ metrics });
       const lease = await semaphore.acquire({ timeoutMs: 1_000 });
 
-      await expect(
-        semaphore.acquire({ timeoutMs: 250 }),
-      ).rejects.toBeInstanceOf(AcquireTimeoutError);
+      await expect(semaphore.acquire({ timeoutMs: 250 })).rejects.toBeInstanceOf(
+        AcquireTimeoutError,
+      );
 
       expect(metrics.recordAcquire).toHaveBeenCalledWith(
         expect.objectContaining({ result: 'timeout' }),
@@ -733,26 +722,11 @@ describe('AdaptiveSemaphore', () => {
       [{ initialLimit: 0 }, 'initialLimit must be an integer >= 1'],
       [{ minLimit: 0 }, 'minLimit must be an integer >= 1'],
       [{ maxLimit: 0.5 }, 'maxLimit must be an integer >= 1'],
-      [
-        { initialLimit: 10, maxLimit: 5 },
-        'initialLimit must be within [minLimit, maxLimit]',
-      ],
-      [
-        { aimd: { decreaseFactor: 1 } },
-        'aimd.decreaseFactor must be within (0, 1)',
-      ],
-      [
-        { aimd: { increaseStep: 0 } },
-        'aimd.increaseStep must be an integer >= 1',
-      ],
-      [
-        { aimd: { windowMs: 0 } },
-        'aimd.windowMs and aimd.cooldownMs must be positive',
-      ],
-      [
-        { classes: { a: { reservedShare: 1 } } },
-        'classes.a.reservedShare must be within (0, 1)',
-      ],
+      [{ initialLimit: 10, maxLimit: 5 }, 'initialLimit must be within [minLimit, maxLimit]'],
+      [{ aimd: { decreaseFactor: 1 } }, 'aimd.decreaseFactor must be within (0, 1)'],
+      [{ aimd: { increaseStep: 0 } }, 'aimd.increaseStep must be an integer >= 1'],
+      [{ aimd: { windowMs: 0 } }, 'aimd.windowMs and aimd.cooldownMs must be positive'],
+      [{ classes: { a: { reservedShare: 1 } } }, 'classes.a.reservedShare must be within (0, 1)'],
       [
         {
           classes: {
@@ -762,10 +736,7 @@ describe('AdaptiveSemaphore', () => {
         },
         'the sum of reservedShare across classes must be < 1',
       ],
-      [
-        { onUnavailable: { localLimit: 0 } },
-        'onUnavailable.localLimit must be an integer >= 1',
-      ],
+      [{ onUnavailable: { localLimit: 0 } }, 'onUnavailable.localLimit must be an integer >= 1'],
     ] satisfies [Partial<AdaptiveSemaphoreOptions>, string][])(
       'rejects invalid options %j',
       (overrides, message) => {

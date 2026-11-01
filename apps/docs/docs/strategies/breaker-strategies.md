@@ -34,7 +34,7 @@ new ConsecutiveBreaker({
 ### Example
 
 ```typescript
-import { CircuitBreaker, ConsecutiveBreaker } from "zenvark";
+import { CircuitBreaker, ConsecutiveBreaker } from 'zenvark';
 
 const circuitBreaker = new CircuitBreaker({
   breaker: new ConsecutiveBreaker({
@@ -72,7 +72,7 @@ new CountBreaker({
 ### Example
 
 ```typescript
-import { CountBreaker } from "zenvark";
+import { CountBreaker } from 'zenvark';
 
 const breaker = new CountBreaker({
   threshold: 0.5, // Open if 50% or more of recent calls failed
@@ -111,7 +111,7 @@ new SamplingBreaker({
 ### Example
 
 ```typescript
-import { SamplingBreaker } from "zenvark";
+import { SamplingBreaker } from 'zenvark';
 
 const breaker = new SamplingBreaker({
   threshold: 0.3, // Open if 30% of calls in window failed
@@ -168,11 +168,7 @@ Choose **SamplingBreaker** when:
 You can implement your own breaker strategy by implementing the `BreakerStrategy` interface:
 
 ```typescript
-import {
-  type BreakerStrategy,
-  type CallResultEvent,
-  CircuitBreaker,
-} from "zenvark";
+import { type BreakerStrategy, type CallResultEvent, CircuitBreaker } from 'zenvark';
 
 class CustomBreaker implements BreakerStrategy {
   shouldOpenCircuit(events: CallResultEvent[]): boolean {

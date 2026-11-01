@@ -27,8 +27,6 @@ export class ConsecutiveBreaker implements BreakerStrategy {
 
     const recentEvents = events.slice(-this.threshold);
 
-    return recentEvents.every(
-      (event) => event.callResult === CallResult.FAILURE,
-    );
+    return recentEvents.every((event) => event.callResult === CallResult.FAILURE);
   }
 }

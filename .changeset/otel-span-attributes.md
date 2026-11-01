@@ -1,5 +1,5 @@
 ---
-"@zenvark/otel": minor
+'@zenvark/otel': minor
 ---
 
 Add an `attributes` option to `ZenvarkOtel`, setting extra attributes on every span, either fixed or resolved from the breaker or semaphore id.

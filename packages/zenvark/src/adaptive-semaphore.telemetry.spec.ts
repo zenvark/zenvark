@@ -1,22 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { redis } from '../test/setup-redis.ts';
 import { AdaptiveSemaphore } from './adaptive-semaphore.ts';
-import {
-  AcquireResult,
-  LeaseOutcome,
-  LimitChangeDirection,
-} from './constants.ts';
+import { AcquireResult, LeaseOutcome, LimitChangeDirection } from './constants.ts';
 import { AcquireTimeoutError } from './errors/acquire-timeout-error.ts';
-import {
-  clearRegisteredTelemetry,
-  registerZenvarkTelemetry,
-} from './telemetry.ts';
+import { clearRegisteredTelemetry, registerZenvarkTelemetry } from './telemetry.ts';
 import { delay } from './utils/delay.ts';
 
 describe('AdaptiveSemaphore telemetry', () => {
   const events: { hook: string; event: object }[] = [];
-  const of = (hook: string) =>
-    events.filter((e) => e.hook === hook).map((e) => e.event);
+  const of = (hook: string) => events.filter((e) => e.hook === hook).map((e) => e.event);
 
   const registerRecorder = () => {
     const record =
@@ -90,9 +82,7 @@ describe('AdaptiveSemaphore telemetry', () => {
     const semaphore = createSemaphore();
     const held = [await semaphore.acquire({}), await semaphore.acquire({})];
 
-    await expect(semaphore.acquire({ timeoutMs: 100 })).rejects.toBeInstanceOf(
-      AcquireTimeoutError,
-    );
+    await expect(semaphore.acquire({ timeoutMs: 100 })).rejects.toBeInstanceOf(AcquireTimeoutError);
 
     const timedOut = of('onAcquire').at(-1) as {
       result: string;

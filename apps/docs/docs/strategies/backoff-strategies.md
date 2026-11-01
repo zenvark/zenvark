@@ -39,7 +39,7 @@ new ConstantBackoff({
 ### Example
 
 ```typescript
-import { CircuitBreaker, ConstantBackoff } from "zenvark";
+import { CircuitBreaker, ConstantBackoff } from 'zenvark';
 
 const circuitBreaker = new CircuitBreaker({
   health: {
@@ -85,7 +85,7 @@ new ExponentialBackoff({
 ### Example
 
 ```typescript
-import { ExponentialBackoff } from "zenvark";
+import { ExponentialBackoff } from 'zenvark';
 
 const backoff = new ExponentialBackoff({
   initialDelayMs: 1000, // Start with 1 second
@@ -156,7 +156,7 @@ Choose **ExponentialBackoff** when:
 You can implement your own backoff strategy by implementing the `BackoffStrategy` interface:
 
 ```typescript
-import { BackoffStrategy } from "zenvark";
+import { BackoffStrategy } from 'zenvark';
 
 class FibonacciBackoff implements BackoffStrategy {
   constructor(private baseDelayMs: number) {}

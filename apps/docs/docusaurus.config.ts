@@ -10,8 +10,7 @@ export default {
     v4: true,
   },
   // favicon: 'img/favicon.ico',
-  tagline:
-    'A robust distributed circuit breaker for high-availability applications',
+  tagline: 'A robust distributed circuit breaker for high-availability applications',
 
   onBrokenLinks: 'throw',
 

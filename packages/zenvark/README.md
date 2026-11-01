@@ -36,42 +36,37 @@ npm install zenvark ioredis
 ## Quick Start: Circuit Breaker
 
 ```typescript
-import { Redis } from "ioredis";
-import {
-  CircuitBreaker,
-  ConsecutiveBreaker,
-  ConstantBackoff,
-  CircuitOpenError,
-} from "zenvark";
+import { Redis } from 'ioredis';
+import { CircuitBreaker, ConsecutiveBreaker, ConstantBackoff, CircuitOpenError } from 'zenvark';
 
-const redis = new Redis("redis://localhost:6379");
+const redis = new Redis('redis://localhost:6379');
 
 const circuitBreaker = new CircuitBreaker({
-  id: "my-service-api",
+  id: 'my-service-api',
   redis,
   breaker: new ConsecutiveBreaker({ threshold: 5 }),
   health: {
     backoff: new ConstantBackoff({ delayMs: 5000 }),
     async check(type, signal) {
-      const response = await fetch("https://api.example.com/health", {
+      const response = await fetch('https://api.example.com/health', {
         signal,
       });
-      if (!response.ok) throw new Error("Health check failed");
+      if (!response.ok) throw new Error('Health check failed');
     },
   },
-  onError: (err) => console.error("Circuit breaker error:", err),
+  onError: (err) => console.error('Circuit breaker error:', err),
 });
 
 await circuitBreaker.start();
 
 try {
   const result = await circuitBreaker.execute(async () => {
-    return await fetch("https://api.example.com/data");
+    return await fetch('https://api.example.com/data');
   });
-  console.log("Success:", result);
+  console.log('Success:', result);
 } catch (err) {
   if (CircuitOpenError.isInstance(err)) {
-    console.log("Circuit is open - request blocked");
+    console.log('Circuit is open - request blocked');
   }
 }
 

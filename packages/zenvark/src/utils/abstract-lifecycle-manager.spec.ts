@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { AbstractLifecycleManager } from './abstract-lifecycle-manager.ts';
 
-class TestLifecycleManager<
-  TConfig = void,
-> extends AbstractLifecycleManager<TConfig> {
+class TestLifecycleManager<TConfig = void> extends AbstractLifecycleManager<TConfig> {
   private startInternalCalled = 0;
   private stopInternalCalled = 0;
   private shouldFailStart = false;

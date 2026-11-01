@@ -4,10 +4,7 @@ type CircuitOpenErrorDetails = {
   circuitId: string;
 };
 
-export class CircuitOpenError extends ZenvarkError<
-  'CIRCUIT_IS_OPEN',
-  CircuitOpenErrorDetails
-> {
+export class CircuitOpenError extends ZenvarkError<'CIRCUIT_IS_OPEN', CircuitOpenErrorDetails> {
   static readonly code = 'CIRCUIT_IS_OPEN';
 
   static isInstance(value: unknown): value is CircuitOpenError {

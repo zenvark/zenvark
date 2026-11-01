@@ -76,10 +76,7 @@ export class ZenvarkOtel implements Telemetry {
   // Zenvark's own attributes are set first, so a low `attributeCountLimit`
   // drops the configured extras rather than the breaker id and result
   private withExtras(id: string, own: Attributes): Attributes {
-    const extra =
-      typeof this.attributes === 'function'
-        ? this.attributes(id)
-        : this.attributes;
+    const extra = typeof this.attributes === 'function' ? this.attributes(id) : this.attributes;
     if (extra === undefined) {
       return own;
     }
@@ -97,10 +94,7 @@ export class ZenvarkOtel implements Telemetry {
    * Wrap a protected call in a `zenvark.call` span, active while the call
    * runs so spans it creates nest under it
    */
-  async executeCall<T>({
-    breakerId,
-    execute,
-  }: ExecuteCallParams<T>): Promise<T> {
+  async executeCall<T>({ breakerId, execute }: ExecuteCallParams<T>): Promise<T> {
     const span = this.getTracer().startSpan('zenvark.call', {
       kind: SpanKind.CLIENT,
       attributes: this.withExtras(breakerId, {
@@ -109,10 +103,7 @@ export class ZenvarkOtel implements Telemetry {
     });
 
     try {
-      const result = await context.with(
-        trace.setSpan(context.active(), span),
-        execute,
-      );
+      const result = await context.with(trace.setSpan(context.active(), span), execute);
       span.setAttribute('zenvark.call.result', CallResult.SUCCESS);
       return result;
     } catch (err) {
@@ -193,21 +184,14 @@ export class ZenvarkOtel implements Telemetry {
    * span. The event fires once the wait is over, so the span is started
    * back at the moment the wait began.
    */
-  onAcquire({
-    semaphoreId,
-    class: className,
-    result,
-    waitMs,
-  }: AcquireEvent): void {
+  onAcquire({ semaphoreId, class: className, result, waitMs }: AcquireEvent): void {
     const endTime = Date.now();
     const span = this.getTracer().startSpan('zenvark.semaphore.acquire', {
       startTime: endTime - waitMs,
       attributes: this.withExtras(semaphoreId, {
         'zenvark.semaphore.id': semaphoreId,
         'zenvark.semaphore.acquire.result': result,
-        ...(className === undefined
-          ? {}
-          : { 'zenvark.semaphore.class': className }),
+        ...(className === undefined ? {} : { 'zenvark.semaphore.class': className }),
       }),
     });
     if (result === AcquireResult.TIMEOUT) {
