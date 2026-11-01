@@ -106,9 +106,7 @@ describe('PrometheusSemaphoreMetrics', () => {
 
     const allMetrics = await registry.metrics();
 
-    expect(allMetrics).toContain(
-      `zenvark_semaphore_limit{semaphore_id="${semaphoreId}"} 12`,
-    );
+    expect(allMetrics).toContain(`zenvark_semaphore_limit{semaphore_id="${semaphoreId}"} 12`);
   });
 
   it('recordThrottle increments the throttle counter', async () => {

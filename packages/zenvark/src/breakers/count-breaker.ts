@@ -39,9 +39,7 @@ export class CountBreaker implements BreakerStrategy {
       return false;
     }
 
-    const failures = recentEvents.filter(
-      (event) => event.callResult === CallResult.FAILURE,
-    ).length;
+    const failures = recentEvents.filter((event) => event.callResult === CallResult.FAILURE).length;
     const failureRate = failures / recentEvents.length;
 
     return failureRate >= this.threshold;

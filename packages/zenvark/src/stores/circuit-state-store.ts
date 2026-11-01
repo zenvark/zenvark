@@ -123,13 +123,7 @@ export class CircuitStateStore extends AbstractLifecycleManager {
   }
 
   private async loadLatestState(): Promise<void> {
-    const entries = await this.redis.xrevrange(
-      this.redisStreamKey,
-      '+',
-      '-',
-      'COUNT',
-      1,
-    );
+    const entries = await this.redis.xrevrange(this.redisStreamKey, '+', '-', 'COUNT', 1);
 
     const firstEntry = entries.at(0);
 

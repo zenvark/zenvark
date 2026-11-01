@@ -5,14 +5,13 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "build/**"]
     },
-    "lint": {
-      "dependsOn": ["^build"]
+    "check": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/oxlint.config.ts", "$TURBO_ROOT$/oxfmt.config.ts"]
     },
-    "lint:fix": {
-      "dependsOn": ["^build"]
-    },
-    "typecheck": {
-      "dependsOn": ["^build"]
+    "check:fix": {
+      "dependsOn": ["^build"],
+      "cache": false
     },
     "test:ci": {
       "dependsOn": ["^build"]

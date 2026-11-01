@@ -6,11 +6,7 @@ import { ConsecutiveBreaker } from './breakers/consecutive-breaker.ts';
 import { CircuitBreaker } from './circuit-breaker.ts';
 import { CircuitRole, CircuitState, HealthCheckType } from './constants.ts';
 import { CircuitOpenError } from './errors/circuit-open-error.ts';
-import {
-  clearRegisteredTelemetry,
-  registerZenvarkTelemetry,
-  type Telemetry,
-} from './telemetry.ts';
+import { clearRegisteredTelemetry, registerZenvarkTelemetry, type Telemetry } from './telemetry.ts';
 import { delay } from './utils/delay.ts';
 
 // Records events the way a telemetry library would see them, and runs every
@@ -37,9 +33,7 @@ const createIntegration = () => {
           await execute();
           events.push(`healthcheck:${type}:success`);
         } catch (err) {
-          events.push(
-            `healthcheck:${type}:${signal.aborted ? 'aborted' : 'failure'}`,
-          );
+          events.push(`healthcheck:${type}:${signal.aborted ? 'aborted' : 'failure'}`);
           throw err;
         }
       }),
@@ -89,14 +83,10 @@ describe('CircuitBreaker telemetry', () => {
   it('lets the integration see a failed call and still rethrows the original error', async () => {
     const { integration, events } = createIntegration();
     registerZenvarkTelemetry(integration);
-    const circuit = await createCircuit(() =>
-      Promise.reject(new Error('down')),
-    );
+    const circuit = await createCircuit(() => Promise.reject(new Error('down')));
     const error = new Error('boom');
 
-    await expect(circuit.execute(() => Promise.reject(error))).rejects.toBe(
-      error,
-    );
+    await expect(circuit.execute(() => Promise.reject(error))).rejects.toBe(error);
     await vi.waitFor(() => expect(events[0]).toBe('call:failure'));
 
     await circuit.stop();
@@ -114,24 +104,15 @@ describe('CircuitBreaker telemetry', () => {
       }
     });
 
-    await expect(
-      circuit.execute(() => Promise.reject(new Error('boom'))),
-    ).rejects.toThrow('boom');
+    await expect(circuit.execute(() => Promise.reject(new Error('boom')))).rejects.toThrow('boom');
     await vi.waitUntil(() => circuit.state === CircuitState.OPEN);
-    await expect(
-      circuit.execute(() => Promise.resolve()),
-    ).rejects.toBeInstanceOf(CircuitOpenError);
-    await vi.waitUntil(() =>
-      events.includes(`healthcheck:${HealthCheckType.RECOVERY}:failure`),
-    );
+    await expect(circuit.execute(() => Promise.resolve())).rejects.toBeInstanceOf(CircuitOpenError);
+    await vi.waitUntil(() => events.includes(`healthcheck:${HealthCheckType.RECOVERY}:failure`));
     healthy = true;
     await vi.waitUntil(() => circuit.state === CircuitState.CLOSED);
     await circuit.stop();
 
-    expect(events.filter((e) => e.startsWith('state:'))).toEqual([
-      'state:open',
-      'state:closed',
-    ]);
+    expect(events.filter((e) => e.startsWith('state:'))).toEqual(['state:open', 'state:closed']);
     expect(events).toContain('blocked:test');
     expect(events).toContain(`healthcheck:${HealthCheckType.RECOVERY}:success`);
     expect(checkScopes.every((s) => s === 'healthcheck:recovery')).toBe(true);
@@ -154,20 +135,15 @@ describe('CircuitBreaker telemetry', () => {
     await vi.waitUntil(() => circuit.role === CircuitRole.LEADER);
 
     await circuit.execute(() => delay(30));
-    await expect(
-      circuit.execute(() => Promise.reject(new Error('boom'))),
-    ).rejects.toThrow('boom');
-    await vi.waitUntil(() =>
-      events.some(({ hook }) => hook === 'onHealthCheckEnd'),
-    );
+    await expect(circuit.execute(() => Promise.reject(new Error('boom')))).rejects.toThrow('boom');
+    await vi.waitUntil(() => events.some(({ hook }) => hook === 'onHealthCheckEnd'));
     await circuit.stop();
 
     expect(events[0]).toEqual({
       hook: 'onBreakerInit',
       event: { breakerId: 'test' },
     });
-    const of = (hook: string) =>
-      events.filter((e) => e.hook === hook).map((e) => e.event);
+    const of = (hook: string) => events.filter((e) => e.hook === hook).map((e) => e.event);
     expect(of('onRoleChange')).toEqual([
       {
         breakerId: 'test',
@@ -186,9 +162,7 @@ describe('CircuitBreaker telemetry', () => {
       result: 'success',
       durationMs: expect.any(Number),
     });
-    expect(
-      (success as { durationMs: number }).durationMs,
-    ).toBeGreaterThanOrEqual(25);
+    expect((success as { durationMs: number }).durationMs).toBeGreaterThanOrEqual(25);
     expect(failure).toMatchObject({ breakerId: 'test', result: 'failure' });
     const [check] = of('onHealthCheckEnd');
     expect(check).toMatchObject({
@@ -196,8 +170,6 @@ describe('CircuitBreaker telemetry', () => {
       type: HealthCheckType.RECOVERY,
       result: 'success',
     });
-    expect((check as { durationMs: number }).durationMs).toBeGreaterThanOrEqual(
-      25,
-    );
+    expect((check as { durationMs: number }).durationMs).toBeGreaterThanOrEqual(25);
   });
 });

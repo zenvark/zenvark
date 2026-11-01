@@ -44,11 +44,11 @@ Prefer the static `isInstance()` guard over `instanceof`. It narrows the type th
 This does not cover errors sent through `postMessage` or `worker_threads`. Structured clone keeps only `message`, `stack`, and `cause`, so the brand, `code`, and `details` are lost in transit. Serialize the fields you need and rebuild the error on the receiving side before checking it.
 
 ```typescript
-import { CircuitBreaker, CircuitOpenError } from "zenvark";
+import { CircuitBreaker, CircuitOpenError } from 'zenvark';
 
 try {
   const result = await circuitBreaker.execute(async () => {
-    return await fetch("https://api.example.com/data");
+    return await fetch('https://api.example.com/data');
   });
 } catch (err) {
   if (CircuitOpenError.isInstance(err)) {
@@ -68,18 +68,14 @@ try {
 When one handler deals with several Zenvark errors, check each class with its `isInstance()` guard. Every branch narrows `err` to that class, so `err.details` has the exact shape for that error and `err.code` is its literal type.
 
 ```typescript
-import {
-  AcquireTimeoutError,
-  SemaphoreDisposedError,
-  SemaphoreUnavailableError,
-} from "zenvark";
+import { AcquireTimeoutError, SemaphoreDisposedError, SemaphoreUnavailableError } from 'zenvark';
 
 try {
   await semaphore.withLease({ timeoutMs: 2_000 }, doWork);
 } catch (err) {
   if (AcquireTimeoutError.isInstance(err)) {
     // Saturated - shed load or retry with backoff
-    metrics.timeout(err.details.class ?? "default", err.details.timeoutMs);
+    metrics.timeout(err.details.class ?? 'default', err.details.timeoutMs);
   } else if (SemaphoreUnavailableError.isInstance(err)) {
     // Redis is down - err.cause holds the connection error
     logger.error({ semaphoreId: err.details.semaphoreId, cause: err.cause });
@@ -109,15 +105,15 @@ Represents the current state of the circuit breaker.
 #### Usage
 
 ```typescript
-import { CircuitBreaker, CircuitState } from "zenvark";
+import { CircuitBreaker, CircuitState } from 'zenvark';
 
 const circuitBreaker = new CircuitBreaker({
   // ...
   onStateChange: (state: CircuitState) => {
     if (state === CircuitState.OPEN) {
-      console.log("Circuit opened - service is unhealthy");
+      console.log('Circuit opened - service is unhealthy');
     } else if (state === CircuitState.CLOSED) {
-      console.log("Circuit closed - service recovered");
+      console.log('Circuit closed - service recovered');
     }
   },
 });
@@ -144,15 +140,15 @@ Represents the leader election role of a circuit breaker instance.
 #### Usage
 
 ```typescript
-import { CircuitBreaker, CircuitRole } from "zenvark";
+import { CircuitBreaker, CircuitRole } from 'zenvark';
 
 const circuitBreaker = new CircuitBreaker({
   // ...
   onRoleChange: (role: CircuitRole) => {
     if (role === CircuitRole.LEADER) {
-      console.log("This instance became the leader");
+      console.log('This instance became the leader');
     } else if (role === CircuitRole.FOLLOWER) {
-      console.log("This instance is now a follower");
+      console.log('This instance is now a follower');
     }
   },
 });
@@ -179,7 +175,7 @@ Indicates the reason for a health check execution.
 #### Usage
 
 ```typescript
-import { CircuitBreaker, HealthCheckType } from "zenvark";
+import { CircuitBreaker, HealthCheckType } from 'zenvark';
 
 const circuitBreaker = new CircuitBreaker({
   // ...
@@ -188,10 +184,10 @@ const circuitBreaker = new CircuitBreaker({
     async check(type: HealthCheckType, signal: AbortSignal) {
       if (type === HealthCheckType.RECOVERY) {
         // More thorough health check during recovery
-        await fetch("https://api.example.com/health/deep", { signal });
+        await fetch('https://api.example.com/health/deep', { signal });
       } else if (type === HealthCheckType.IDLE) {
         // Lightweight health check during idle periods
-        await fetch("https://api.example.com/health", { signal });
+        await fetch('https://api.example.com/health', { signal });
       }
     },
   },
@@ -214,7 +210,7 @@ Represents the outcome of a protected call execution.
 #### Usage
 
 ```typescript
-import { CallResult, registerZenvarkTelemetry } from "zenvark";
+import { CallResult, registerZenvarkTelemetry } from 'zenvark';
 
 registerZenvarkTelemetry({
   onCallEnd({ result, durationMs }) {

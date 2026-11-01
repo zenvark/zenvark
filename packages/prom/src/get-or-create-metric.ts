@@ -9,12 +9,7 @@ import {
 } from '@prometheus-io/client';
 
 const getTypeParam = (obj: unknown): string | undefined => {
-  if (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'type' in obj &&
-    typeof obj.type === 'string'
-  ) {
+  if (typeof obj === 'object' && obj !== null && 'type' in obj && typeof obj.type === 'string') {
     return obj.type;
   }
 };

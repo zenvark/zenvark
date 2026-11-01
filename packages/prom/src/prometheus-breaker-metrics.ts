@@ -1,9 +1,4 @@
-import type {
-  Counter,
-  Gauge,
-  Histogram,
-  Registry,
-} from '@prometheus-io/client';
+import type { Counter, Gauge, Histogram, Registry } from '@prometheus-io/client';
 import type {
   BreakerMetricsRecorder,
   RecordBlockedRequestParams,

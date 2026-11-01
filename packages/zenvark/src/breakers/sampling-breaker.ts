@@ -40,9 +40,7 @@ export class SamplingBreaker implements BreakerStrategy {
 
     const cutoffTime = latestEvent.timestamp - this.duration;
 
-    const timeWindowEvents = events.filter(
-      (event) => event.timestamp >= cutoffTime,
-    );
+    const timeWindowEvents = events.filter((event) => event.timestamp >= cutoffTime);
 
     if (timeWindowEvents.length < this.minimumNumberOfCalls) {
       return false;

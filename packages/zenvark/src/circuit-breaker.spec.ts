@@ -3,16 +3,8 @@ import { redis } from '../test/setup-redis.ts';
 import { AdaptiveSemaphore } from './adaptive-semaphore.ts';
 import { ConstantBackoff } from './backoffs/constant-backoff.ts';
 import { ConsecutiveBreaker } from './breakers/consecutive-breaker.ts';
-import {
-  type BreakerSemaphoreOptions,
-  CircuitBreaker,
-} from './circuit-breaker.ts';
-import {
-  CircuitRole,
-  CircuitState,
-  type HealthCheckType,
-  LeaseOutcome,
-} from './constants.ts';
+import { type BreakerSemaphoreOptions, CircuitBreaker } from './circuit-breaker.ts';
+import { CircuitRole, CircuitState, type HealthCheckType, LeaseOutcome } from './constants.ts';
 import { AcquireTimeoutError } from './errors/acquire-timeout-error.ts';
 import { CircuitOpenError } from './errors/circuit-open-error.ts';
 import type { SemaphoreClassConfig } from './types.ts';
@@ -93,25 +85,19 @@ describe('CircuitBreaker', () => {
 
     await Promise.all([circuitA.start(), circuitB.start()]);
 
-    await expect(
-      circuitA.execute(() => Promise.reject('fail')),
-    ).rejects.toThrow();
-    await expect(
-      circuitA.execute(() => Promise.reject('fail')),
-    ).rejects.toThrow();
+    await expect(circuitA.execute(() => Promise.reject('fail'))).rejects.toThrow();
+    await expect(circuitA.execute(() => Promise.reject('fail'))).rejects.toThrow();
 
     await vi.waitUntil(
-      () =>
-        circuitA.state === CircuitState.OPEN &&
-        circuitB.state === CircuitState.OPEN,
+      () => circuitA.state === CircuitState.OPEN && circuitB.state === CircuitState.OPEN,
     );
 
-    await expect(
-      circuitA.execute(() => Promise.resolve('blocked')),
-    ).rejects.toBeInstanceOf(CircuitOpenError);
-    await expect(
-      circuitB.execute(() => Promise.resolve('blocked')),
-    ).rejects.toBeInstanceOf(CircuitOpenError);
+    await expect(circuitA.execute(() => Promise.resolve('blocked'))).rejects.toBeInstanceOf(
+      CircuitOpenError,
+    );
+    await expect(circuitB.execute(() => Promise.resolve('blocked'))).rejects.toBeInstanceOf(
+      CircuitOpenError,
+    );
 
     await Promise.all([circuitA.stop(), circuitB.stop()]);
   });
@@ -140,9 +126,9 @@ describe('CircuitBreaker', () => {
       interval: 1,
     });
 
-    await expect(
-      circuit.execute(() => Promise.resolve('blocked')),
-    ).rejects.toBeInstanceOf(CircuitOpenError);
+    await expect(circuit.execute(() => Promise.resolve('blocked'))).rejects.toBeInstanceOf(
+      CircuitOpenError,
+    );
 
     await vi.waitUntil(() => circuit.state === CircuitState.CLOSED);
 
@@ -192,9 +178,7 @@ describe('CircuitBreaker', () => {
 
     await circuit.start();
 
-    await expect(
-      circuit.execute(() => Promise.reject('fail')),
-    ).rejects.toThrow();
+    await expect(circuit.execute(() => Promise.reject('fail'))).rejects.toThrow();
 
     await vi.waitUntil(() => circuit.state === CircuitState.OPEN, {
       interval: 1,
@@ -363,9 +347,7 @@ describe('CircuitBreaker', () => {
         metrics,
       });
 
-      await expect(
-        circuit.execute(() => Promise.reject(new Error('429'))),
-      ).rejects.toThrow('429');
+      await expect(circuit.execute(() => Promise.reject(new Error('429')))).rejects.toThrow('429');
 
       // the semaphore halved its limit, but the breaker recorded a plain failure
       expect(await redis.get(SEMAPHORE_LIMIT_KEY)).toBe('5');
@@ -385,9 +367,9 @@ describe('CircuitBreaker', () => {
       const blocker = await semaphore.acquire({ timeoutMs: 1_000 });
       const fn = vi.fn(() => Promise.resolve('never'));
 
-      await expect(
-        circuit.execute(fn, { lease: { timeoutMs: 250 } }),
-      ).rejects.toBeInstanceOf(AcquireTimeoutError);
+      await expect(circuit.execute(fn, { lease: { timeoutMs: 250 } })).rejects.toBeInstanceOf(
+        AcquireTimeoutError,
+      );
 
       expect(fn).not.toHaveBeenCalled();
       expect(metrics.recordCall).not.toHaveBeenCalled();
@@ -405,17 +387,17 @@ describe('CircuitBreaker', () => {
         metrics,
       });
 
-      await expect(
-        circuit.execute(() => Promise.reject(new Error('boom'))),
-      ).rejects.toThrow('boom');
+      await expect(circuit.execute(() => Promise.reject(new Error('boom')))).rejects.toThrow(
+        'boom',
+      );
       await vi.waitUntil(() => circuit.state === CircuitState.OPEN, {
         interval: 1,
       });
 
       const acquireSpy = vi.spyOn(semaphore, 'acquire');
-      await expect(
-        circuit.execute(() => Promise.resolve('blocked')),
-      ).rejects.toBeInstanceOf(CircuitOpenError);
+      await expect(circuit.execute(() => Promise.resolve('blocked'))).rejects.toBeInstanceOf(
+        CircuitOpenError,
+      );
 
       expect(acquireSpy).not.toHaveBeenCalled();
       expect(metrics.recordBlockedRequest).toHaveBeenCalledWith({
@@ -455,9 +437,9 @@ describe('CircuitBreaker', () => {
         .catch((err: unknown) => err);
       await delay(100);
 
-      await expect(
-        tripper.execute(() => Promise.reject(new Error('boom'))),
-      ).rejects.toThrow('boom');
+      await expect(tripper.execute(() => Promise.reject(new Error('boom')))).rejects.toThrow(
+        'boom',
+      );
 
       expect(await pending).toBeInstanceOf(CircuitOpenError);
       expect(metrics.recordBlockedRequest).toHaveBeenCalledWith({
@@ -502,9 +484,9 @@ describe('CircuitBreaker', () => {
         onError,
       });
 
-      await expect(
-        circuit.execute(() => Promise.reject(new Error('boom'))),
-      ).rejects.toThrow('boom');
+      await expect(circuit.execute(() => Promise.reject(new Error('boom')))).rejects.toThrow(
+        'boom',
+      );
 
       expect(await redis.get(SEMAPHORE_LIMIT_KEY)).toBe('10');
       expect(onError).toHaveBeenCalled();

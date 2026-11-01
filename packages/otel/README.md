@@ -15,8 +15,8 @@ Requires Node.js 24 or later.
 Register the integration once at startup, before or after creating breakers:
 
 ```typescript
-import { registerZenvarkTelemetry } from "zenvark";
-import { ZenvarkOtel } from "@zenvark/otel";
+import { ZenvarkOtel } from '@zenvark/otel';
+import { registerZenvarkTelemetry } from 'zenvark';
 
 registerZenvarkTelemetry(new ZenvarkOtel());
 ```

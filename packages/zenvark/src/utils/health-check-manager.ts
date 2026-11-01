@@ -39,9 +39,7 @@ export class HealthCheckManager extends AbstractLifecycleManager<HealthCheckStar
     this.runCheck = options.runCheck;
   }
 
-  protected override startInternal(
-    options: HealthCheckStartOptions,
-  ): Promise<void> {
+  protected override startInternal(options: HealthCheckStartOptions): Promise<void> {
     const abortController = new AbortController();
     this.healthCheckLoop = {
       abortController,

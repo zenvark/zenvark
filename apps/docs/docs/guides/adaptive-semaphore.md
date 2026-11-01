@@ -11,16 +11,16 @@ Where the circuit breaker is reactive (it cuts callers off from a dependency tha
 ## Quick Start
 
 ```typescript
-import { Redis } from "ioredis";
-import { AdaptiveSemaphore, LeaseOutcome } from "zenvark";
+import { Redis } from 'ioredis';
+import { AdaptiveSemaphore, LeaseOutcome } from 'zenvark';
 
-const redis = new Redis("redis://localhost:6379");
+const redis = new Redis('redis://localhost:6379');
 
 const semaphore = new AdaptiveSemaphore({
-  id: "my-provider-api",
+  id: 'my-provider-api',
   redis,
   initialLimit: 10,
-  onError: (err) => console.error("Semaphore error:", err),
+  onError: (err) => console.error('Semaphore error:', err),
 });
 
 // No start step — construction is passive. The first acquire seeds the
@@ -52,9 +52,7 @@ try {
   await lease.release(LeaseOutcome.SUCCESS);
   return result;
 } catch (err) {
-  await lease.release(
-    isRateLimitError(err) ? LeaseOutcome.THROTTLED : LeaseOutcome.FAILURE,
-  );
+  await lease.release(isRateLimitError(err) ? LeaseOutcome.THROTTLED : LeaseOutcome.FAILURE);
   throw err;
 }
 ```
@@ -116,7 +114,7 @@ A class with a `reservedShare` gets a slice of capacity that other classes can n
 
 ```typescript
 const semaphore = new AdaptiveSemaphore({
-  id: "my-provider-api",
+  id: 'my-provider-api',
   redis,
   initialLimit: 20,
   classes: {
@@ -125,9 +123,7 @@ const semaphore = new AdaptiveSemaphore({
   },
 });
 
-await semaphore.withLease({ class: "interactive", timeoutMs: 10_000 }, () =>
-  callProvider(),
-);
+await semaphore.withLease({ class: 'interactive', timeoutMs: 10_000 }, () => callProvider());
 ```
 
 Leases cannot be preempted, so the reserve is never lent out — the reserved slice idles when its class has no traffic.
@@ -149,7 +145,7 @@ When both primitives guard the same call, pass the semaphore to the breaker at c
 
 ```typescript
 const semaphore = new AdaptiveSemaphore({
-  id: "my-provider-api",
+  id: 'my-provider-api',
   redis,
   initialLimit: 10,
   classes: {
@@ -159,7 +155,7 @@ const semaphore = new AdaptiveSemaphore({
 });
 
 const circuitBreaker = new CircuitBreaker({
-  id: "my-service-api",
+  id: 'my-service-api',
   redis,
   breaker: new ConsecutiveBreaker({ threshold: 5 }),
   health,
@@ -175,7 +171,7 @@ await circuitBreaker.start();
 // Every execute is now gated through the semaphore. The optional second
 // argument overrides the lease defaults per call.
 const result = await circuitBreaker.execute(() => callProvider(), {
-  lease: { class: "interactive" },
+  lease: { class: 'interactive' },
 });
 ```
 

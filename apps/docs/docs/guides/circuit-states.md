@@ -121,15 +121,15 @@ See [Health Checks](./healthchecks.md) for more details on implementing health c
 ### Using Callbacks
 
 ```typescript
-import { CircuitBreaker, CircuitState } from "zenvark";
+import { CircuitBreaker, CircuitState } from 'zenvark';
 
 const circuitBreaker = new CircuitBreaker({
   // ...
   onStateChange: (state: CircuitState) => {
     if (state === CircuitState.OPEN) {
-      console.error("Circuit opened - service degraded");
+      console.error('Circuit opened - service degraded');
     } else {
-      console.info("Circuit closed - service recovered");
+      console.info('Circuit closed - service recovered');
     }
   },
 });
@@ -138,7 +138,7 @@ const circuitBreaker = new CircuitBreaker({
 ### Checking Current State
 
 ```typescript
-import { CircuitState } from "zenvark";
+import { CircuitState } from 'zenvark';
 
 // Read-only property
 const currentState = circuitBreaker.state;

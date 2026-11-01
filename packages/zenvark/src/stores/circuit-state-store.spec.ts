@@ -46,21 +46,11 @@ describe('CircuitStateStore', () => {
     expect(entries).toEqual([
       [
         expect.any(String),
-        [
-          'state',
-          CircuitState.OPEN,
-          'timestamp',
-          expect.stringMatching(/^\d+$/),
-        ],
+        ['state', CircuitState.OPEN, 'timestamp', expect.stringMatching(/^\d+$/)],
       ],
       [
         expect.any(String),
-        [
-          'state',
-          CircuitState.CLOSED,
-          'timestamp',
-          expect.stringMatching(/^\d+$/),
-        ],
+        ['state', CircuitState.CLOSED, 'timestamp', expect.stringMatching(/^\d+$/)],
       ],
     ]);
   });
@@ -132,12 +122,8 @@ describe('CircuitStateStore', () => {
 
     await store1.setState(CircuitState.OPEN);
 
-    await vi.waitUntil(
-      () => onStateChange1.mock.calls[0]?.[0] === CircuitState.OPEN,
-    );
-    await vi.waitUntil(
-      () => onStateChange2.mock.calls[0]?.[0] === CircuitState.OPEN,
-    );
+    await vi.waitUntil(() => onStateChange1.mock.calls[0]?.[0] === CircuitState.OPEN);
+    await vi.waitUntil(() => onStateChange2.mock.calls[0]?.[0] === CircuitState.OPEN);
     await vi.waitUntil(() => store1.getState() === CircuitState.OPEN);
     await vi.waitUntil(() => store2.getState() === CircuitState.OPEN);
 

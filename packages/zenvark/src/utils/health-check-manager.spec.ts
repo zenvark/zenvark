@@ -28,11 +28,7 @@ describe('HealthCheckManager', () => {
 
     await vi.waitUntil(() => attempts.length >= 3);
 
-    expect(calls).toEqual([
-      HealthCheckType.IDLE,
-      HealthCheckType.IDLE,
-      HealthCheckType.IDLE,
-    ]);
+    expect(calls).toEqual([HealthCheckType.IDLE, HealthCheckType.IDLE, HealthCheckType.IDLE]);
     expect(attempts).toEqual([1, 2, 3]);
   });
 

@@ -49,13 +49,13 @@ If you don't provide an `onError` callback, errors are logged to `console.error`
 For production applications, provide a custom error handler to integrate with your logging and monitoring systems:
 
 ```typescript
-const breakerId = "my-service-api";
+const breakerId = 'my-service-api';
 
 const circuitBreaker = new CircuitBreaker({
   id: breakerId,
   // ...
   onError: (err: Error) => {
-    logger.error("Circuit breaker error", {
+    logger.error('Circuit breaker error', {
       breakerId,
       cause: err,
     });

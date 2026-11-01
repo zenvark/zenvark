@@ -31,9 +31,7 @@ export class RedisStreamReader extends AbstractLifecycleManager {
   private readonly redis: Redis;
   private readonly streamKey: string;
   private readonly getLastId: () => string;
-  private readonly onEntries: (
-    entries: [string, string[]][],
-  ) => void | Promise<void>;
+  private readonly onEntries: (entries: [string, string[]][]) => void | Promise<void>;
   private readonly onError: (err: unknown) => void;
 
   private readerLoop: ReaderLoop | null = null;
@@ -77,10 +75,7 @@ export class RedisStreamReader extends AbstractLifecycleManager {
     this.readerLoop = null;
   }
 
-  private async listenLoop(
-    signal: AbortSignal,
-    redisListener: Redis,
-  ): Promise<void> {
+  private async listenLoop(signal: AbortSignal, redisListener: Redis): Promise<void> {
     while (!signal.aborted) {
       try {
         const result = await redisListener.xread(

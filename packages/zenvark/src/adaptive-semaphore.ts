@@ -1,10 +1,6 @@
 import type { Redis } from 'ioredis';
 import { Semaphore } from 'redis-semaphore';
-import {
-  AcquireResult,
-  LeaseOutcome,
-  LimitChangeDirection,
-} from './constants.ts';
+import { AcquireResult, LeaseOutcome, LimitChangeDirection } from './constants.ts';
 import { AcquireTimeoutError } from './errors/acquire-timeout-error.ts';
 import { SemaphoreDisposedError } from './errors/semaphore-disposed-error.ts';
 import { SemaphoreUnavailableError } from './errors/semaphore-unavailable-error.ts';
@@ -245,8 +241,7 @@ export class AdaptiveSemaphore {
     this.minLimit = options.minLimit ?? DEFAULT_MIN_LIMIT;
     this.maxLimit = options.maxLimit ?? DEFAULT_MAX_LIMIT;
     this.leaseTtlMs = options.leaseTtlMs ?? DEFAULT_LEASE_TTL_MS;
-    this.decreaseFactor =
-      options.aimd?.decreaseFactor ?? DEFAULT_DECREASE_FACTOR;
+    this.decreaseFactor = options.aimd?.decreaseFactor ?? DEFAULT_DECREASE_FACTOR;
     this.increaseStep = options.aimd?.increaseStep ?? DEFAULT_INCREASE_STEP;
     this.windowMs = options.aimd?.windowMs ?? DEFAULT_WINDOW_MS;
     this.cooldownMs = options.aimd?.cooldownMs ?? DEFAULT_COOLDOWN_MS;
@@ -285,9 +280,7 @@ export class AdaptiveSemaphore {
       throw new Error('timeoutMs must be a non-negative number');
     }
     if (options.class !== undefined && !(options.class in this.classes)) {
-      throw new Error(
-        `Unknown semaphore class "${options.class}" for semaphore "${this.id}"`,
-      );
+      throw new Error(`Unknown semaphore class "${options.class}" for semaphore "${this.id}"`);
     }
 
     const controller = new AbortController();
@@ -307,19 +300,14 @@ export class AdaptiveSemaphore {
    * SUCCESS when it resolves, otherwise whatever `outcomeOnError` returns
    * (FAILURE when omitted). The callback's error is rethrown.
    */
-  async withLease<T>(
-    options: WithLeaseOptions,
-    fn: () => Promise<T>,
-  ): Promise<T> {
+  async withLease<T>(options: WithLeaseOptions, fn: () => Promise<T>): Promise<T> {
     const lease = await this.acquire(options);
     try {
       const result = await fn();
       await lease.release(LeaseOutcome.SUCCESS);
       return result;
     } catch (err) {
-      await lease.release(
-        this.resolveErrorOutcome(options.outcomeOnError, err),
-      );
+      await lease.release(this.resolveErrorOutcome(options.outcomeOnError, err));
       throw err;
     }
   }
@@ -379,10 +367,7 @@ export class AdaptiveSemaphore {
             // jittered interval rather than spinning against Redis.
             retryInterval: this.retryIntervalFor(deadline),
             onLockLost: (err) =>
-              this.handleError(
-                `Lease on semaphore "${this.id}" was lost before release`,
-                err,
-              ),
+              this.handleError(`Lease on semaphore "${this.id}" was lost before release`, err),
           },
         );
         if (await gate.tryAcquire(signal)) {
@@ -392,13 +377,7 @@ export class AdaptiveSemaphore {
         if (signal.aborted) {
           throw signal.reason ?? err;
         }
-        return await this.acquireWithFallback(
-          options,
-          signal,
-          startedAt,
-          deadline,
-          err,
-        );
+        return await this.acquireWithFallback(options, signal, startedAt, deadline, err);
       }
 
       if (acquiredGate) {
@@ -472,10 +451,7 @@ export class AdaptiveSemaphore {
           await this.maybeAdaptUp();
         }
       } catch (err) {
-        this.handleError(
-          `Failed to adapt the limit of semaphore "${this.id}"`,
-          err,
-        );
+        this.handleError(`Failed to adapt the limit of semaphore "${this.id}"`, err);
       }
     });
   }
@@ -499,13 +475,7 @@ export class AdaptiveSemaphore {
     this.metrics?.recordThrottle?.({ id: this.id });
     this.telemetry.emit('onThrottle', { semaphoreId: this.id });
     await this.redis.set(this.throttledKey, '1', 'PX', this.windowMs);
-    const claimed = await this.redis.set(
-      this.cooldownKey,
-      '1',
-      'PX',
-      this.cooldownMs,
-      'NX',
-    );
+    const claimed = await this.redis.set(this.cooldownKey, '1', 'PX', this.cooldownMs, 'NX');
     if (claimed === null) {
       return;
     }
@@ -528,20 +498,11 @@ export class AdaptiveSemaphore {
    * window, fleet-wide.
    */
   private async maybeAdaptUp(): Promise<void> {
-    const [demand, throttled] = await this.redis.mget(
-      this.demandKey,
-      this.throttledKey,
-    );
+    const [demand, throttled] = await this.redis.mget(this.demandKey, this.throttledKey);
     if (demand === null || throttled !== null) {
       return;
     }
-    const claimed = await this.redis.set(
-      this.increaseKey,
-      '1',
-      'PX',
-      this.windowMs,
-      'NX',
-    );
+    const claimed = await this.redis.set(this.increaseKey, '1', 'PX', this.windowMs, 'NX');
     if (claimed === null) {
       return;
     }
@@ -601,9 +562,7 @@ export class AdaptiveSemaphore {
     let direction: LimitChangeDirection = LimitChangeDirection.INIT;
     if (this.cachedLimit !== null) {
       direction =
-        limit > this.cachedLimit
-          ? LimitChangeDirection.INCREASE
-          : LimitChangeDirection.DECREASE;
+        limit > this.cachedLimit ? LimitChangeDirection.INCREASE : LimitChangeDirection.DECREASE;
     }
     this.cachedLimit = limit;
     this.metrics?.recordLimitChange?.({ id: this.id, limit, direction });
@@ -631,8 +590,7 @@ export class AdaptiveSemaphore {
 
   private retryIntervalFor(deadline: number): number {
     const jitter =
-      RETRY_INTERVAL_MIN_MS +
-      Math.random() * (RETRY_INTERVAL_MAX_MS - RETRY_INTERVAL_MIN_MS);
+      RETRY_INTERVAL_MIN_MS + Math.random() * (RETRY_INTERVAL_MAX_MS - RETRY_INTERVAL_MIN_MS);
     const remaining = deadline - Date.now();
     return Math.max(1, Math.round(Math.min(jitter, remaining)));
   }
@@ -640,34 +598,22 @@ export class AdaptiveSemaphore {
   private trackAcquired(className?: string): void {
     this.inflightTotal += 1;
     if (className !== undefined) {
-      this.inflightPerClass.set(
-        className,
-        (this.inflightPerClass.get(className) ?? 0) + 1,
-      );
+      this.inflightPerClass.set(className, (this.inflightPerClass.get(className) ?? 0) + 1);
     }
   }
 
   private trackReleased(className?: string): void {
     this.inflightTotal -= 1;
     if (className !== undefined) {
-      this.inflightPerClass.set(
-        className,
-        (this.inflightPerClass.get(className) ?? 1) - 1,
-      );
+      this.inflightPerClass.set(className, (this.inflightPerClass.get(className) ?? 1) - 1);
     }
   }
 
-  private recordAcquired(
-    className: string | undefined,
-    startedAt: number,
-  ): void {
+  private recordAcquired(className: string | undefined, startedAt: number): void {
     this.recordAcquire(className, AcquireResult.ACQUIRED, startedAt);
   }
 
-  private recordTimedOut(
-    className: string | undefined,
-    startedAt: number,
-  ): void {
+  private recordTimedOut(className: string | undefined, startedAt: number): void {
     this.recordAcquire(className, AcquireResult.TIMEOUT, startedAt);
   }
 
@@ -756,8 +702,7 @@ export class AdaptiveSemaphore {
     if (options.initialLimit < minLimit || options.initialLimit > maxLimit) {
       throw new Error('initialLimit must be within [minLimit, maxLimit]');
     }
-    const decreaseFactor =
-      options.aimd?.decreaseFactor ?? DEFAULT_DECREASE_FACTOR;
+    const decreaseFactor = options.aimd?.decreaseFactor ?? DEFAULT_DECREASE_FACTOR;
     if (!(decreaseFactor > 0 && decreaseFactor < 1)) {
       throw new Error('aimd.decreaseFactor must be within (0, 1)');
     }
@@ -786,8 +731,7 @@ export class AdaptiveSemaphore {
     if (
       options.onUnavailable !== undefined &&
       options.onUnavailable !== 'throw' &&
-      (!Number.isInteger(options.onUnavailable.localLimit) ||
-        options.onUnavailable.localLimit < 1)
+      (!Number.isInteger(options.onUnavailable.localLimit) || options.onUnavailable.localLimit < 1)
     ) {
       throw new Error('onUnavailable.localLimit must be an integer >= 1');
     }

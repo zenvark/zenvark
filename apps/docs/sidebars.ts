@@ -28,11 +28,7 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'API Reference',
       collapsed: false,
-      items: [
-        'api/circuit-breaker',
-        'api/enums-and-errors',
-        'api/interfaces-and-types',
-      ],
+      items: ['api/circuit-breaker', 'api/enums-and-errors', 'api/interfaces-and-types'],
     },
   ],
 };

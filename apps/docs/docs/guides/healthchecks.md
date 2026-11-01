@@ -26,7 +26,7 @@ When the circuit opens due to failures, the leader instance automatically begins
 Recovery health checks use a backoff strategy to control retry timing. See the [Backoff Strategies](../strategies/backoff-strategies.md) guide for available options.
 
 ```typescript
-import { CircuitBreaker, ExponentialBackoff } from "zenvark";
+import { CircuitBreaker, ExponentialBackoff } from 'zenvark';
 
 const circuitBreaker = new CircuitBreaker({
   health: {
@@ -37,7 +37,7 @@ const circuitBreaker = new CircuitBreaker({
       maxDelayMs: 30_000,
     }),
     async check(type: HealthCheckType, signal: AbortSignal) {
-      await fetch("https://api.example.com/health", { signal });
+      await fetch('https://api.example.com/health', { signal });
     },
   },
 });
@@ -76,7 +76,7 @@ const circuitBreaker = new CircuitBreaker({
   health: {
     backoff: new ConstantBackoff({ delayMs: 5000 }),
     async check(type: HealthCheckType, signal: AbortSignal) {
-      await fetch("https://api.example.com/health", { signal });
+      await fetch('https://api.example.com/health', { signal });
     },
     idleProbeIntervalMs: 30_000, // Check every 30 seconds when idle
   },

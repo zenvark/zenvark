@@ -31,8 +31,9 @@ npm install @zenvark/prom @prometheus-io/client
 Here's a complete example showing how to set up and use a circuit breaker:
 
 ```typescript
-import { Redis } from "ioredis";
-import { register } from "@prometheus-io/client";
+import { register } from '@prometheus-io/client';
+import { ZenvarkProm } from '@zenvark/prom';
+import { Redis } from 'ioredis';
 import {
   CircuitBreaker,
   ConsecutiveBreaker,
@@ -42,46 +43,45 @@ import {
   CircuitRole,
   CircuitState,
   registerZenvarkTelemetry,
-} from "zenvark";
-import { ZenvarkProm } from "@zenvark/prom";
+} from 'zenvark';
 
 // Report Prometheus metrics for every breaker and semaphore in the process
 registerZenvarkTelemetry(
   new ZenvarkProm({
     registry: register, // Prometheus registry instance
-    customLabels: { service: "my-api" }, // Add custom labels to your metrics
+    customLabels: { service: 'my-api' }, // Add custom labels to your metrics
   }),
 );
 
-const redis = new Redis("redis://localhost:6379");
+const redis = new Redis('redis://localhost:6379');
 
 const circuitBreaker = new CircuitBreaker({
-  id: "my-service-api", // Unique ID for this circuit breaker
+  id: 'my-service-api', // Unique ID for this circuit breaker
   redis,
   breaker: new ConsecutiveBreaker({ threshold: 5 }), // Open after 5 consecutive failures
   health: {
     backoff: new ConstantBackoff({ delayMs: 5000 }), // Wait 5 seconds between health checks
     async check(type: HealthCheckType, signal: AbortSignal) {
       // Your health check logic
-      const response = await fetch("https://api.example.com/health", {
+      const response = await fetch('https://api.example.com/health', {
         signal,
       });
-      if (!response.ok) throw new Error("Health check failed");
+      if (!response.ok) throw new Error('Health check failed');
     },
     idleProbeIntervalMs: 30_000, // Run first probe 30s after last call, then every 30s while idle
   },
   onError: (err: Error) => {
     // Optional: Handle internal circuit breaker errors.
     // If not provided, errors are logged to console.error by default.
-    console.error("Circuit breaker error:", err);
+    console.error('Circuit breaker error:', err);
   },
   onRoleChange: (role: CircuitRole) => {
     // Observe leader election role changes
-    console.log("Circuit role changed to", role);
+    console.log('Circuit role changed to', role);
   },
   onStateChange: (state: CircuitState) => {
     // Observe state transitions across the cluster
-    console.log("Circuit state changed to", state);
+    console.log('Circuit state changed to', state);
   },
 });
 
@@ -92,9 +92,9 @@ await circuitBreaker.start();
 try {
   const result = await circuitBreaker.execute(async () => {
     // Your potentially failing operation
-    return await fetch("https://api.example.com/data");
+    return await fetch('https://api.example.com/data');
   });
-  console.log("Success:", result);
+  console.log('Success:', result);
 } catch (err) {
   // isInstance() also matches across realms and duplicate package copies
   if (CircuitOpenError.isInstance(err)) {
@@ -116,7 +116,7 @@ Create a circuit breaker instance with your desired configuration:
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-  id: "my-service-api",
+  id: 'my-service-api',
   redis,
   breaker: new ConsecutiveBreaker({ threshold: 5 }),
   health: {

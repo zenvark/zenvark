@@ -15,9 +15,8 @@ const FeatureList: FeatureItem[] = [
     icon: '🌐',
     description: (
       <>
-        Multiple instances coordinate circuit state using Redis, ensuring
-        consistent behavior across your services. State changes propagate in
-        real-time to all instances.
+        Multiple instances coordinate circuit state using Redis, ensuring consistent behavior across
+        your services. State changes propagate in real-time to all instances.
       </>
     ),
   },
@@ -26,9 +25,8 @@ const FeatureList: FeatureItem[] = [
     icon: '⚙️',
     description: (
       <>
-        Choose from multiple breaker strategies (consecutive, count, sampling)
-        and backoff strategies (constant, exponential) to match your specific
-        requirements.
+        Choose from multiple breaker strategies (consecutive, count, sampling) and backoff
+        strategies (constant, exponential) to match your specific requirements.
       </>
     ),
   },
@@ -37,9 +35,8 @@ const FeatureList: FeatureItem[] = [
     icon: '👑',
     description: (
       <>
-        Automatic leader election ensures a single instance manages health
-        checks and state transitions, preventing race conditions and reducing
-        load on protected services.
+        Automatic leader election ensures a single instance manages health checks and state
+        transitions, preventing race conditions and reducing load on protected services.
       </>
     ),
   },
@@ -48,9 +45,8 @@ const FeatureList: FeatureItem[] = [
     icon: '⚡',
     description: (
       <>
-        Real-time state coordination powered by Redis Streams. All instances
-        receive immediate updates when circuit state changes, ensuring fast
-        response to failures.
+        Real-time state coordination powered by Redis Streams. All instances receive immediate
+        updates when circuit state changes, ensuring fast response to failures.
       </>
     ),
   },
@@ -59,9 +55,8 @@ const FeatureList: FeatureItem[] = [
     icon: '📊',
     description: (
       <>
-        Native Prometheus metrics integration provides visibility into circuit
-        health, call durations, blocked requests, and health check results out
-        of the box.
+        Native Prometheus metrics integration provides visibility into circuit health, call
+        durations, blocked requests, and health check results out of the box.
       </>
     ),
   },
@@ -70,8 +65,8 @@ const FeatureList: FeatureItem[] = [
     icon: '🚀',
     description: (
       <>
-        Battle-tested patterns with proper error handling, graceful shutdown,
-        and comprehensive documentation.
+        Battle-tested patterns with proper error handling, graceful shutdown, and comprehensive
+        documentation.
       </>
     ),
   },

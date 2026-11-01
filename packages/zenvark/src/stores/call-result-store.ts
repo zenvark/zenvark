@@ -25,9 +25,7 @@ export class CallResultStore extends AbstractLifecycleManager {
   private readonly streamReader: RedisStreamReader;
   private readonly maxLen: number;
   private readonly onStreamWriteError: (err: unknown) => void;
-  private readonly onEventsAdded: (
-    events: CallResultEvent[],
-  ) => void | Promise<void>;
+  private readonly onEventsAdded: (events: CallResultEvent[]) => void | Promise<void>;
 
   private events: CallResultEvent[] = [];
 
@@ -44,7 +42,7 @@ export class CallResultStore extends AbstractLifecycleManager {
       streamKey: this.redisStreamKey,
       getLastId: () => this.events.at(-1)?.id ?? '0',
       onEntries: (entries) => {
-        const events = entries.map(this.mapEntryToCallResultEvent);
+        const events = entries.map((entry) => this.mapEntryToCallResultEvent(entry));
         this.pushEvents(events);
       },
       onError: options.onStreamReadError,
@@ -54,7 +52,7 @@ export class CallResultStore extends AbstractLifecycleManager {
   protected override async startInternal(): Promise<void> {
     this.events = await this.getInitialEvents();
     if (this.events.length > 0) {
-      this.onEventsAdded(this.events);
+      void this.onEventsAdded(this.events);
     }
     await this.streamReader.start();
   }
@@ -65,16 +63,10 @@ export class CallResultStore extends AbstractLifecycleManager {
   }
 
   private async getInitialEvents(): Promise<CallResultEvent[]> {
-    const entries = await this.redis.xrevrange(
-      this.redisStreamKey,
-      '+',
-      '-',
-      'COUNT',
-      this.maxLen,
-    );
+    const entries = await this.redis.xrevrange(this.redisStreamKey, '+', '-', 'COUNT', this.maxLen);
 
     const orderedEntries = entries.toReversed();
-    return orderedEntries.map(this.mapEntryToCallResultEvent);
+    return orderedEntries.map((entry) => this.mapEntryToCallResultEvent(entry));
   }
 
   getEvents(): CallResultEvent[] {
@@ -99,9 +91,7 @@ export class CallResultStore extends AbstractLifecycleManager {
     }
   }
 
-  private mapEntryToCallResultEvent(
-    entry: [string, string[]],
-  ): CallResultEvent {
+  private mapEntryToCallResultEvent(entry: [string, string[]]): CallResultEvent {
     const [id, fields] = entry;
 
     return {
@@ -118,6 +108,6 @@ export class CallResultStore extends AbstractLifecycleManager {
       this.events.splice(0, this.events.length - this.maxLen);
     }
 
-    this.onEventsAdded(this.events);
+    void this.onEventsAdded(this.events);
   }
 }
