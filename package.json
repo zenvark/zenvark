@@ -15,8 +15,8 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "check": "oxfmt --check . '!packages/**' '!apps/**' && turbo run check",
-    "check:fix": "turbo run check:fix && oxfmt . '!packages/**' '!apps/**'",
+    "check": "oxfmt --check . '!packages/**' '!apps/**' && oxlint --ignore-pattern 'packages/**' --ignore-pattern 'apps/**' && turbo run check",
+    "check:fix": "turbo run check:fix && oxlint --fix --ignore-pattern 'packages/**' --ignore-pattern 'apps/**' && oxfmt . '!packages/**' '!apps/**'",
     "test:ci": "turbo run test:ci --concurrency=1",
     "changeset": "changeset",
     "version-packages": "changeset version",
