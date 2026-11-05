@@ -11,15 +11,12 @@ Circuit breakers and adaptive semaphores report what they do to **telemetry inte
 Register integrations once at startup. Every circuit breaker and semaphore in the process uses them, including ones created before the registration:
 
 ```typescript
-import { register } from "@prometheus-io/client";
-import { registerZenvarkTelemetry } from "zenvark";
-import { ZenvarkOtel } from "@zenvark/otel";
-import { ZenvarkProm } from "@zenvark/prom";
+import { register } from '@prometheus-io/client';
+import { ZenvarkOtel } from '@zenvark/otel';
+import { ZenvarkProm } from '@zenvark/prom';
+import { registerZenvarkTelemetry } from 'zenvark';
 
-registerZenvarkTelemetry(
-  new ZenvarkProm({ registry: register }),
-  new ZenvarkOtel(),
-);
+registerZenvarkTelemetry(new ZenvarkProm({ registry: register }), new ZenvarkOtel());
 ```
 
 Override the integrations for a single breaker or semaphore with its `telemetry` option:
@@ -53,14 +50,14 @@ npm install @zenvark/prom @prometheus-io/client
 ### Configuration
 
 ```typescript
-import { register } from "@prometheus-io/client";
-import { registerZenvarkTelemetry } from "zenvark";
-import { ZenvarkProm } from "@zenvark/prom";
+import { register } from '@prometheus-io/client';
+import { ZenvarkProm } from '@zenvark/prom';
+import { registerZenvarkTelemetry } from 'zenvark';
 
 registerZenvarkTelemetry(
   new ZenvarkProm({
     registry: register,
-    customLabels: { service: "my-api" },
+    customLabels: { service: 'my-api' },
   }),
 );
 ```
@@ -70,13 +67,13 @@ registerZenvarkTelemetry(
 ### Exposing Metrics
 
 ```typescript
-import express from "express";
-import { register } from "@prometheus-io/client";
+import { register } from '@prometheus-io/client';
+import express from 'express';
 
 const app = express();
 
-app.get("/metrics", async (req, res) => {
-  res.set("Content-Type", register.contentType);
+app.get('/metrics', async (req, res) => {
+  res.set('Content-Type', register.contentType);
   res.end(await register.metrics());
 });
 
@@ -158,7 +155,7 @@ The unique identifier for the circuit breaker instance as defined in the configu
 
 ```typescript
 const circuitBreaker = new CircuitBreaker({
-  id: "payment-gateway-stripe", // This becomes the breaker_id label
+  id: 'payment-gateway-stripe', // This becomes the breaker_id label
   // ...
 });
 ```
@@ -185,9 +182,9 @@ Additional key-value pairs provided in the `ZenvarkProm` configuration:
 new ZenvarkProm({
   registry: register,
   customLabels: {
-    service: "my-api",
-    environment: "production",
-    region: "us-east-1",
+    service: 'my-api',
+    environment: 'production',
+    region: 'us-east-1',
   },
 });
 ```
@@ -219,17 +216,17 @@ Without a registered OpenTelemetry SDK the spans are no-ops. Once the applicatio
 To integrate another telemetry system, implement the `Telemetry` interface. All methods are optional; implement only the ones you need:
 
 ```typescript
-import { registerZenvarkTelemetry, type Telemetry } from "zenvark";
+import { registerZenvarkTelemetry, type Telemetry } from 'zenvark';
 
 const logging: Telemetry = {
   onCallEnd({ breakerId, result, durationMs }) {
-    console.log(breakerId, result, "in", durationMs, "ms");
+    console.log(breakerId, result, 'in', durationMs, 'ms');
   },
   onStateChange({ breakerId, state }) {
-    console.log(breakerId, "is now", state);
+    console.log(breakerId, 'is now', state);
   },
   onAcquire({ semaphoreId, result, waitMs }) {
-    console.log(semaphoreId, result, "after", waitMs, "ms");
+    console.log(semaphoreId, result, 'after', waitMs, 'ms');
   },
 };
 

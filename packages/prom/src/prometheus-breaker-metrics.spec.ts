@@ -61,9 +61,7 @@ describe('PrometheusBreakerMetrics', () => {
     const allMetrics = await registry.metrics();
 
     expect(allMetrics).toMatch(
-      new RegExp(
-        `zenvark_blocked_requests_total{[^}]*breaker_id="${breakerId}"[^}]*} 2`,
-      ),
+      new RegExp(`zenvark_blocked_requests_total{[^}]*breaker_id="${breakerId}"[^}]*} 2`),
     );
   });
 
@@ -145,9 +143,7 @@ describe('PrometheusBreakerMetrics', () => {
       bm.recordStateChange({ breakerId, state: CircuitState.OPEN });
 
       const beforeClear = await registry.metrics();
-      expect(beforeClear).toMatch(
-        new RegExp(`zenvark_state{[^}]*breaker_id="${breakerId}"[^}]*}`),
-      );
+      expect(beforeClear).toMatch(new RegExp(`zenvark_state{[^}]*breaker_id="${breakerId}"[^}]*}`));
 
       bm.clearState(breakerId);
 
@@ -173,9 +169,7 @@ describe('PrometheusBreakerMetrics', () => {
 
       const metricsAfterBlock = await registry.metrics();
       expect(metricsAfterBlock).toMatch(
-        new RegExp(
-          `zenvark_blocked_requests_total{[^}]*breaker_id="${breakerId}"[^}]*} 1`,
-        ),
+        new RegExp(`zenvark_blocked_requests_total{[^}]*breaker_id="${breakerId}"[^}]*} 1`),
       );
     });
 

@@ -213,9 +213,8 @@ export class CircuitBreaker extends AbstractLifecycleManager {
         const startedAt = performance.now();
 
         try {
-          await this.telemetry.executeHealthCheck(
-            { breakerId: this.id, type, signal },
-            () => this.health.check(type, signal),
+          await this.telemetry.executeHealthCheck({ breakerId: this.id, type, signal }, () =>
+            this.health.check(type, signal),
           );
 
           this.recordHealthCheck(type, CallResult.SUCCESS, startedAt);
@@ -239,10 +238,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
   protected override async startInternal(): Promise<void> {
     await this.redis.connect();
 
-    await Promise.all([
-      this.callResultStore.start(),
-      this.circuitStateStore.start(),
-    ]);
+    await Promise.all([this.callResultStore.start(), this.circuitStateStore.start()]);
 
     await this.elector.start();
   }
@@ -308,9 +304,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       return;
     }
 
-    const lastEventTimestamp = this.callResultStore
-      .getEvents()
-      .at(-1)?.timestamp;
+    const lastEventTimestamp = this.callResultStore.getEvents().at(-1)?.timestamp;
     const initialExecutionStartMs = lastEventTimestamp
       ? lastEventTimestamp + this.health.idleProbeIntervalMs
       : 0;
@@ -333,11 +327,8 @@ export class CircuitBreaker extends AbstractLifecycleManager {
 
     // Filter out events that occurred before the last state change
     // This prevents historical failures from causing repeated circuit opens after successful recovery
-    const lastStateChangeTimestamp =
-      this.circuitStateStore.getLastStateChangeTimestamp();
-    const recentEvents = events.filter(
-      (event) => event.timestamp >= lastStateChangeTimestamp,
-    );
+    const lastStateChangeTimestamp = this.circuitStateStore.getLastStateChangeTimestamp();
+    const recentEvents = events.filter((event) => event.timestamp >= lastStateChangeTimestamp);
 
     if (this.shouldOpenCircuit(recentEvents)) {
       await this.circuitStateStore.setState(CircuitState.OPEN);
@@ -347,11 +338,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
     }
   };
 
-  private recordHealthCheck(
-    type: HealthCheckType,
-    result: CallResult,
-    startedAt: number,
-  ): void {
+  private recordHealthCheck(type: HealthCheckType, result: CallResult, startedAt: number): void {
     const event = {
       breakerId: this.id,
       type,
@@ -362,10 +349,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
     this.telemetry.emit('onHealthCheckEnd', event);
   }
 
-  private async recordCallResult(
-    callResult: CallResult,
-    callStartedAtMs: number,
-  ) {
+  private async recordCallResult(callResult: CallResult, callStartedAtMs: number) {
     const event = {
       breakerId: this.id,
       result: callResult,
@@ -389,8 +373,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
       return await this.runCall(fn);
     }
 
-    const outcomeOnError =
-      options?.lease?.outcomeOnError ?? this.semaphore.outcomeOnError;
+    const outcomeOnError = options?.lease?.outcomeOnError ?? this.semaphore.outcomeOnError;
     const lease = await this.acquireLease(this.semaphore, options?.lease);
 
     // The circuit may have opened while we were waiting for the lease
@@ -460,10 +443,7 @@ export class CircuitBreaker extends AbstractLifecycleManager {
     const startedAt = performance.now();
 
     try {
-      const result = await this.telemetry.executeCall(
-        { breakerId: this.id },
-        fn,
-      );
+      const result = await this.telemetry.executeCall({ breakerId: this.id }, fn);
 
       void this.recordCallResult(CallResult.SUCCESS, startedAt);
 

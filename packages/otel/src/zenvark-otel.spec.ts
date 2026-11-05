@@ -10,15 +10,7 @@ import {
   SimpleSpanProcessor,
   TracerProvider,
 } from '@opentelemetry/sdk-trace';
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { AcquireResult, CircuitState, HealthCheckType } from 'zenvark';
 import { ZenvarkOtel } from './zenvark-otel.ts';
 
@@ -30,13 +22,10 @@ describe('ZenvarkOtel', () => {
   });
   const testTracer = provider.getTracer('test');
 
-  const spans = (name: string) =>
-    exporter.getFinishedSpans().filter((s) => s.name === name);
+  const spans = (name: string) => exporter.getFinishedSpans().filter((s) => s.name === name);
 
   beforeAll(() => {
-    context.setGlobalContextManager(
-      new AsyncLocalStorageContextManager().enable(),
-    );
+    context.setGlobalContextManager(new AsyncLocalStorageContextManager().enable());
   });
 
   beforeEach(() => {
@@ -51,20 +40,17 @@ describe('ZenvarkOtel', () => {
     const telemetry = new ZenvarkOtel({ tracer: testTracer });
 
     it('nests the call span between the caller and spans the call creates', async () => {
-      const result = await testTracer.startActiveSpan(
-        'request',
-        async (request) => {
-          const value = await telemetry.executeCall({
-            breakerId,
-            execute: async () => {
-              testTracer.startSpan('http').end();
-              return 'ok';
-            },
-          });
-          request.end();
-          return value;
-        },
-      );
+      const result = await testTracer.startActiveSpan('request', async (request) => {
+        const value = await telemetry.executeCall({
+          breakerId,
+          execute: async () => {
+            testTracer.startSpan('http').end();
+            return 'ok';
+          },
+        });
+        request.end();
+        return value;
+      });
 
       expect(result).toBe('ok');
       const [request] = spans('request');
@@ -76,9 +62,7 @@ describe('ZenvarkOtel', () => {
         'zenvark.call.result': 'success',
       });
       expect(call?.status.code).toBe(SpanStatusCode.UNSET);
-      expect(call?.parentSpanContext?.spanId).toBe(
-        request?.spanContext().spanId,
-      );
+      expect(call?.parentSpanContext?.spanId).toBe(request?.spanContext().spanId);
       expect(http?.parentSpanContext?.spanId).toBe(call?.spanContext().spanId);
     });
 
@@ -190,9 +174,7 @@ describe('ZenvarkOtel', () => {
     const [blocked] = spans('zenvark.blocked');
     expect(blocked?.attributes).toEqual({ 'zenvark.breaker.id': breakerId });
     expect(blocked?.status.code).toBe(SpanStatusCode.ERROR);
-    expect(blocked?.parentSpanContext?.spanId).toBe(
-      request?.spanContext().spanId,
-    );
+    expect(blocked?.parentSpanContext?.spanId).toBe(request?.spanContext().spanId);
   });
 
   it('records a state change in a new trace', () => {
@@ -228,9 +210,7 @@ describe('ZenvarkOtel', () => {
 
       const [request] = spans('request');
       const [acquire] = spans('zenvark.semaphore.acquire');
-      expect(acquire?.parentSpanContext?.spanId).toBe(
-        request?.spanContext().spanId,
-      );
+      expect(acquire?.parentSpanContext?.spanId).toBe(request?.spanContext().spanId);
       expect(acquire?.attributes).toEqual({
         'zenvark.semaphore.id': 'testSemaphore',
         'zenvark.semaphore.class': 'bulk',
@@ -265,9 +245,7 @@ describe('ZenvarkOtel', () => {
     // package resolve it to different directories. It has no dependencies,
     // so a copy of the package directory is a complete second instance.
     const importApiCopy = async () => {
-      const entry = createRequire(import.meta.url).resolve(
-        '@opentelemetry/api',
-      );
+      const entry = createRequire(import.meta.url).resolve('@opentelemetry/api');
       const packageDir = resolve(entry, '../../..');
       const copyDir = await mkdtemp(join(tmpdir(), 'zenvark-otel-api-'));
       await cp(packageDir, copyDir, { recursive: true });

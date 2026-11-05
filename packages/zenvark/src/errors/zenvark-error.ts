@@ -1,9 +1,6 @@
 const BRAND = Symbol.for('zenvark.error');
 
-export type ZenvarkErrorParams<
-  TCode extends string,
-  TDetails extends Record<string, unknown>,
-> = {
+export type ZenvarkErrorParams<TCode extends string, TDetails extends Record<string, unknown>> = {
   message: string;
   code: TCode;
   details: TDetails;

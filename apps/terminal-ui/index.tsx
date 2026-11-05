@@ -37,10 +37,7 @@ const createCircuit = (instanceId: string) => {
           throw new Error('Healthcheck failing by toggle');
         }
 
-        circuitEvents.emit(
-          'log',
-          `[${instanceId}] ${type} healthcheck succeeded`,
-        );
+        circuitEvents.emit('log', `[${instanceId}] ${type} healthcheck succeeded`);
       },
       idleProbeIntervalMs: 10_000,
     },
@@ -48,17 +45,11 @@ const createCircuit = (instanceId: string) => {
       circuitEvents.emit('log', `[${instanceId}] error: ${err.message}`);
     },
     onRoleChange(role) {
-      circuitEvents.emit(
-        'log',
-        `[${instanceId}] role changed to ${role.toUpperCase()}`,
-      );
+      circuitEvents.emit('log', `[${instanceId}] role changed to ${role.toUpperCase()}`);
       circuitEvents.emit('roleChange');
     },
     onStateChange(state) {
-      circuitEvents.emit(
-        'log',
-        `[${instanceId}] state changed to ${state.toUpperCase()}`,
-      );
+      circuitEvents.emit('log', `[${instanceId}] state changed to ${state.toUpperCase()}`);
       circuitEvents.emit('stateChange');
     },
   });
@@ -87,11 +78,7 @@ const Button = ({ label, onPress }: ButtonProps) => {
   });
 
   return (
-    <Box
-      borderStyle="round"
-      paddingX={1}
-      borderColor={isFocused ? 'yellow' : 'gray'}
-    >
+    <Box borderStyle="round" paddingX={1} borderColor={isFocused ? 'yellow' : 'gray'}>
       <Text color={isFocused ? 'yellow' : undefined}>{label}</Text>
     </Box>
   );
@@ -103,12 +90,7 @@ type RadioOptionProps = {
   selectedColor: string;
   onSelect: () => void;
 };
-const RadioOption = ({
-  label,
-  selected,
-  selectedColor,
-  onSelect,
-}: RadioOptionProps) => {
+const RadioOption = ({ label, selected, selectedColor, onSelect }: RadioOptionProps) => {
   const { isFocused } = useFocus();
 
   useInput((input, key) => {
@@ -159,12 +141,7 @@ type HealthcheckBoxProps = {
 };
 const HealthcheckBox = ({ shouldFail, setShouldFail }: HealthcheckBoxProps) => {
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="round"
-      borderColor="magenta"
-      paddingX={1}
-    >
+    <Box flexDirection="column" borderStyle="round" borderColor="magenta" paddingX={1}>
       <Box marginBottom={1}>
         <Text>Healthcheck returns</Text>
       </Box>
@@ -202,12 +179,7 @@ const CircuitBox = ({
 }: CircuitBoxProps) => {
   const stateColor = state === 'open' ? 'red' : 'green';
   return (
-    <Box
-      flexDirection="column"
-      borderStyle="round"
-      borderColor="cyan"
-      paddingX={1}
-    >
+    <Box flexDirection="column" borderStyle="round" borderColor="cyan" paddingX={1}>
       <Box>
         <Text>
           {title}{' '}
@@ -224,10 +196,8 @@ const CircuitBox = ({
       <Box marginTop={1}>
         <Text>
           Status:
-          <Text color={role === CircuitRole.LEADER ? 'yellow' : 'gray'}>
-            {role.toUpperCase()}
-          </Text>
-          -<Text color={stateColor}>{state.toUpperCase()}</Text>
+          <Text color={role === CircuitRole.LEADER ? 'yellow' : 'gray'}>{role.toUpperCase()}</Text>-
+          <Text color={stateColor}>{state.toUpperCase()}</Text>
         </Text>
       </Box>
       <Box>
@@ -245,7 +215,6 @@ const App = () => {
 
   const triggerRefresh = () => setRefreshCounter((i) => i + 1);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: it's fine
   useEffect(() => {
     const timer = setInterval(() => {
       triggerRefresh();
@@ -274,7 +243,6 @@ const App = () => {
     shouldCircuitHealthFail = healthFail;
   }, [healthFail]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: it's fine
   useEffect(() => {
     const handleLog = (message: string) => addLog(message);
 
@@ -307,11 +275,7 @@ const App = () => {
     }
   });
 
-  async function executeOn(
-    circuit: CircuitBreaker,
-    instanceId: string,
-    shouldFail: boolean,
-  ) {
+  async function executeOn(circuit: CircuitBreaker, instanceId: string, shouldFail: boolean) {
     if (!circuit.isOperational) {
       addLog(`[${instanceId}] circuit has to be started first`);
       return;
@@ -352,8 +316,8 @@ const App = () => {
     <Box flexDirection="column" gap={1}>
       <Box>
         <Text>
-          Press Tab to focus next element, Shift+Tab for previous. Enter/Space
-          to activate. Esc/q to quit. Tick: {refreshCounter}
+          Press Tab to focus next element, Shift+Tab for previous. Enter/Space to activate. Esc/q to
+          quit. Tick: {refreshCounter}
         </Text>
       </Box>
       <Box gap={1}>
@@ -379,12 +343,7 @@ const App = () => {
           onStop={() => stopCircuit(circuitB, instanceB)}
         />
       </Box>
-      <Box
-        flexDirection="column"
-        borderStyle="round"
-        borderColor="gray"
-        paddingX={1}
-      >
+      <Box flexDirection="column" borderStyle="round" borderColor="gray" paddingX={1}>
         <Text>Logs:</Text>
         {logs.map((log) => (
           <Text key={log.id}>{log.message}</Text>

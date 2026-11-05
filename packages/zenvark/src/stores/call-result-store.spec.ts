@@ -53,21 +53,11 @@ describe('CallResultStore', () => {
     expect(elements).toEqual([
       [
         expect.any(String),
-        [
-          'callResult',
-          CallResult.SUCCESS,
-          'timestamp',
-          expect.stringMatching(/^\d+$/),
-        ],
+        ['callResult', CallResult.SUCCESS, 'timestamp', expect.stringMatching(/^\d+$/)],
       ],
       [
         expect.any(String),
-        [
-          'callResult',
-          CallResult.FAILURE,
-          'timestamp',
-          expect.stringMatching(/^\d+$/),
-        ],
+        ['callResult', CallResult.FAILURE, 'timestamp', expect.stringMatching(/^\d+$/)],
       ],
     ]);
   });
@@ -127,9 +117,7 @@ describe('CallResultStore', () => {
     ]);
 
     await vi.waitUntil(
-      () =>
-        onEventsAddedSpy1.mock.calls.length > 0 &&
-        onEventsAddedSpy2.mock.calls.length > 0,
+      () => onEventsAddedSpy1.mock.calls.length > 0 && onEventsAddedSpy2.mock.calls.length > 0,
     );
 
     const expectedEvents = expect.arrayContaining([
