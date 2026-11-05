@@ -15,8 +15,8 @@
   },
   "scripts": {
     "build": "turbo run build",
-    "check": "oxfmt --check . '!packages/**' '!apps/**' && turbo run check",
-    "check:fix": "turbo run check:fix && oxfmt . '!packages/**' '!apps/**'",
+    "check": "vp fmt --check . '!packages/**' '!apps/**' && vp lint --ignore-pattern 'packages/**' --ignore-pattern 'apps/**' && turbo run check",
+    "check:fix": "turbo run check:fix && vp lint --fix --ignore-pattern 'packages/**' --ignore-pattern 'apps/**' && vp fmt . '!packages/**' '!apps/**'",
     "test:ci": "turbo run test:ci --concurrency=1",
     "changeset": "changeset",
     "version-packages": "changeset version",
@@ -25,10 +25,8 @@
   "devDependencies": {
     "@changesets/cli": "^3.0.2",
     "@lokalise/tsconfig": "^5.0.0",
-    "oxfmt": "^0.75.0",
-    "oxlint": "^1.90.0",
-    "oxlint-tsgolint": "^7.0.2005",
     "turbo": "^2.10.12",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vite-plus": "^1.4.0"
   }
 }

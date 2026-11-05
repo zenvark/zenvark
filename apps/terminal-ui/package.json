@@ -11,8 +11,8 @@
     "start": "tsx index.tsx",
     "docker:start": "docker compose up -d",
     "docker:stop": "docker compose down",
-    "check": "oxfmt --check && oxlint",
-    "check:fix": "oxlint --fix && oxfmt"
+    "check": "vp check",
+    "check:fix": "vp check --fix"
   },
   "dependencies": {
     "ink": "^6.4.0",

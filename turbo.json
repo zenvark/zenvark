@@ -7,7 +7,7 @@
     },
     "check": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/oxlint.config.ts", "$TURBO_ROOT$/oxfmt.config.ts"]
+      "inputs": ["$TURBO_DEFAULT$", "$TURBO_ROOT$/vite.config.ts"]
     },
     "check:fix": {
       "dependsOn": ["^build"],

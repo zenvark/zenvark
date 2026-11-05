@@ -39,8 +39,8 @@
   },
   "scripts": {
     "build": "rimraf dist && tsc -p tsconfig.build.json",
-    "check": "oxfmt --check && oxlint",
-    "check:fix": "oxlint --fix && oxfmt",
+    "check": "vp check",
+    "check:fix": "vp check --fix",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "test:ci": "pnpm run test:coverage"
