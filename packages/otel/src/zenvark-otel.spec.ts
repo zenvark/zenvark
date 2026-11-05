@@ -253,6 +253,89 @@ describe('ZenvarkOtel', () => {
     });
   });
 
+  describe('attributes', () => {
+    it('adds fixed attributes to the call and health check spans', async () => {
+      const telemetry = new ZenvarkOtel({
+        tracer: testTracer,
+        attributes: { 'server.address': 'api.example.com' },
+      });
+
+      await telemetry.executeCall({ breakerId, execute: async () => 'ok' });
+      await telemetry.executeHealthCheck({
+        breakerId,
+        type: HealthCheckType.IDLE,
+        signal: new AbortController().signal,
+        execute: async () => {},
+      });
+
+      expect(spans('zenvark.call')[0]?.attributes).toMatchObject({
+        'server.address': 'api.example.com',
+      });
+      expect(spans('zenvark.healthcheck')[0]?.attributes).toMatchObject({
+        'server.address': 'api.example.com',
+      });
+    });
+
+    it('resolves attributes from the breaker and semaphore id', () => {
+      const hosts: Record<string, string> = {
+        [breakerId]: 'api.example.com',
+        testSemaphore: 'db.example.com',
+      };
+      const telemetry = new ZenvarkOtel({
+        tracer: testTracer,
+        attributes: (id) => ({ 'server.address': hosts[id] }),
+      });
+
+      telemetry.onBlockedRequest({ breakerId });
+      telemetry.onAcquire({
+        semaphoreId: 'testSemaphore',
+        result: AcquireResult.ACQUIRED,
+        waitMs: 10,
+      });
+
+      expect(spans('zenvark.blocked')[0]?.attributes).toMatchObject({
+        'server.address': 'api.example.com',
+      });
+      expect(spans('zenvark.semaphore.acquire')[0]?.attributes).toMatchObject({
+        'server.address': 'db.example.com',
+      });
+    });
+
+    it("drops them before zenvark's own under an attribute limit", async () => {
+      const limitedExporter = new InMemorySpanExporter();
+      const limitedProvider = new TracerProvider({
+        spanLimits: { attributeCountLimit: 1 },
+        spanProcessors: [
+          new SimpleSpanProcessor({ exporter: limitedExporter }),
+        ],
+      });
+      const telemetry = new ZenvarkOtel({
+        tracer: limitedProvider.getTracer('limited'),
+        attributes: { 'server.address': 'api.example.com' },
+      });
+
+      await telemetry.executeCall({ breakerId, execute: async () => 'ok' });
+
+      const [call] = limitedExporter.getFinishedSpans();
+      expect(call?.attributes).toEqual({ 'zenvark.breaker.id': breakerId });
+      await limitedProvider.shutdown();
+    });
+
+    it("does not let them override zenvark's own attributes", async () => {
+      const telemetry = new ZenvarkOtel({
+        tracer: testTracer,
+        attributes: { 'zenvark.breaker.id': 'impostor' },
+      });
+
+      await telemetry.executeCall({ breakerId, execute: async () => 'ok' });
+
+      expect(spans('zenvark.call')[0]?.attributes).toEqual({
+        'zenvark.breaker.id': breakerId,
+        'zenvark.call.result': 'success',
+      });
+    });
+  });
+
   describe('without a tracer option', () => {
     let restore: (() => Promise<void> | void) | undefined;
 
